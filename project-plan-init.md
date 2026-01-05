@@ -3,85 +3,127 @@
 
 **Project Type:** Open Source Research Framework & Training Infrastructure  
 **Status:** Inception / Research Phase  
-**Primary Goal:** To develop a generalized framework for training LLMs to internalize "risk" concepts for autonomous decision-making, optimizing for safety and constraint satisfaction rather than purely maximum reward.
+**Primary Goal:** To develop a generalized framework for training and testing LLMs to understand, interpret, and make decisions based on risk. The framework provides policy development, loss functions, and risk-aware decision-making capabilities, with primary focus on financial risk assessment using multiple methods and metrics.
 
 ---
 
 ## 1. Executive Summary
-**Raft-LM** is a modular framework designed to bridge the gap between Large Language Models (LLMs) and Risk-Aware Decision Making. Unlike standard alignment techniques (RLHF/DPO) that optimize for the average likelihood of a "good" outcome, Raft-LM introduces a **Risk Layer** into the optimization loop. This layer allows researchers and engineers to define, measure, and penalize risk dynamically during training.
+**Raft-LM** is a modular research framework for training and testing LLMs to internalize risk understanding and make risk-aware decisions. Rather than just generating risk reports, the framework trains models to actively interpret, assess, and respond to different types of risk during inference.
 
-The framework treats "Risk" as a flexible, first-class citizen. Whether the risk is financial loss, safety violation in physical environments, or factual hallucination, Raft-LM provides the architecture to modify standard optimization algorithms (PPO, DPO, GRPO, RLVR) to account for these tail risks and constraints.
+The core innovation is treating **Risk Understanding** as a trainable capability through:
+- **Custom Loss Functions**: Risk-aware objectives that go beyond standard reward maximization
+- **Policy Development**: Decision-making strategies that balance reward against risk exposure
+- **Multi-Method Evaluation**: Testing risk assessment using various metrics and approaches
 
----
-
-## 2. High-Level System Architecture (Top-Layer Abstractions)
-
-The system is built as a "Layered Stack" to allow for pluggable definitions of risk and optimization methods.
-
-### A. The Risk Definition Layer (The "What")
-This layer is responsible for translating abstract concepts of risk into mathematical or logical signals the model can optimize against.
-*   **Risk Registry:** A schema to define risk types (e.g., `TailRisk`, `ComplianceRisk`, `SafetyRisk`).
-*   **Metric Engine:** A library of quantitative risk functions (e.g., CVaR, Drawdown, Entropy, Constraint Violation Counts).
-*   **Policy Parser:** An interface to ingest risk rules (Natural Language or Code) and convert them into optimization constraints.
-
-### B. The Training & Alignment Engine (The "How")
-The core of Raft-LM: modified optimizers that natively understand risk signals.
-*   **Algorithm Plugins:**
-    *   **Raft-PPO:** Extends Proximal Policy Optimization with a Lagrangian relaxation layer for hard constraints.
-    *   **Raft-DPO:** Modifies Direct Preference Optimization to prefer "safer" outcomes over "higher-reward" outcomes when risk thresholds are breached.
-    *   **Raft-GRPO:** Implements Group Relative Policy Optimization, comparing groups of samples to estimate risk without a separate Critic model.
-    *   **Raft-RLVR:** Reinforcement Learning with Verification/Risk, using a verification loop to penalize risky actions during rollouts.
-*   **Loss Aggregator:** A modular loss function builder: `Total_Loss = Reward_Loss + λ * Risk_Penalty`.
-#### Important: These are open to research, they may be change after implementation or evaluation.
-
-### C. The Environment & Data Bridge (The Context)
-While data ingestion is not the primary focus, the model needs a context to make decisions.
-*   **Env Adapter:** A standardized interface for Gymnasium-style environments, APIs, or Database streams.
-*   **State Injector:** Formats raw data (files/APIs) into the LLM context window, appending real-time risk metrics (e.g., `Current_Volatility`, `Inventory_Risk`).
-
-### D. The Interpretability Module (The "Why")
-Crucial for research and trust.
-*   **Decision Tracer:** Logs the state, action, and the *calculated risk value* at every step.
-*   **Faithfulness Scorer:** Analyzes if the model's natural language explanation correlates with the actual risk signals driving the gradient updates.
+**Primary Use Case**: Financial risk assessment and decision-making, with extensibility to other risk domains. The framework is research-first, allowing experimentation with different risk metrics, training methods, and evaluation protocols.
 
 ---
 
-## 3. Project Roadmap & Timeline
+## 2. High-Level System Architecture
 
-The project is divided into four main phases spanning **12-18 months**.
+The system is built as a modular research framework with interchangeable components for experimentation.
 
-### Phase 1: Research Foundation & Abstraction (Months 1-3)
-**Goal:** Define the mathematical basis for "Risk Awareness" and design the architecture.
+### A. Risk Definition & Metrics Layer
+Defines what "risk" means in different contexts and how to measure it.
+*   **Risk Type Registry:** Extensible catalog of risk types (Financial, Compliance, Safety, Operational)
+*   **Metric Library:** Quantitative risk measures (VaR, CVaR, Sharpe Ratio, Max Drawdown, Volatility, Custom metrics)
+*   **Risk Evaluation Engine:** Computes risk metrics from model outputs and ground truth
+
+### B. Training & Policy Development Layer
+Core training loop with risk-aware objectives.
+*   **Loss Function Library:** 
+    *   Base losses (Cross-Entropy, MSE for regression)
+    *   Risk-aware losses (CVaR-based, Constraint penalty, Multi-objective)
+    *   Custom composable losses: `Total_Loss = α * Task_Loss + β * Risk_Penalty + γ * Constraint_Loss`
+*   **Training Methods** (Experimental - subject to change):
+    *   Supervised Fine-tuning with risk annotations
+    *   Preference learning (DPO-style) with risk preferences
+    *   RL-based methods (PPO/GRPO) with risk-adjusted rewards
+    *   Multi-task learning (task performance + risk assessment)
+*   **Policy Development:** Strategies for risk-aware decision making during inference
+
+### C. Data & Environment Layer
+Provides training data and evaluation environments.
+*   **Data Adapters:** Ingest financial data, market scenarios, historical risk events
+*   **Scenario Generators:** Create synthetic risk scenarios for training/testing
+*   **Environment Interface:** Optional RL environments for interactive learning
+
+### D. Evaluation & Interpretability Layer
+Measure both task performance and risk understanding.
+*   **Performance Metrics:** Accuracy, F1, Regression error for risk predictions
+*   **Risk Assessment Metrics:** Calibration, coverage, tail behavior accuracy
+*   **Decision Quality:** Risk-adjusted returns, constraint satisfaction rates
+*   **Interpretability:** Attention analysis, decision explanations, faithfulness scoring
+
+**Note:** All methods and architectures are experimental and subject to modification based on research findings.
+
+---
+
+## 3. Research Phases & Roadmap
+
+The project follows an iterative research approach with flexible phase boundaries. Timeline: **12-18 months**, with continuous evaluation of methods.
+
+### Phase 0: Foundation & Infrastructure (Weeks 1-4)
+**Goal:** Set up research infrastructure and basic framework.
 *   **Tasks:**
-    *   **Literature Review:** Survey Risk-Sensitive RL (CVaR, Robust MDPs) and LLM Alignment (DPO, KTO).
-    *   **Schema Design:** Finalize the data structures for `RiskConstraint` and `RiskProfile`.
-    *   **Algorithm Selection:** Determine which baseline algos (PPO vs. GRPO) to prioritize for the prototype.
-    *   **Deliverable:** The "Raft Yellowpaper" (Internal research note defining the mathematical approach).
+    *   Repository structure, experiment tracking, documentation
+    *   Base training pipeline (standard fine-tuning)
+    *   Data loading and preprocessing
+    *   Basic evaluation metrics
+*   **Deliverable:** Working research environment with reproducible experiment tracking
 
-### Phase 2: The Core Framework (Months 4-7)
-**Goal:** Build the working code skeleton and the first implementation of Risk-PPO.
+### Phase 1: Risk Understanding Baselines (Months 1-3)
+**Goal:** Establish baseline approaches for risk-aware LLM training.
 *   **Tasks:**
-    *   **Repo Setup:** Establish the monorepo structure.
-    *   **Base Trainer:** Implement a standard PPO/DPO trainer for LLMs.
-    *   **Risk Integration:** Inject the "Risk Constraint Layer" into the loss calculation.
-    *   **Metric Library:** Implement basic Python classes for CVaR, Max Drawdown, and Threshold counting.
-    *   **Deliverable:** `Raft-Core` v0.1 (A runnable, but empty, framework).
+    *   **Literature Review:** Risk-Sensitive RL, LLM Alignment, Financial ML
+    *   **Data Collection:** Financial scenarios, risk annotations, historical data
+    *   **Baseline Models:** Train LLMs on risk prediction tasks (regression, classification)
+    *   **Risk Metrics:** Implement VaR, CVaR, Sharpe Ratio, custom metrics
+    *   **Initial Evaluation:** Compare model risk predictions vs ground truth
+*   **Deliverable:** Baseline performance numbers, initial metric library, research notes
+*   **KPIs:** Prediction accuracy, calibration scores, metric coverage
 
-### Phase 3: Implementation of Advanced Optimizers (Months 8-12)
-**Goal:** Implement the specific algorithms (GRPO, RLVR) and the Natural Language parsing.
+### Phase 2: Risk-Aware Loss Functions (Months 3-6)
+**Goal:** Develop and test custom loss functions for risk awareness.
 *   **Tasks:**
-    *   **Raft-GRPO Implementation:** Build the sampler that estimates risk via group comparison.
-    *   **Constraint Parser:** Build a lightweight LLM parser that turns "Don't lose more than 5%" into a JSON constraint object.
-    *   **Dynamic Adjustment:** Implement the logic to adjust `temperature` or `penalty weights` based on volatility.
-    *   **Deliverable:** `Raft-Trainer` v1.0 with support for multiple optimization algos.
+    *   **Loss Function Design:** CVaR-based losses, constraint penalties, multi-objective
+    *   **Experimentation:** Test different loss combinations and weights
+    *   **Comparison Studies:** Risk-aware losses vs standard losses
+    *   **Metric Tracking:** Monitor both task performance and risk assessment quality
+*   **Deliverable:** Loss function library, experimental results, best-performing methods
+*   **KPIs:** Risk-adjusted performance, constraint satisfaction, stability
+*   **Note:** Methods will be added, tested, and potentially removed based on results
 
-### Phase 4: Validation, Benchmarks, & Research (Months 13-18)
-**Goal:** Prove the framework works on non-trivial problems and produce academic results.
+### Phase 3: Policy Development & Decision Making (Months 6-10)
+**Goal:** Train models to make risk-aware decisions, not just predictions.
 *   **Tasks:**
-    *   **Benchmark Environments:** Create 3 distinct test environments (e.g., Trading Bot, Code Safety, Resource Allocation) to show generalizability.
-    *   **Stress Testing:** Run "Black Swan" tests (injecting extreme noise) to compare Raft-LM vs. Standard RL.
-    *   **Paper Writing:** Draft papers on "Risk-Sensitive Alignment in LLMs" and "Faithfulness of Explanations in Risk-Aware Agents."
-    *   **Deliverable:** Open Source Release on GitHub + 1-2 academic pre-prints.
+    *   **Policy Framework:** Define decision-making protocols
+    *   **Training Methods:** Experiment with SFT, DPO, PPO, GRPO, or hybrid approaches
+    *   **Risk Preferences:** Train on risk preference data
+    *   **Action Evaluation:** Measure decision quality in risk contexts
+*   **Deliverable:** Trained policy models, decision evaluation framework
+*   **KPIs:** Decision quality, risk-adjusted returns, constraint violations
+*   **Note:** Training methods are experimental and will evolve
+
+### Phase 4: Evaluation & Benchmarking (Months 10-14)
+**Goal:** Comprehensive evaluation across different risk scenarios and domains.
+*   **Tasks:**
+    *   **Benchmark Suite:** Financial scenarios, stress tests, edge cases
+    *   **Comparative Analysis:** Raft-LM vs baselines vs standard methods
+    *   **Robustness Testing:** Out-of-distribution, black swan events
+    *   **Interpretability Analysis:** Understanding model risk reasoning
+*   **Deliverable:** Benchmark results, comparative studies, research papers
+*   **KPIs:** Performance across scenarios, robustness metrics, generalization
+
+### Phase 5: Extension & Refinement (Months 14-18)
+**Goal:** Extend to new risk types and refine based on findings.
+*   **Tasks:**
+    *   **New Risk Domains:** Beyond financial (operational, compliance, etc.)
+    *   **Method Refinement:** Improve best-performing approaches
+    *   **Production Readiness:** Optimize inference, reduce computational cost
+    *   **Documentation:** Comprehensive guides, tutorials, research notes
+*   **Deliverable:** Extended framework, production-ready components, publications
+*   **KPIs:** Multi-domain performance, inference efficiency, adoption readiness
 
 ---
 
@@ -115,22 +157,55 @@ The project is divided into four main phases spanning **12-18 months**.
 
 ---
 
-## 5. Key Success Indicators (KPIs)
+## 5. Key Performance Indicators (KPIs)
 
-1.  **Framework Modularity:** Can a user swap a "Financial CVaR" risk function for a "Safety Threshold" function by changing only one config file?
-2.  **Performance on Tail Events:** In a test environment with rare but catastrophic events, does Raft-LM survive significantly longer than a standard PPO-trained LLM?
-3.  **Algorithm Versatility:** Does the framework successfully train models using at least three different optimization methods (e.g., PPO, DPO, GRPO)?
+### Technical KPIs
+1.  **Risk Prediction Accuracy:** Model accuracy on held-out risk assessment tasks (target: >80% for classification, <10% error for regression)
+2.  **Risk Calibration:** How well predicted risk probabilities match actual outcomes (target: calibration error <5%)
+3.  **Tail Event Performance:** Model accuracy on rare/extreme risk scenarios (target: >70% precision on tail events)
+4.  **Constraint Satisfaction:** Percentage of decisions that respect defined risk constraints (target: >95%)
+
+### Research KPIs
+5.  **Method Comparison:** Clear performance ranking of different training methods with statistical significance
+6.  **Loss Function Effectiveness:** Quantifiable improvement from risk-aware losses vs standard losses (target: >15% improvement in risk-adjusted metrics)
+7.  **Reproducibility:** All experiments reproducible with documented configs and seeds
+8.  **Computational Efficiency:** Training time and resource usage tracked and optimized
+
+### Framework KPIs
+9.  **Modularity:** Ability to swap risk metrics, loss functions, and training methods via configuration
+10. **Extensibility:** Time to add new risk metric or training method (target: <1 day for experienced user)
+11. **Documentation Quality:** All components documented with examples and usage patterns
+12. **Experiment Tracking:** Complete provenance for all training runs (config, data, metrics, artifacts)
+
+### Business/Application KPIs (Financial Risk Use Case)
+13. **Risk-Adjusted Returns:** Sharpe ratio or similar metric for model decisions (target: >1.5)
+14. **Maximum Drawdown:** Worst-case loss in simulation (target: <20%)
+15. **Win Rate vs Risk Exposure:** Percentage of profitable decisions adjusted for risk taken
+16. **Real-World Applicability:** Model performance on actual historical data vs training scenarios
 
 ---
 
-## 6. Initial "Spike" (Proof of Concept) Plan (First 2 Weeks)
+## 6. Initial Validation (Proof of Concept) - First 4 Weeks
 
-To validate the "Raft" concept before building the full framework:
+**Objective:** Validate that LLMs can learn meaningful risk assessment before building full framework.
 
-*   **Objective:** Train a small LLM (Llama-3-8B or smaller) to play a simple game (e.g., Blackjack or a simple grid world).
-*   **Constraint:** The agent must not "go bust" (hit 0 points) more than 5% of the time.
-*   **Method:**
-    1.  Implement standard PPO.
-    2.  Add a simple penalty term: `Loss = PPO_Loss + (100 * Prob_of_Bust)`.
-    3.  Compare: Standard PPO vs. Risk-PPO.
-*   **Success:** If Risk-PPO learns a conservative strategy that survives longer while still winning some hands, the project proceeds.
+### Week 1-2: Simple Risk Prediction
+*   **Task:** Train a small LLM (GPT-2 or similar) to predict risk level (low/medium/high) from financial text descriptions
+*   **Data:** Synthetic scenarios with clear risk labels
+*   **Success Criteria:** >70% accuracy on held-out test set
+*   **Deliverable:** Working training pipeline, baseline metrics
+
+### Week 3-4: Risk-Aware Loss Function Test
+*   **Task:** Compare standard fine-tuning vs risk-aware loss function
+*   **Setup:** 
+    1.  Model A: Standard cross-entropy loss
+    2.  Model B: Cross-entropy + CVaR-based penalty
+    3.  Model C: Multi-objective (accuracy + risk calibration)
+*   **Evaluation:** Compare accuracy, calibration, and tail event performance
+*   **Success Criteria:** At least one risk-aware variant shows measurable improvement (>10%) in risk-relevant metrics
+*   **Deliverable:** Experimental results, statistical comparison, research note
+
+### Decision Point
+*   **Proceed if:** Risk-aware training shows meaningful improvement in risk assessment quality
+*   **Iterate if:** Results are inconclusive - try different loss functions or data
+*   **Pivot if:** No improvement after 3 iterations - reconsider approach
