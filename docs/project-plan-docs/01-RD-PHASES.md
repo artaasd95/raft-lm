@@ -16,6 +16,25 @@ A phase is **done** only when it produces:
 
 ---
 
+## How phases map to the Raft-LM architecture
+
+From the high-level plan (`project-plan-init.md`), Raft-LM has several conceptual layers:
+- **Risk Definition & Metrics Layer** (risk types, VaR/CVaR, Sharpe, drawdown, etc.)
+- **Training & Policy Development Layer** (loss functions, training methods, decision policies)
+- **Data & Environment Layer** (financial scenarios, historical data, optional RL envs)
+- **Evaluation & Interpretability Layer** (risk understanding quality, decision quality, robustness)
+
+The phases roughly map to these layers:
+- **Phase 0–1** → Data & Environment + Risk Definition & Metrics (infrastructure + baselines)
+- **Phase 2** → Training & Policy Development (risk‑aware loss functions)
+- **Phase 3** → Training & Policy Development (decision policies under risk)
+- **Phase 4** → Evaluation & Interpretability (benchmarks, robustness, analysis)
+- **Phase 5** → Extension across risk types and domains
+
+Use this mapping to keep experiments aligned with the overall architecture.
+
+---
+
 ## Phase 0 — Foundation & Infrastructure
 
 **Goal**: Set up research infrastructure for reproducible experiments.
@@ -28,6 +47,10 @@ A phase is **done** only when it produces:
 - Experiment tracking and artifact generation
 - Data loading and preprocessing
 - Basic evaluation metrics
+
+**KPIs touched** (from `project-plan-init.md`):
+- Reproducibility of experiments
+- Basic computational efficiency (training runs complete in reasonable time)
 
 **Done when**:
 - [ ] Training pipeline runs end-to-end
@@ -60,6 +83,11 @@ A phase is **done** only when it produces:
 - Basic risk metrics (VaR, CVaR, accuracy, calibration)
 - Initial datasets (synthetic and/or real)
 - Comparative evaluation framework
+
+**KPIs touched**:
+- Risk prediction accuracy (classification / regression)
+- Risk calibration quality
+- Tail event performance (where applicable)
 
 **Done when**:
 - [ ] At least 2 baseline models trained (different sizes or architectures)
@@ -98,6 +126,11 @@ A phase is **done** only when it produces:
 - Multi-objective losses (task + risk)
 - Weighted combinations of losses
 - Comparative experiments: risk-aware vs standard losses
+
+**KPIs touched**:
+- Loss function effectiveness (improvement in risk‑adjusted metrics)
+- Constraint satisfaction rates
+- Training stability
 
 **Done when**:
 - [ ] At least 3 different loss functions implemented
@@ -142,6 +175,11 @@ A phase is **done** only when it produces:
 - Risk preference data collection/generation
 - Decision quality metrics
 - Interactive evaluation (if applicable)
+
+**KPIs touched**:
+- Decision quality under risk (correct/optimal choices)
+- Risk‑adjusted returns (for financial decision tasks)
+- Constraint satisfaction (respecting defined risk limits)
 
 **Done when**:
 - [ ] Decision-making task defined and implemented
@@ -192,6 +230,11 @@ A phase is **done** only when it produces:
 - Robustness evaluation
 - Interpretability analysis
 
+**KPIs touched**:
+- Robustness across scenarios and distributions
+- Performance on tail / extreme events
+- Generalization across datasets and configurations
+
 **Done when**:
 - [ ] Benchmark suite with ≥10 diverse scenarios
 - [ ] All models evaluated on benchmark
@@ -233,6 +276,11 @@ A phase is **done** only when it produces:
 - Production-ready components
 - Comprehensive documentation
 - Tutorials and examples
+
+**KPIs touched**:
+- Multi‑domain performance (beyond financial market risk)
+- Inference efficiency (latency / throughput)
+- Adoption readiness (documentation, examples, deployment guides)
 
 **Done when**:
 - [ ] Framework extended to ≥2 new risk domains

@@ -183,28 +183,11 @@ summary.to_csv("experiments/results/cvar_loss_study/summary.csv")
 
 ### Statistical comparison:
 
-```python
-import scipy.stats as stats
+At minimum, compute:
+- Mean and standard deviation of key metrics per method
+- A statistical test (e.g., t-test) and effect size (e.g., Cohen's d) when you claim an improvement
 
-baseline = df[df["loss_function"] == "mse"]["test_tail_mse"].values
-cvar = df[df["loss_function"] == "cvar"]["test_tail_mse"].values
-
-# t-test
-t_stat, p_value = stats.ttest_ind(baseline, cvar)
-print(f"t-test: t={t_stat:.3f}, p={p_value:.4f}")
-
-# Effect size (Cohen's d)
-mean_diff = np.mean(cvar) - np.mean(baseline)
-pooled_std = np.sqrt((np.var(baseline) + np.var(cvar)) / 2)
-cohens_d = mean_diff / pooled_std
-print(f"Effect size: d={cohens_d:.3f}")
-
-# Interpretation
-if p_value < 0.05 and abs(cohens_d) > 0.3:
-    print("Significant difference with meaningful effect size")
-else:
-    print("No significant/meaningful difference")
-```
+For concrete examples and recommended tests, see the **Statistical Testing Guide** in `05-EXPERIMENT-REVIEW.md`.
 
 ---
 
@@ -352,6 +335,27 @@ You're done when:
 - Next steps are clear
 
 Then move to the next research question.
+
+---
+
+## Special case: Policy / decision experiments
+
+Everything above still applies when you move from **prediction** to **decision-making**, but a few details change:
+
+- Instead of just train/test splits, you evaluate a **policy** by:
+  - Replaying it on historical data (offline evaluation),
+  - Rolling it out in a simulation/scenario engine, or
+  - Running it in an interactive/RL environment with episodes.
+- Outputs are **actions** (decisions) plus their outcomes, not just scalar predictions.
+- Key metrics focus on **risk-adjusted decision quality**, for example:
+  - Risk-adjusted return (e.g., Sharpe / Sortino in financial settings)
+  - Constraint violation rate (how often does the policy break risk limits?)
+  - Max drawdown / worst-case loss across evaluation scenarios.
+
+When running policy experiments:
+- Use the **\"Evaluating a Decision Policy\"** checklist in `02-CHECKLISTS.md` to structure evaluation.
+- Still use multiple seeds / scenarios and compare to baseline policies.
+- Treat policy evaluation runs as experiments that produce full artifacts (configs, decision logs, metrics, notes).
 
 ---
 

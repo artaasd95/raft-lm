@@ -122,27 +122,10 @@ experiments/results/2026-01-05_cvar_loss_seed42/
 ## Statistical Testing Quick Guide
 
 ### Comparing two methods:
-```python
-from scipy import stats
-import numpy as np
+- Use a **t-test** (or non-parametric alternative) + an **effect size** (Cohen's d) when you claim an improvement.
+- Rule of thumb: p < 0.05 **and** |d| > 0.3 ⇒ improvement is both statistically and practically meaningful.
 
-baseline = [0.85, 0.86, 0.84]  # 3 seeds
-new_method = [0.89, 0.90, 0.88]
-
-# t-test
-t_stat, p_value = stats.ttest_ind(baseline, new_method)
-
-# Effect size (Cohen's d)
-mean_diff = np.mean(new_method) - np.mean(baseline)
-pooled_std = np.sqrt((np.var(baseline) + np.var(new_method)) / 2)
-cohens_d = mean_diff / pooled_std
-
-# Interpretation
-if p_value < 0.05 and abs(cohens_d) > 0.3:
-    print("Significant and meaningful difference")
-```
-
-**Always report effect size, not just p-values!**
+For concrete code examples and recommendations, see the **Statistical Testing Guide** section in `05-EXPERIMENT-REVIEW.md`.
 
 ---
 

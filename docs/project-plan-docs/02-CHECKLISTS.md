@@ -139,6 +139,30 @@ Use this for comprehensive model evaluation.
 
 ---
 
+## Checklist: Evaluating a Decision Policy
+
+Use this when evaluating a model or policy that **chooses actions** under risk (e.g., trading decisions, allocations, approvals).
+
+```
+[ ] Decision space defined (what actions can the policy take?)
+[ ] Risk constraints defined (e.g., max drawdown, VaR limit, position size limits)
+[ ] Evaluation environment chosen and documented:
+    - Historical replay (offline evaluation on recorded data), OR
+    - Scenario/simulation engine, OR
+    - Online/RL environment with episodes
+[ ] Metrics defined:
+    - Risk-adjusted return (e.g., Sharpe / Sortino for financial tasks)
+    - Constraint violation rate (percentage of decisions that break constraints)
+    - Max drawdown or worst-case loss over evaluation horizon
+[ ] Evaluation run over multiple seeds / scenarios (not just a single path)
+[ ] All decisions and outcomes logged (e.g., `decision_log.csv` with state, action, reward, risk metrics)
+[ ] Baseline policies evaluated for comparison (e.g., naive, rule-based, non-risk-aware model)
+[ ] Failure modes examined (which scenarios cause bad decisions?)
+[ ] Results summarized in a research note with clear recommendation
+```
+
+---
+
 ## Checklist: Before Committing Code
 
 Use this before every commit to keep the repo stable.

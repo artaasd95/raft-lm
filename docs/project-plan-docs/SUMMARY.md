@@ -83,6 +83,8 @@ A **complete operational framework** for research and development in Raft-LM. Th
 - Performance budgets and guidelines
 - Optimization workflow
 
+These guides support the **KPIs defined in `project-plan-init.md`** (risk prediction accuracy, calibration, tail performance, constraint satisfaction, risk-adjusted returns, robustness, efficiency) by making sure each phase and experiment has clear metrics and decision criteria.
+
 ---
 
 ## How It All Fits Together
@@ -264,6 +266,12 @@ Document all experiments, especially failures:
 - Reproducibility information
 
 **Why**: Learn from both successes and failures.
+
+### (Future) Risk Output Schema
+Over time, Raft-LM will converge on a **standard JSON schema** for risk outputs (e.g., per-scenario `risk_score`, `risk_bucket`, `constraints_violated`, and key metrics like VaR/CVaR). This will live in a small dedicated doc (e.g., `RISK-OUTPUTS.md`) and is intended to support:
+- Simple JSON/tool outputs from models
+- Consistent evaluation across experiments
+- Downstream integrations (dashboards, tools, external systems)
 
 ---
 

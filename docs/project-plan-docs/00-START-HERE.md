@@ -9,7 +9,7 @@ This repo is **research-first**: we build a framework for training LLMs to under
 By the end of **Week 4** you should have:
 - ✅ A working training pipeline that produces **experiment artifacts**
 - ✅ At least one baseline model trained and evaluated on risk prediction
-- ✅ Basic risk metrics implemented (VaR, CVaR, or accuracy/calibration)
+- ✅ Basic **financial risk metrics** implemented (e.g., VaR, CVaR, accuracy/calibration on simple P&L scenarios)
 - ✅ Reproducible experiments with tracked configs and results
 
 By the end of **Month 3** you should have:
@@ -17,6 +17,22 @@ By the end of **Month 3** you should have:
 - ✅ Multiple loss functions tested with comparative results
 - ✅ At least one research question answered with artifacts
 - ✅ Documented decision points (what worked, what didn't)
+
+---
+
+## Scope for the first iterations
+
+To keep the project focused and concrete, the initial scope is:
+- **Risk domain**: Financial market risk (single‑asset or simple portfolio P&L)
+- **Tasks**:
+  - Classify scenarios as low/medium/high risk
+  - Regress simple risk numbers (e.g., 1‑day VaR or CVaR on a position)
+  - (Later) choose between actions with different risk/return profiles
+- **Metrics**:
+  - Task metrics: accuracy / MSE
+  - Risk metrics: VaR, CVaR, basic drawdown, simple risk‑adjusted return
+
+Other risk types (operational, compliance, safety, etc.) can be added later, but early experiments should stay inside this **financial risk** box so results are easy to interpret and compare.
 
 ---
 
