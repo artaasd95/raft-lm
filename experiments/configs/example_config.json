@@ -1,0 +1,47 @@
+{
+  "experiment_name": "baseline_classification",
+  "description": "Baseline risk classification experiment",
+  "model": {
+    "type": "SimpleMLP",
+    "input_dim": 10,
+    "hidden_dim": 128,
+    "output_dim": 3,
+    "num_layers": 2,
+    "dropout": 0.1
+  },
+  "data": {
+    "dataset_type": "SyntheticRiskDataset",
+    "train_size": 1000,
+    "val_size": 200,
+    "test_size": 200,
+    "batch_size": 32,
+    "num_workers": 0
+  },
+  "training": {
+    "num_epochs": 50,
+    "optimizer": {
+      "type": "Adam",
+      "lr": 0.001,
+      "weight_decay": 0.0001
+    },
+    "loss": {
+      "type": "CrossEntropyLoss"
+    },
+    "seed": 42,
+    "device": "cuda"
+  },
+  "evaluation": {
+    "metrics": [
+      "accuracy",
+      "f1_score",
+      "cvar",
+      "constraint_violation_rate"
+    ]
+  },
+  "logging": {
+    "log_interval": 10,
+    "save_checkpoints": true,
+    "checkpoint_interval": 10
+  }
+}
+
