@@ -502,3 +502,57 @@ Based on the Raft-LM project plan and the convexity doctrine, here is the priori
 - Validate category utility before expanding methods
 - Higher priority categories get more method variants earlier
 - Lower priority categories start with single reference implementation
+
+## 5) Source Mapping: Book Chapters & Papers → Risk Categories
+
+Below is a simple mapping from the provided book chapters, papers, and note files to each risk category. This is intended as a quick reference to guide research and implementation choices.
+
+- **Category 1 — Structural / Ruin Risk**
+  - `docs/modeling-rational-human-trader.md`: sections on "Distance to Ruin" and ruin-as-master-constraint
+  - `docs/research_notes/fattail-book-chapters.md`: **Chapter 23: Lindy as Distance from an Absorbing Barrier**
+  - `docs/research_notes/init-papers.md`: Category 1 rationale (preference = survival)
+
+- **Category 2 — Volatility & Noise**
+  - `docs/modeling-rational-human-trader.md`: volatility regime and Risk Governor notes
+  - `docs/research_notes/init-text-converage-analysis.md`: coverage notes & mechanics roadmap (Phase 2 / TailWarp references)
+
+- **Category 3 — Downside & Tail**
+  - `docs/research_notes/fattail-book-chapters.md`: **Chapter 2.2.19: VaR, Conditional VaR** (maps to Lens 3)
+  - `docs/research_notes/init-text-converage-analysis.md`: emphasis on CVaR and EVT
+  - `docs/research_notes/init-papers.md`: CVaR mentioned as core loss construction
+
+- **Category 4 — Drawdown & "Pain"**
+  - `docs/modeling-rational-human-trader.md`: Pain-to-Volatility Ratio and drawdown-duration ideas
+  - `docs/research_notes/init-text-converage-analysis.md`: evaluation & benchmark suggestions (drawdown metrics)
+
+- **Category 5 — Asymmetry & Convexity**
+  - `docs/research_notes/fattail-book-chapters.md`: **Chapter 3.10: X vs. F(X)** and **Chapter 30: Tail Risk Constraints and Maximum Entropy**
+  - `docs/research_notes/init-papers.md`: "Convexity Score" and Path of the Convexity Hunter
+  - `docs/modeling-rational-human-trader.md`: doctrine and Convexity Index discussion
+
+- **Category 6 — Exposure & Leverage**
+  - `docs/modeling-rational-human-trader.md`: position sizing, Fractional Kelly, exposure controls
+  - `docs/research_notes/init-text-converage-analysis.md`: implementation notes for sizing and constraints
+
+- **Category 7 — Liquidity & Market-Structure**
+  - `docs/research_notes/init-text-converage-analysis.md`: called out as a gap (microstructure & liquidity not well covered)
+  - `docs/modeling-rational-human-trader.md`: mentions liquidity in Risk Governor / narrative parsing
+
+- **Category 8 — Behavioral & Perception**
+  - `docs/research_notes/fattail-book-chapters.md`: **Chapter 11 / 11.2** (probability calibration and psychology)
+  - `docs/research_notes/init-papers.md`: rationale for modeling behavioral perception (calm psychologist)
+  - `docs/modeling-rational-human-trader.md`: somatic markers, behavioral simulation engine
+
+- **Category 9 — Narrative & Information-Structure**
+  - `docs/research_notes/fattail-book-chapters.md`: **Chapter 12: On Single Point Forecasts for Fat-Tailed Variables**
+  - `docs/research_notes/init-text-converage-analysis.md`: narrative–price dislocation analysis and Phase 1 recommendations
+  - `docs/modeling-rational-human-trader.md`: narrative parsing in Input Layer
+
+- **Category 10 — Cross-Asset & Systemic**
+  - `docs/research_notes/fattail-book-chapters.md`: **Chapter 29: Portfolios should never rely on correlation**
+  - `docs/research_notes/init-text-converage-analysis.md`: notes that systemic / network theory could be expanded
+  - `docs/research_notes/init-papers.md`: systemic risk indicators in training context
+
+Notes:
+- This mapping is intentionally lightweight — use it to pick 1–2 chapters/papers to read per category before deeper implementation.
+- Chapters explicitly listed in `docs/research_notes/fattail-book-chapters.md` are highlighted where directly relevant (Chapters 2.2.19, 3.10, 11, 12, 23, 29, 30).
