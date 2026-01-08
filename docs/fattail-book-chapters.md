@@ -2,8 +2,6 @@ Based on your request, here are the reorganized markdown files. The first file c
 
 ---
 
-### **File 1: Chapters by Project**
-
 #### **Project 1: Raft-LM (LLM Risk Understanding & Decision Making)**
 - **Chapter 2.2.19: Value at Risk, Conditional VaR**  
   *Primary risk metrics for early-phase implementation.*
@@ -19,8 +17,6 @@ Based on your request, here are the reorganized markdown files. The first file c
   *Provides foundation for risk-aware loss functions.*
 
 ---
-
-### **File 2: Reordered Chapters with Project & Lens Context**
 
 **Chapter 2.2.19: Value at Risk (VaR), Conditional VaR (Expected Shortfall)**  
 - **Projects:** Raft-LM  
