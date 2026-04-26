@@ -1,94 +1,62 @@
 """
 Risk-aware loss functions.
 
-Specialized losses for tail risk, CVaR, and constraint satisfaction.
+Uses :func:`src.metrics.risk_metrics.batch_cvar_from_losses` so training objectives
+match evaluation CVaR (see docs/RISK-METHODS-REQUIREMENTS.md).
 """
+
+from __future__ import annotations
 
 import torch
 import torch.nn as nn
 from typing import Optional
 
+from ..metrics.risk_metrics import batch_cvar_from_losses
+
 
 class CVaRLoss(nn.Module):
     """
-    Conditional Value at Risk (CVaR) loss.
-    
-    Penalizes based on expected loss in the tail of the distribution.
-    This is a placeholder - actual implementation to be filled later.
+    Batch CVaR (Expected Shortfall) on per-example base losses.
+
+    Computes the mean of the worst (1-α) fraction of element-wise losses in the batch.
     """
-    
+
     def __init__(self, alpha: float = 0.95, base_loss: Optional[nn.Module] = None):
-        """
-        Initialize CVaR loss.
-        
-        Args:
-            alpha: Confidence level (e.g., 0.95 for 95% CVaR)
-            base_loss: Base loss function to compute element-wise losses
-        """
         super().__init__()
+        if not 0 < alpha < 1:
+            raise ValueError("alpha must be in (0, 1)")
         self.alpha = alpha
-        self.base_loss = base_loss or nn.MSELoss(reduction='none')
-    
+        self.base_loss = base_loss or nn.MSELoss(reduction="none")
+
     def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        """
-        Compute CVaR loss.
-        
-        Args:
-            predictions: Model predictions
-            targets: Ground truth targets
-            
-        Returns:
-            CVaR loss value
-        """
-        # Compute element-wise losses
         losses = self.base_loss(predictions, targets)
-        
-        # Placeholder: Simple implementation (to be replaced with proper CVaR)
-        # TODO: Implement proper CVaR computation
-        # 1. Compute VaR (quantile at alpha)
-        # 2. Compute expected loss beyond VaR
-        
-        return losses.mean()
+        return batch_cvar_from_losses(losses, self.alpha)
 
 
 class TailAwareLoss(nn.Module):
     """
-    Tail-aware loss that emphasizes extreme events.
-    
-    Placeholder for tail-focused loss function.
+    Emphasizes tail errors: blend of mean loss and CVaR of losses.
+
+    ``tail_weight`` ∈ [0, 1] mixes toward the CVaR term (larger → more tail focus).
     """
-    
-    def __init__(self, tail_weight: float = 2.0):
-        """
-        Initialize tail-aware loss.
-        
-        Args:
-            tail_weight: Weight multiplier for tail events
-        """
+
+    def __init__(
+        self,
+        alpha: float = 0.9,
+        tail_weight: float = 0.5,
+        base_loss: Optional[nn.Module] = None,
+    ):
         super().__init__()
+        if not 0 < alpha < 1:
+            raise ValueError("alpha must be in (0, 1)")
+        if not 0.0 <= tail_weight <= 1.0:
+            raise ValueError("tail_weight must be in [0, 1]")
+        self.alpha = alpha
         self.tail_weight = tail_weight
-    
+        self.base_loss = base_loss or nn.MSELoss(reduction="none")
+
     def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        """
-        Compute tail-aware loss.
-        
-        Args:
-            predictions: Model predictions
-            targets: Ground truth targets
-            
-        Returns:
-            Tail-aware loss value
-        """
-        # Placeholder implementation
-        # TODO: Implement tail detection and weighting
-        mse = nn.MSELoss()
-        return mse(predictions, targets)
-
-
-# Placeholder for future risk-aware losses
-# TODO: Add quantile regression loss
-# TODO: Add distributional loss (for full distribution prediction)
-# TODO: Add constraint violation penalty
-# TODO: Add robust losses for heavy-tailed data
-# TODO: Add preference-based losses (for DPO)
-
+        losses = self.base_loss(predictions, targets).reshape(-1)
+        mean_term = losses.mean()
+        tail_term = batch_cvar_from_losses(losses, self.alpha)
+        return (1.0 - self.tail_weight) * mean_term + self.tail_weight * tail_term

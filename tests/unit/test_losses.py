@@ -1,56 +1,68 @@
-"""
-Unit tests for loss functions.
+"""Unit tests for loss functions."""
 
-Tests mathematical correctness, gradient properties, and edge cases.
-"""
-
-import torch
 import pytest
-from src.losses.base_losses import MSELoss, CrossEntropyLoss
-from src.losses.risk_losses import CVaRLoss, TailAwareLoss
+
+try:
+    import torch
+
+    _ = torch.tensor([1.0])
+    _TORCH_OK = True
+except Exception:
+    _TORCH_OK = False
+
+requires_torch = pytest.mark.skipif(not _TORCH_OK, reason="PyTorch not available")
 
 
+@requires_torch
 class TestBaseLosses:
-    """Test suite for base loss functions."""
-    
     def test_mse_loss(self):
-        """Test MSE loss computation."""
-        # TODO: Implement test
-        # - Test on known inputs
-        # - Verify gradient
-        # - Test edge cases (zero loss, large values)
-        pass
-    
+        import torch
+
+        from src.losses.base_losses import MSELoss
+
+        loss = MSELoss()
+        pred = torch.tensor([1.0, 2.0], requires_grad=True)
+        tgt = torch.tensor([1.0, 3.0])
+        out = loss(pred, tgt)
+        assert out.item() == pytest.approx(0.5)
+        out.backward()
+        assert pred.grad is not None
+
     def test_cross_entropy_loss(self):
-        """Test cross entropy loss computation."""
-        # TODO: Implement test
-        pass
+        import torch
+
+        from src.losses.base_losses import CrossEntropyLoss
+
+        loss = CrossEntropyLoss()
+        logits = torch.tensor([[2.0, 0.0], [0.0, 2.0]], requires_grad=True)
+        tgt = torch.tensor([0, 1])
+        out = loss(logits, tgt)
+        out.backward()
+        assert logits.grad is not None
 
 
+@requires_torch
 class TestRiskLosses:
-    """Test suite for risk-aware loss functions."""
-    
-    def test_cvar_loss(self):
-        """Test CVaR loss computation."""
-        # TODO: Implement test
-        # - Test on toy data with known CVaR
-        # - Verify it focuses on tail events
-        # - Test different alpha values
-        pass
-    
-    def test_tail_aware_loss(self):
-        """Test tail-aware loss computation."""
-        # TODO: Implement test
-        pass
-    
-    def test_gradient_flow(self):
-        """Test that gradients flow correctly through loss functions."""
-        # TODO: Implement gradient checks
-        pass
+    def test_cvar_loss_grad(self):
+        import torch
 
+        from src.losses.risk_losses import CVaRLoss
 
-# Placeholder for future tests
-# TODO: Add tests for all loss functions
-# TODO: Add comparison with baseline implementations
-# TODO: Add numerical stability tests
+        loss_fn = CVaRLoss(alpha=0.5, base_loss=torch.nn.MSELoss(reduction="none"))
+        pred = torch.tensor([0.0, 2.0, 4.0], requires_grad=True)
+        tgt = torch.tensor([0.0, 0.0, 0.0])
+        out = loss_fn(pred, tgt)
+        out.backward()
+        assert pred.grad is not None
 
+    def test_tail_aware_loss_positive(self):
+        import torch
+
+        from src.losses.risk_losses import TailAwareLoss
+
+        loss_fn = TailAwareLoss(alpha=0.75, tail_weight=0.5)
+        pred = torch.randn(8, 1, requires_grad=True)
+        tgt = torch.randn(8, 1)
+        out = loss_fn(pred, tgt)
+        assert out.item() >= 0
+        out.backward()

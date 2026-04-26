@@ -2,92 +2,70 @@
 Task performance metrics.
 
 Standard metrics for classification, regression, and decision tasks.
+Works with NumPy arrays; PyTorch tensors are converted when available.
 """
 
-import torch
+from __future__ import annotations
+
+from typing import Any, Tuple
+
 import numpy as np
-from typing import Union
 
 
-def accuracy(predictions: torch.Tensor, targets: torch.Tensor) -> float:
+def _to_numpy(x: Any) -> np.ndarray:
+    if hasattr(x, "detach") and callable(x.detach):
+        return np.asarray(x.detach().cpu().numpy())
+    return np.asarray(x)
+
+
+def _classification_pair(predictions: Any, targets: Any) -> Tuple[np.ndarray, np.ndarray]:
+    p = _to_numpy(predictions)
+    t = _to_numpy(targets)
+    if p.ndim > 1:
+        p = p.argmax(axis=-1)
+    return p.reshape(-1), t.reshape(-1)
+
+
+def accuracy(predictions: Any, targets: Any) -> float:
     """
     Compute classification accuracy.
-    
+
     Args:
         predictions: Model predictions (logits or class indices)
         targets: Ground truth class indices
-        
-    Returns:
-        Accuracy as a float between 0 and 1
     """
-    if predictions.dim() > 1:
-        predictions = predictions.argmax(dim=1)
-    correct = (predictions == targets).sum().item()
-    total = targets.size(0)
-    return correct / total
+    p, t = _classification_pair(predictions, targets)
+    return float((p == t).mean())
 
 
-def mse(predictions: torch.Tensor, targets: torch.Tensor) -> float:
-    """
-    Compute Mean Squared Error.
-    
-    Args:
-        predictions: Model predictions
-        targets: Ground truth values
-        
-    Returns:
-        MSE value
-    """
-    return ((predictions - targets) ** 2).mean().item()
+def mse(predictions: Any, targets: Any) -> float:
+    """Mean Squared Error."""
+    p = _to_numpy(predictions).reshape(-1)
+    t = _to_numpy(targets).reshape(-1)
+    return float(((p - t) ** 2).mean())
 
 
-def mae(predictions: torch.Tensor, targets: torch.Tensor) -> float:
-    """
-    Compute Mean Absolute Error.
-    
-    Args:
-        predictions: Model predictions
-        targets: Ground truth values
-        
-    Returns:
-        MAE value
-    """
-    return (predictions - targets).abs().mean().item()
+def mae(predictions: Any, targets: Any) -> float:
+    """Mean Absolute Error."""
+    p = _to_numpy(predictions).reshape(-1)
+    t = _to_numpy(targets).reshape(-1)
+    return float(np.abs(p - t).mean())
 
 
-def f1_score(predictions: torch.Tensor, targets: torch.Tensor) -> float:
-    """
-    Compute F1 score for binary classification.
-    
-    Args:
-        predictions: Model predictions (logits or class indices)
-        targets: Ground truth class indices
-        
-    Returns:
-        F1 score
-    """
-    if predictions.dim() > 1:
-        predictions = predictions.argmax(dim=1)
-    
-    tp = ((predictions == 1) & (targets == 1)).sum().item()
-    fp = ((predictions == 1) & (targets == 0)).sum().item()
-    fn = ((predictions == 0) & (targets == 1)).sum().item()
-    
+def f1_score(predictions: Any, targets: Any) -> float:
+    """F1 score for binary classification."""
+    p, t = _classification_pair(predictions, targets)
+    tp = int(((p == 1) & (t == 1)).sum())
+    fp = int(((p == 1) & (t == 0)).sum())
+    fn = int(((p == 0) & (t == 1)).sum())
+
     if tp + fp == 0 or tp + fn == 0:
         return 0.0
-    
+
     precision = tp / (tp + fp)
     recall = tp / (tp + fn)
-    
+
     if precision + recall == 0:
         return 0.0
-    
-    return 2 * (precision * recall) / (precision + recall)
 
-
-# Placeholder for additional task metrics
-# TODO: Add multi-class F1 score
-# TODO: Add confusion matrix
-# TODO: Add ROC-AUC
-# TODO: Add calibration error
-
+    return float(2 * (precision * recall) / (precision + recall))
