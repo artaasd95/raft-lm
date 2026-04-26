@@ -50,6 +50,13 @@ These are **required** for baseline training labels, evaluation, and CVaR-style 
 | **Portfolio variance / vol** | \(w^\top \Sigma w\), \(\sqrt{\cdot}\) | `portfolio_variance`, `portfolio_volatility` |
 | **Parametric (linear) portfolio VaR** | Gaussian: \(\sqrt{w^\top\Sigma w}\cdot z_{1-\alpha}\) as **loss magnitude** | `portfolio_var_gaussian` |
 | **Beta (vs benchmark)** | \(\text{Cov}(r,r_b)/\text{Var}(r_b)\) | `beta_vs_benchmark` |
+| **Omega ratio** | \(\sum \max(r-L,0) / \sum \max(L-r,0)\) | `omega_ratio` |
+| **Calmar / Sterling** | CAGR vs max / mean drawdown | `calmar_ratio`, `sterling_ratio` |
+| **Ulcer index** | \(\sqrt{\mathbb{E}[\text{DD}_t^2]}\) on wealth | `ulcer_index_wealth`, `ulcer_index_from_returns` |
+| **Information ratio** | \(\mu(r-r_b) / \sigma(r-r_b)\) | `information_ratio` |
+| **Historical portfolio VaR/CVaR** | \(R w\) then tail metrics | `portfolio_var_historical`, `portfolio_cvar_historical` |
+| **Marginal / component VaR** | Linear Gaussian decomposition | `marginal_var_gaussian`, `component_var_gaussian` |
+| **Tail ratio** | CVaR / VaR (returns) | `tail_ratio_returns` |
 
 ---
 

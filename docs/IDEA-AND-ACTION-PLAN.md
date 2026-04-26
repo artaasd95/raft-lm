@@ -206,6 +206,7 @@ That completes the **definition of “project started”** in a way that matches
 | Risk category philosophy | `docs/research_notes/risk-categories-init.md` |
 | Full architecture & KPIs | `project-plan-init.md` |
 | Risk method definitions & API map | `docs/RISK-METHODS-REQUIREMENTS.md` |
+| Metrics backlog & phased delivery | `docs/RISK-METRICS-ROADMAP.md` |
 
 ---
 

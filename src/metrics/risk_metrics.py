@@ -7,19 +7,26 @@ Implements Tier A–D methods from docs/RISK-METHODS-REQUIREMENTS.md.
 from __future__ import annotations
 
 import math
-from typing import Union
+from statistics import NormalDist
+from typing import Any
 
 import numpy as np
-import torch
 
 from .conventions import Array, to_numpy
+
+
+def _normal_inv_cdf(p: float) -> float:
+    """Inverse CDF of standard normal (quantile). Uses ``statistics.NormalDist`` for broad Python support."""
+    if not 0 < p < 1:
+        raise ValueError("p must be in (0, 1)")
+    return NormalDist().inv_cdf(p)
 
 # ---------------------------------------------------------------------------
 # Loss samples (larger = worse), e.g. dollar loss magnitudes or absolute errors
 # ---------------------------------------------------------------------------
 
 
-def compute_var(losses: Union[torch.Tensor, np.ndarray], alpha: float = 0.95) -> float:
+def compute_var(losses: Array, alpha: float = 0.95) -> float:
     """
     Historical VaR on a sample of **losses** (larger = worse).
 
@@ -33,7 +40,7 @@ def compute_var(losses: Union[torch.Tensor, np.ndarray], alpha: float = 0.95) ->
     return float(np.quantile(L, alpha))
 
 
-def compute_cvar(losses: Union[torch.Tensor, np.ndarray], alpha: float = 0.95) -> float:
+def compute_cvar(losses: Array, alpha: float = 0.95) -> float:
     """
     Historical CVaR / ES on **losses** (larger = worse).
 
@@ -137,7 +144,7 @@ def max_drawdown_from_returns(returns: Array, initial_wealth: float = 1.0) -> fl
     return max_drawdown_wealth(w)
 
 
-def max_drawdown(cumulative_returns: Union[torch.Tensor, np.ndarray]) -> float:
+def max_drawdown(cumulative_returns: Array) -> float:
     """
     Backward-compatible entry point: expects a **positive equity curve** (wealth).
 
@@ -183,7 +190,7 @@ def semi_variance(returns: Array, mar: float = 0.0) -> float:
 
 
 def sharpe_ratio(
-    returns: Union[torch.Tensor, np.ndarray],
+    returns: Array,
     risk_free_rate: float = 0.0,
     *,
     periods_per_year: float | None = None,
@@ -200,7 +207,7 @@ def sharpe_ratio(
     xs = r - risk_free_rate
     mu = float(xs.mean())
     sig = float(xs.std(ddof=1))
-    if sig == 0.0:
+    if sig < 1e-15:
         return 0.0
     if annualize:
         if periods_per_year is None or periods_per_year <= 0:
@@ -269,7 +276,7 @@ def portfolio_var_gaussian(
     if not 0 < alpha < 1:
         raise ValueError("alpha must be in (0, 1)")
     sig_p = portfolio_volatility(weights, cov_matrix)
-    z_alpha = math.sqrt(2.0) * math.erfinv(2.0 * alpha - 1.0)
+    z_alpha = _normal_inv_cdf(alpha)
     return float(z_alpha * sig_p)
 
 
@@ -351,12 +358,252 @@ def risk_of_ruin_gbm_log_barrier_approx(
 
 
 # ---------------------------------------------------------------------------
-# Constraint & batch CVaR (PyTorch)
+# Drawdown diagnostics, Omega, Calmar, Ulcer, moments, IR (Phase F1 roadmap)
+# ---------------------------------------------------------------------------
+
+
+def drawdown_series_wealth(equity_curve: Array) -> np.ndarray:
+    """Per-period drawdown fraction (peak - W) / peak on strictly positive equity."""
+    return _drawdown_fractions(to_numpy(equity_curve))
+
+
+def _drawdown_fractions(w: np.ndarray) -> np.ndarray:
+    if w.size == 0:
+        raise ValueError("equity_curve must be non-empty")
+    if np.any(w <= 0):
+        raise ValueError("equity_curve must be strictly positive")
+    peak = np.maximum.accumulate(w)
+    return (peak - w) / peak
+
+
+def average_drawdown_wealth(equity_curve: Array) -> float:
+    """Mean drawdown fraction over the path (includes zeros at new peaks)."""
+    return float(drawdown_series_wealth(equity_curve).mean())
+
+
+def ulcer_index_wealth(equity_curve: Array) -> float:
+    """
+    Ulcer index: RMS of drawdown percentages (Peter Martin / Byron McCann).
+
+    UI = sqrt(mean(DD_t^2)) with DD_t the fractional drawdown from running peak.
+    """
+    dd = drawdown_series_wealth(equity_curve)
+    return float(math.sqrt((dd**2).mean()))
+
+
+def ulcer_index_from_returns(returns: Array, initial_wealth: float = 1.0) -> float:
+    """Ulcer index on wealth compounded from simple returns."""
+    w = wealth_from_simple_returns(returns, initial_wealth)
+    return ulcer_index_wealth(w)
+
+
+def omega_ratio(returns: Array, threshold: float = 0.0) -> float:
+    """
+    Omega ratio at threshold L: sum(max(r-L,0)) / sum(max(L-r,0)).
+
+    Returns +inf if denominator is 0 (no below-threshold outcomes).
+    """
+    r = to_numpy(returns)
+    if r.size == 0:
+        raise ValueError("returns must be non-empty")
+    gains = np.maximum(r - threshold, 0.0).sum()
+    losses = np.maximum(threshold - r, 0.0).sum()
+    if losses < 1e-16:
+        return float("inf") if gains > 0 else 0.0
+    return float(gains / losses)
+
+
+def calmar_ratio(returns: Array, periods_per_year: float = 252.0) -> float:
+    """
+    Calmar ratio: CAGR / max drawdown (both from compounded simple returns).
+
+    CAGR uses (W_T/W_0)^(1/years) - 1 with years = T/periods_per_year.
+    """
+    r = to_numpy(returns)
+    if r.size == 0:
+        raise ValueError("returns must be non-empty")
+    if periods_per_year <= 0:
+        raise ValueError("periods_per_year must be positive")
+    dd = max_drawdown_from_returns(r)
+    if dd < 1e-12:
+        return 0.0
+    w = wealth_from_simple_returns(r, 1.0)
+    total_growth = float(w[-1] / w[0])
+    years = len(r) / periods_per_year
+    if years <= 0:
+        return 0.0
+    cagr = total_growth ** (1.0 / years) - 1.0
+    return float(cagr / dd)
+
+
+def sterling_ratio(returns: Array, periods_per_year: float = 252.0) -> float:
+    """
+    Sterling ratio (variant): CAGR / average drawdown on the wealth path.
+
+    Average drawdown uses the full series including zero-DD periods at peaks.
+    """
+    r = to_numpy(returns)
+    if r.size == 0:
+        raise ValueError("returns must be non-empty")
+    w = wealth_from_simple_returns(r, 1.0)
+    avg_dd = average_drawdown_wealth(w)
+    if avg_dd < 1e-12:
+        return 0.0
+    years = len(r) / periods_per_year
+    if years <= 0 or periods_per_year <= 0:
+        return 0.0
+    total_growth = float(w[-1] / w[0])
+    cagr = total_growth ** (1.0 / years) - 1.0
+    return float(cagr / avg_dd)
+
+
+def skewness(returns: Array) -> float:
+    """Third standardized moment m₃/s³ (sample mean and std)."""
+    x = to_numpy(returns)
+    n = x.size
+    if n < 3:
+        raise ValueError("need at least 3 returns for skewness")
+    m = x.mean()
+    s = x.std(ddof=1)
+    if s < 1e-16:
+        return 0.0
+    m3 = ((x - m) ** 3).mean()
+    # unbiased-ish: use sample std in denominator cubed
+    return float(m3 / (s**3))
+
+
+def excess_kurtosis(returns: Array) -> float:
+    """Excess kurtosis (Fisher): 0 for Gaussian."""
+    x = to_numpy(returns)
+    n = x.size
+    if n < 4:
+        raise ValueError("need at least 4 returns for kurtosis")
+    m = x.mean()
+    s = x.std(ddof=1)
+    if s < 1e-16:
+        return 0.0
+    m4 = ((x - m) ** 4).mean()
+    return float(m4 / (s**4) - 3.0)
+
+
+def information_ratio(
+    returns: Array,
+    benchmark_returns: Array,
+    *,
+    periods_per_year: float | None = None,
+    annualize: bool = False,
+) -> float:
+    """
+    Information ratio: mean(active return) / tracking error (sample std of active).
+
+    Active = asset - benchmark (simple return difference per period).
+    """
+    a = to_numpy(returns)
+    b = to_numpy(benchmark_returns)
+    if a.shape != b.shape:
+        raise ValueError("returns and benchmark_returns must align")
+    if a.size < 2:
+        raise ValueError("need at least two paired returns")
+    active = a - b
+    mu = float(active.mean())
+    te = float(active.std(ddof=1))
+    if te == 0.0:
+        return 0.0
+    if annualize:
+        if periods_per_year is None or periods_per_year <= 0:
+            raise ValueError("periods_per_year required when annualize=True")
+        mu *= periods_per_year
+        te *= math.sqrt(periods_per_year)
+    return mu / te
+
+
+def portfolio_var_historical(
+    asset_returns: np.ndarray,
+    weights: Array,
+    alpha: float = 0.95,
+) -> float:
+    """
+    Historical simulation portfolio VaR: R w then :func:`var_historical_returns`.
+
+    Args:
+        asset_returns: shape (T, n_assets) simple returns, rows = time.
+        weights: length n_assets (not required to sum to 1; scales exposure).
+    """
+    R = np.asarray(asset_returns, dtype=np.float64)
+    w = to_numpy(weights)
+    if R.ndim != 2:
+        raise ValueError("asset_returns must be 2-D (T x n_assets)")
+    if R.shape[1] != w.shape[0]:
+        raise ValueError("weights length must match number of asset columns")
+    rp = R @ w
+    return var_historical_returns(rp, alpha)
+
+
+def portfolio_cvar_historical(
+    asset_returns: np.ndarray,
+    weights: Array,
+    alpha: float = 0.95,
+) -> float:
+    """Historical portfolio CVaR / ES on implied portfolio simple returns."""
+    R = np.asarray(asset_returns, dtype=np.float64)
+    w = to_numpy(weights)
+    if R.ndim != 2:
+        raise ValueError("asset_returns must be 2-D (T x n_assets)")
+    if R.shape[1] != w.shape[0]:
+        raise ValueError("weights length must match number of asset columns")
+    rp = R @ w
+    return cvar_historical_returns(rp, alpha)
+
+
+def marginal_var_gaussian(
+    weights: Array,
+    cov_matrix: np.ndarray,
+    alpha: float = 0.95,
+) -> np.ndarray:
+    """
+    Marginal VaR (linear, Gaussian): ∂VaR/∂w_i ≈ z_α · (Σw)_i / σ_p.
+
+    Returns vector same shape as weights. Portfolio VaR ≈ sum_i w_i * marginal_i
+    when VaR is linear homogeneous (EL+VaR decomposition).
+    """
+    if not 0 < alpha < 1:
+        raise ValueError("alpha must be in (0, 1)")
+    w = to_numpy(weights)
+    sig_p = portfolio_volatility(w, cov_matrix)
+    if sig_p < 1e-16:
+        return np.zeros_like(w)
+    z_alpha = _normal_inv_cdf(alpha)
+    return z_alpha * (cov_matrix @ w) / sig_p
+
+
+def component_var_gaussian(
+    weights: Array,
+    cov_matrix: np.ndarray,
+    alpha: float = 0.95,
+) -> np.ndarray:
+    """Component VaR_i = w_i · marginal_VaR_i; sums to portfolio VaR (Gaussian linear)."""
+    w = to_numpy(weights)
+    mv = marginal_var_gaussian(w, cov_matrix, alpha)
+    return w * mv
+
+
+def tail_ratio_returns(returns: Array, alpha: float = 0.95) -> float:
+    """CVaR / VaR on simple returns (both as positive loss magnitudes). Tails heavier → ratio > 1."""
+    if not 0 < alpha < 1:
+        raise ValueError("alpha must be in (0, 1)")
+    v = var_historical_returns(returns, alpha)
+    if v < 1e-16:
+        return 0.0
+    return cvar_historical_returns(returns, alpha) / v
+
+
+# ---------------------------------------------------------------------------
+# Constraint & batch CVaR (PyTorch — lazy import)
 # ---------------------------------------------------------------------------
 
 
 def constraint_violation_rate(
-    values: Union[torch.Tensor, np.ndarray],
+    values: Array,
     threshold: float,
 ) -> float:
     """Fraction of samples strictly above threshold."""
@@ -366,14 +613,21 @@ def constraint_violation_rate(
     return float((v > threshold).mean())
 
 
-def batch_cvar_from_losses(elementwise_losses: torch.Tensor, alpha: float = 0.95) -> torch.Tensor:
+def batch_cvar_from_losses(elementwise_losses: Any, alpha: float = 0.95) -> Any:
     """
     Differentiable (subgradient) batch CVaR: mean of worst ceil((1-α)N) per-example losses.
 
     Aligns with :func:`compute_cvar` on the same finite sample.
+    Requires PyTorch.
     """
+    import torch
+
     if not 0 < alpha < 1:
         raise ValueError("alpha must be in (0, 1)")
+    if not isinstance(elementwise_losses, torch.Tensor):
+        elementwise_losses = torch.as_tensor(
+            to_numpy(elementwise_losses), dtype=torch.float32
+        )
     losses = elementwise_losses.reshape(-1)
     n = losses.numel()
     if n == 0:

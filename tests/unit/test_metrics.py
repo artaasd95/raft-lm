@@ -47,8 +47,9 @@ class TestTaskMetrics:
         assert f1_score(pred, tgt) == pytest.approx(0.5)
 
 
-@requires_torch
 class TestRiskMetrics:
+    """NumPy-only risk metrics (no PyTorch import required)."""
+
     def test_var_cvar_losses_monotone(self):
         from src.metrics.risk_metrics import compute_cvar, compute_var
 
@@ -120,8 +121,11 @@ class TestRiskMetrics:
         cov = np.array([[0.04, 0.0], [0.0, 0.04]])
         sig = portfolio_volatility(w, cov)
         assert sig == pytest.approx(0.14142135, rel=1e-3)
+        from statistics import NormalDist
+
         pvar = portfolio_var_gaussian(w, cov, alpha=0.95)
-        assert pvar == pytest.approx(sig * math.sqrt(2) * math.erfinv(2 * 0.95 - 1), rel=1e-5)
+        z = NormalDist().inv_cdf(0.95)
+        assert pvar == pytest.approx(sig * z, rel=1e-5)
 
     def test_beta(self):
         from src.metrics.risk_metrics import beta_vs_benchmark
@@ -151,8 +155,11 @@ class TestRiskMetrics:
         from src.metrics.risk_metrics import constraint_violation_rate
 
         v = np.array([0.1, 0.5, 0.2])
-        assert constraint_violation_rate(v, 0.15) == pytest.approx(1.0 / 3.0)
+        assert constraint_violation_rate(v, 0.15) == pytest.approx(2.0 / 3.0)
 
+
+@requires_torch
+class TestBatchCvarTorch:
     def test_batch_cvar_from_losses(self):
         import torch
 
@@ -163,3 +170,73 @@ class TestRiskMetrics:
         assert L.item() == pytest.approx(10.0)
         L.backward()
         assert losses.grad is not None
+
+
+class TestRoadmapF1Metrics:
+    """Phase F1 from docs/RISK-METRICS-ROADMAP.md."""
+
+    def test_omega_ratio(self):
+        from src.metrics.risk_metrics import omega_ratio
+
+        r = np.array([-0.01, 0.02, -0.005, 0.03])
+        o = omega_ratio(r, threshold=0.0)
+        gains = 0.02 + 0.03
+        losses = 0.01 + 0.005
+        assert o == pytest.approx(gains / losses)
+
+    def test_ulcer_nonnegative(self):
+        from src.metrics.risk_metrics import ulcer_index_from_returns
+
+        r = np.array([0.1, -0.05, 0.02])
+        assert ulcer_index_from_returns(r) >= 0.0
+
+    def test_calmar_positive_on_trend(self):
+        from src.metrics.risk_metrics import calmar_ratio
+
+        rng = np.random.default_rng(3)
+        r = np.concatenate([rng.normal(0.002, 0.01, 200), rng.normal(-0.001, 0.015, 52)])
+        assert calmar_ratio(r, periods_per_year=252.0) > 0.0
+
+    def test_information_ratio(self):
+        from src.metrics.risk_metrics import information_ratio
+
+        b = np.zeros(20)
+        a = np.full(20, 0.001)
+        assert information_ratio(a, b) > 0.0
+
+    def test_portfolio_var_historical_matches_manual(self):
+        from src.metrics.risk_metrics import portfolio_var_historical, var_historical_returns
+
+        rng = np.random.default_rng(0)
+        R = rng.normal(0, 0.01, (500, 3))
+        w = np.array([0.2, 0.3, 0.5])
+        v1 = portfolio_var_historical(R, w, alpha=0.95)
+        v2 = var_historical_returns(R @ w, alpha=0.95)
+        assert v1 == pytest.approx(v2)
+
+    def test_component_var_sums_to_portfolio_var(self):
+        from src.metrics.risk_metrics import (
+            component_var_gaussian,
+            portfolio_var_gaussian,
+        )
+
+        w = np.array([0.3, 0.7])
+        cov = np.array([[0.04, 0.01], [0.01, 0.09]])
+        alpha = 0.95
+        comp = component_var_gaussian(w, cov, alpha)
+        total = portfolio_var_gaussian(w, cov, alpha)
+        assert comp.sum() == pytest.approx(total, rel=1e-5)
+
+    def test_tail_ratio_at_least_one(self):
+        from src.metrics.risk_metrics import tail_ratio_returns
+
+        rng = np.random.default_rng(1)
+        r = rng.standard_t(3, size=2000) * 0.01
+        assert tail_ratio_returns(r, alpha=0.95) >= 1.0 - 1e-6
+
+    def test_skew_and_kurtosis_finite(self):
+        from src.metrics.risk_metrics import excess_kurtosis, skewness
+
+        r = np.random.default_rng(2).normal(0, 1, 100)
+        assert math.isfinite(skewness(r))
+        assert math.isfinite(excess_kurtosis(r))
