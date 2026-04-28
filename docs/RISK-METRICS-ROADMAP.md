@@ -38,15 +38,17 @@ Companion to `docs/RISK-METHODS-REQUIREMENTS.md` (definitions) and `docs/IDEA-AN
 
 **Status:** Implemented in `src/metrics/risk_metrics.py` with tests in `tests/unit/test_metrics.py` (`TestRoadmapF1Metrics`). Gaussian quantiles use `statistics.NormalDist` (no SciPy).
 
-### Phase F2 — Liquidity & microstructure (next)
+### Phase F2 — Liquidity & microstructure (**in progress**)
 
-| Metric | Purpose |
-|--------|---------|
-| Amihud illiquidity | \|return\| / dollar volume |
-| Roll’s spread estimator | From price autocovariance |
-| Volume z-score | Regime flag for thin markets |
+| Metric | Purpose | API |
+|--------|---------|-----|
+| Amihud illiquidity | \|return\| / dollar volume | `amihud_illiquidity` |
+| Roll’s spread estimator | From price autocovariance | `roll_spread_estimator` |
+| Volume z-score | Regime flag for thin markets | `volume_zscore` |
 
-**Needs:** Volume series in dataset schema; adapters in `src/data/`.
+**Status:** Metric primitives added in `src/metrics/risk_metrics.py` with tests in `tests/unit/test_metrics.py` (`TestRoadmapF2Metrics`).
+
+**Needs:** Volume series in dataset schema; adapters in `src/data/` (wiring into dataset builders remains).
 
 ### Phase F3 — Dependence & systemic
 

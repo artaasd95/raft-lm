@@ -598,6 +598,73 @@ def tail_ratio_returns(returns: Array, alpha: float = 0.95) -> float:
 
 
 # ---------------------------------------------------------------------------
+# Liquidity & microstructure (Phase F2 roadmap)
+# ---------------------------------------------------------------------------
+
+
+def amihud_illiquidity(returns: Array, dollar_volume: Array) -> float:
+    """
+    Amihud illiquidity: mean(|r_t| / dollar_volume_t) over aligned observations.
+
+    Larger values indicate bigger price moves per traded dollar (lower liquidity).
+    """
+    r = to_numpy(returns)
+    dv = to_numpy(dollar_volume)
+    if r.shape != dv.shape:
+        raise ValueError("returns and dollar_volume must align")
+    if r.size == 0:
+        raise ValueError("returns must be non-empty")
+    if np.any(dv <= 0):
+        raise ValueError("dollar_volume must be strictly positive")
+    return float(np.mean(np.abs(r) / dv))
+
+
+def roll_spread_estimator(prices: Array) -> float:
+    """
+    Roll's implied spread from serial covariance of price changes.
+
+    Uses S = 2 * sqrt(-Cov(Δp_t, Δp_{t-1})) when covariance is negative.
+    Returns 0.0 when covariance is non-negative (estimator not identified).
+    """
+    p = to_numpy(prices)
+    if p.size < 3:
+        raise ValueError("need at least three prices")
+    if np.any(p <= 0):
+        raise ValueError("prices must be strictly positive")
+    dp = np.diff(p)
+    cov = float(np.cov(dp[1:], dp[:-1], ddof=1)[0, 1])
+    if cov >= 0.0:
+        return 0.0
+    return float(2.0 * math.sqrt(-cov))
+
+
+def volume_zscore(volume: Array, lookback: int = 20) -> np.ndarray:
+    """
+    Rolling z-score of volume for regime flags in thin / abnormal markets.
+
+    For index t >= lookback-1, z_t = (v_t - mean(window)) / std(window).
+    Earlier entries are NaN because the rolling window is not yet available.
+    """
+    v = to_numpy(volume)
+    if v.size == 0:
+        raise ValueError("volume must be non-empty")
+    if lookback < 2:
+        raise ValueError("lookback must be >= 2")
+    if lookback > v.size:
+        raise ValueError("lookback cannot exceed series length")
+    if np.any(v < 0):
+        raise ValueError("volume must be non-negative")
+
+    z = np.full(v.shape, np.nan, dtype=np.float64)
+    for t in range(lookback - 1, v.size):
+        w = v[t - lookback + 1 : t + 1]
+        mu = float(w.mean())
+        sig = float(w.std(ddof=1))
+        z[t] = 0.0 if sig < 1e-15 else (v[t] - mu) / sig
+    return z
+
+
+# ---------------------------------------------------------------------------
 # Constraint & batch CVaR (PyTorch — lazy import)
 # ---------------------------------------------------------------------------
 

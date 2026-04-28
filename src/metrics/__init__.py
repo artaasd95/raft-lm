@@ -24,6 +24,7 @@ from .vol_surface import (
 
 _LAZY_RISK: FrozenSet[str] = frozenset(
     {
+        "amihud_illiquidity",
         "average_drawdown_wealth",
         "batch_cvar_from_losses",
         "beta_vs_benchmark",
@@ -54,6 +55,7 @@ _LAZY_RISK: FrozenSet[str] = frozenset(
         "portfolio_volatility",
         "probability_consecutive_losses",
         "realized_volatility",
+        "roll_spread_estimator",
         "risk_of_ruin_gbm_log_barrier_approx",
         "semi_variance",
         "sharpe_ratio",
@@ -64,6 +66,7 @@ _LAZY_RISK: FrozenSet[str] = frozenset(
         "ulcer_index_from_returns",
         "ulcer_index_wealth",
         "var_historical_returns",
+        "volume_zscore",
         "wealth_from_simple_returns",
     }
 )

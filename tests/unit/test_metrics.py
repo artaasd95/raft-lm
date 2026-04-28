@@ -240,3 +240,32 @@ class TestRoadmapF1Metrics:
         r = np.random.default_rng(2).normal(0, 1, 100)
         assert math.isfinite(skewness(r))
         assert math.isfinite(excess_kurtosis(r))
+
+
+class TestRoadmapF2Metrics:
+    """Phase F2 from docs/RISK-METRICS-ROADMAP.md."""
+
+    def test_amihud_illiquidity_matches_definition(self):
+        from src.metrics.risk_metrics import amihud_illiquidity
+
+        r = np.array([0.01, -0.02, 0.015])
+        dv = np.array([1_000_000.0, 2_000_000.0, 500_000.0])
+        expected = np.mean(np.abs(r) / dv)
+        assert amihud_illiquidity(r, dv) == pytest.approx(expected)
+
+    def test_roll_spread_estimator_nonnegative(self):
+        from src.metrics.risk_metrics import roll_spread_estimator
+
+        prices = np.array([100.0, 100.02, 99.99, 100.03, 99.98, 100.01, 99.97, 100.0])
+        spread = roll_spread_estimator(prices)
+        assert spread >= 0.0
+
+    def test_volume_zscore_rolling_behavior(self):
+        from src.metrics.risk_metrics import volume_zscore
+
+        volume = np.array([100.0, 110.0, 120.0, 130.0, 200.0])
+        z = volume_zscore(volume, lookback=3)
+        assert np.isnan(z[0])
+        assert np.isnan(z[1])
+        assert z.shape == volume.shape
+        assert math.isfinite(float(z[-1]))
