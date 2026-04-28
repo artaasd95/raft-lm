@@ -145,3 +145,189 @@ def total_implied_variance(time_to_expiry: float, implied_vol: float) -> float:
     if implied_vol < 0:
         raise ValueError("implied_vol must be non-negative")
     return float(implied_vol * implied_vol * time_to_expiry)
+
+
+def svi_total_variance(
+    log_moneyness: Array,
+    a: float,
+    b: float,
+    rho: float,
+    m: float,
+    sigma: float,
+) -> np.ndarray:
+    """
+    Raw SVI slice parameterization:
+    w(k) = a + b * (rho * (k - m) + sqrt((k - m)^2 + sigma^2)).
+    """
+    if b < 0:
+        raise ValueError("b must be non-negative")
+    if sigma <= 0:
+        raise ValueError("sigma must be positive")
+    if not -1 < rho < 1:
+        raise ValueError("rho must be in (-1, 1)")
+    k = np.asarray(log_moneyness, dtype=float)
+    x = k - m
+    return a + b * (rho * x + np.sqrt(x * x + sigma * sigma))
+
+
+def fit_svi_slice(log_moneyness: Array, total_variance: Array) -> dict[str, float]:
+    """
+    Lightweight SVI fit without external optimizers.
+
+    Uses a robust heuristic for (m, sigma, rho) and closed-form linear fit for (a, b).
+    """
+    k = np.asarray(log_moneyness, dtype=float)
+    w = np.asarray(total_variance, dtype=float)
+    if k.shape != w.shape:
+        raise ValueError("log_moneyness and total_variance must have same shape")
+    if k.size < 5:
+        raise ValueError("need at least 5 points to fit SVI")
+    if np.any(w <= 0):
+        raise ValueError("total_variance values must be positive")
+
+    m = float(np.median(k))
+    sigma = float(max(np.std(k), 1e-3))
+    rho = -0.3
+
+    x = k - m
+    basis = rho * x + np.sqrt(x * x + sigma * sigma)
+    A = np.column_stack([np.ones_like(basis), basis])
+    a_hat, b_hat = np.linalg.lstsq(A, w, rcond=None)[0]
+    b_hat = float(max(float(b_hat), 1e-10))
+    a_hat = float(max(float(a_hat), 1e-10))
+
+    return {"a": a_hat, "b": b_hat, "rho": rho, "m": m, "sigma": sigma}
+
+
+def fit_ssvi_slice(
+    log_moneyness: Array,
+    total_variance: Array,
+    *,
+    rho: float = -0.3,
+) -> dict[str, float]:
+    """
+    Heuristic SSVI-style slice summary parameters.
+
+    Returns theta (ATM total variance), rho, and eta inferred from slope scale.
+    """
+    if not -1 < rho < 1:
+        raise ValueError("rho must be in (-1, 1)")
+    k = np.asarray(log_moneyness, dtype=float)
+    w = np.asarray(total_variance, dtype=float)
+    if k.shape != w.shape:
+        raise ValueError("log_moneyness and total_variance must have same shape")
+    if k.size < 5:
+        raise ValueError("need at least 5 points to fit SSVI")
+    if np.any(w <= 0):
+        raise ValueError("total_variance values must be positive")
+
+    atm_idx = int(np.argmin(np.abs(k)))
+    theta = float(w[atm_idx])
+    # Approximate eta from local slope scale around ATM
+    order = np.argsort(np.abs(k))
+    i0, i1 = sorted(order[:2])
+    if i1 == i0:
+        i1 = min(i0 + 1, len(k) - 1)
+    dk = float(abs(k[i1] - k[i0]))
+    dw = float(abs(w[i1] - w[i0]))
+    eta = float(max(dw / max(dk * math.sqrt(max(theta, 1e-12)), 1e-12), 1e-8))
+    return {"theta": theta, "rho": rho, "eta": eta}
+
+
+def butterfly_no_arb_check(strikes: Array, call_prices: Array, tol: float = 1e-10) -> bool:
+    """
+    Check static no-arbitrage in strike for a single maturity:
+    call prices are non-increasing and convex in strike.
+    """
+    k = np.asarray(strikes, dtype=float)
+    c = np.asarray(call_prices, dtype=float)
+    if k.shape != c.shape:
+        raise ValueError("strikes and call_prices must have same shape")
+    if k.size < 3:
+        raise ValueError("need at least 3 strikes")
+    order = np.argsort(k)
+    k = k[order]
+    c = c[order]
+    if np.any(np.diff(k) <= 0):
+        raise ValueError("strikes must be strictly increasing after sorting")
+    if np.any(np.diff(c) > tol):
+        return False
+
+    slopes = np.diff(c) / np.diff(k)
+    # Convexity: slope should be non-decreasing with strike
+    return bool(np.all(np.diff(slopes) >= -tol))
+
+
+def calendar_no_arb_check(
+    maturities: Array, total_variance_by_maturity: np.ndarray, tol: float = 1e-10
+) -> bool:
+    """
+    Check calendar no-arbitrage proxy: total variance non-decreasing in maturity.
+
+    Args:
+        maturities: shape (n_maturities,)
+        total_variance_by_maturity: shape (n_maturities, n_strikes_like_grid)
+    """
+    t = np.asarray(maturities, dtype=float)
+    w = np.asarray(total_variance_by_maturity, dtype=float)
+    if t.ndim != 1:
+        raise ValueError("maturities must be 1-D")
+    if w.ndim != 2:
+        raise ValueError("total_variance_by_maturity must be 2-D")
+    if w.shape[0] != t.shape[0]:
+        raise ValueError("first dimension of total_variance_by_maturity must match maturities")
+    if np.any(t <= 0):
+        raise ValueError("maturities must be positive")
+    order = np.argsort(t)
+    w = w[order]
+    return bool(np.all(np.diff(w, axis=0) >= -tol))
+
+
+def dupire_local_vol(
+    strikes: Array,
+    maturities: Array,
+    call_prices: np.ndarray,
+    *,
+    risk_free_rate: float = 0.0,
+    dividend_yield: float = 0.0,
+) -> np.ndarray:
+    """
+    Dupire local volatility surface estimate from call price grid.
+
+    Uses central finite differences on interior points and returns NaN on boundaries.
+    """
+    k = np.asarray(strikes, dtype=float)
+    t = np.asarray(maturities, dtype=float)
+    c = np.asarray(call_prices, dtype=float)
+    if k.ndim != 1 or t.ndim != 1:
+        raise ValueError("strikes and maturities must be 1-D")
+    if c.shape != (t.size, k.size):
+        raise ValueError("call_prices must have shape (len(maturities), len(strikes))")
+    if t.size < 3 or k.size < 3:
+        raise ValueError("need at least 3 maturities and 3 strikes")
+    if np.any(k <= 0) or np.any(t <= 0):
+        raise ValueError("strikes and maturities must be positive")
+
+    out = np.full_like(c, np.nan, dtype=float)
+    for i in range(1, t.size - 1):
+        dt = t[i + 1] - t[i - 1]
+        if dt <= 0:
+            continue
+        for j in range(1, k.size - 1):
+            dk_l = k[j] - k[j - 1]
+            dk_r = k[j + 1] - k[j]
+            if dk_l <= 0 or dk_r <= 0:
+                continue
+            dC_dT = (c[i + 1, j] - c[i - 1, j]) / dt
+            dC_dK = (c[i, j + 1] - c[i, j - 1]) / (k[j + 1] - k[j - 1])
+            d2C_dK2 = 2.0 * (
+                (c[i, j + 1] - c[i, j]) / dk_r - (c[i, j] - c[i, j - 1]) / dk_l
+            ) / (dk_l + dk_r)
+
+            denom = 0.5 * k[j] * k[j] * d2C_dK2
+            numer = dC_dT + (risk_free_rate - dividend_yield) * k[j] * dC_dK + dividend_yield * c[i, j]
+            if denom <= 1e-15 or numer <= 0:
+                continue
+            lv2 = numer / denom
+            out[i, j] = math.sqrt(max(lv2, 0.0))
+    return out

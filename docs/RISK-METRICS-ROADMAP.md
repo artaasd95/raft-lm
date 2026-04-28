@@ -46,9 +46,9 @@ Companion to `docs/RISK-METHODS-REQUIREMENTS.md` (definitions) and `docs/IDEA-AN
 | Roll’s spread estimator | From price autocovariance | `roll_spread_estimator` |
 | Volume z-score | Regime flag for thin markets | `volume_zscore` |
 
-**Status:** Metric primitives added in `src/metrics/risk_metrics.py` with tests in `tests/unit/test_metrics.py` (`TestRoadmapF2Metrics`).
+**Status:** Implemented in `src/metrics/risk_metrics.py` with tests in `tests/unit/test_metrics.py` (`TestRoadmapF2Metrics`). Dataset adapters shipped in `src/data/adapters.py` (`build_aligned_panel`, `compute_f2_liquidity_features`).
 
-**Needs:** Volume series in dataset schema; adapters in `src/data/` (wiring into dataset builders remains).
+**Needs:** Hook into production dataset builders when raw feeds include stable volume columns.
 
 ### Phase F3 — Dependence & systemic
 
@@ -58,11 +58,11 @@ Companion to `docs/RISK-METHODS-REQUIREMENTS.md` (definitions) and `docs/IDEA-AN
 | Sample copula tail dependence | Upper/lower tail λ | `sample_copula_tail_dependence` |
 | Diversification ratio | (w'σ) / √(w'Σw) | `diversification_ratio` |
 
-**Status:** Metric primitives added in `src/metrics/risk_metrics.py` with tests in `tests/unit/test_metrics.py` (`TestRoadmapF3Metrics`).
+**Status:** Implemented in `src/metrics/risk_metrics.py` with tests in `tests/unit/test_metrics.py` (`TestRoadmapF3Metrics`). Multi-asset panel alignment + feature aggregation added in `src/data/adapters.py` (`build_aligned_panel`, `compute_f3_dependence_features`).
 
-**Needs:** Multi-asset panel aligned in time (dataset/report integration remains).
+**Needs:** Wire factor definitions from research config for consistent rolling-β semantics.
 
-### Phase F4 — Options surface (advanced)
+### Phase F4 — Options surface (advanced, **implemented primitives**)
 
 | Item | Purpose |
 |------|---------|
@@ -70,7 +70,9 @@ Companion to `docs/RISK-METHODS-REQUIREMENTS.md` (definitions) and `docs/IDEA-AN
 | Butterfly / calendar no-arb checks | Validation |
 | Local vol (Dupire) | Scenario engine |
 
-**Needs:** Curated option chain snapshots; possibly `scipy.optimize`.
+**Status:** Implemented in `src/metrics/vol_surface.py` with tests in `tests/unit/test_vol_surface.py`: `fit_svi_slice`, `fit_ssvi_slice`, `butterfly_no_arb_check`, `calendar_no_arb_check`, `dupire_local_vol`.
+
+**Needs:** Curated option chain snapshots for robust calibration; optional upgrade to optimizer-backed calibration (`scipy.optimize`) for tighter production fits.
 
 ### Phase F5 — Simulation engines
 

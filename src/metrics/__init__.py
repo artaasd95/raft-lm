@@ -16,9 +16,15 @@ from .task_metrics import accuracy, mae, mse, f1_score
 from .vol_surface import (
     atm_strike_index,
     black_scholes_call_price,
+    butterfly_no_arb_check,
+    calendar_no_arb_check,
+    dupire_local_vol,
+    fit_ssvi_slice,
+    fit_svi_slice,
     implied_volatility_bisection,
     interpolate_iv_1d,
     iv_skew_finite_difference,
+    svi_total_variance,
     total_implied_variance,
 )
 
@@ -94,9 +100,15 @@ __all__ = [
     "f1_score",
     "atm_strike_index",
     "black_scholes_call_price",
+    "butterfly_no_arb_check",
+    "calendar_no_arb_check",
+    "dupire_local_vol",
+    "fit_ssvi_slice",
+    "fit_svi_slice",
     "implied_volatility_bisection",
     "interpolate_iv_1d",
     "iv_skew_finite_difference",
+    "svi_total_variance",
     "total_implied_variance",
     *sorted(_LAZY_RISK),
 ]
