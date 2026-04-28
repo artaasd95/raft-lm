@@ -269,3 +269,44 @@ class TestRoadmapF2Metrics:
         assert np.isnan(z[1])
         assert z.shape == volume.shape
         assert math.isfinite(float(z[-1]))
+
+
+class TestRoadmapF3Metrics:
+    """Phase F3 from docs/RISK-METRICS-ROADMAP.md."""
+
+    def test_rolling_correlation_shape_and_bounds(self):
+        from src.metrics.risk_metrics import rolling_correlation
+
+        x = np.array([0.01, 0.02, -0.01, 0.03, 0.01, -0.02])
+        y = np.array([0.005, 0.01, -0.005, 0.02, 0.007, -0.01])
+        rc = rolling_correlation(x, y, window=3)
+        assert rc.shape == x.shape
+        assert np.isnan(rc[0]) and np.isnan(rc[1])
+        assert np.all(np.abs(rc[2:]) <= 1.0 + 1e-12)
+
+    def test_rolling_beta_positive_for_scaled_series(self):
+        from src.metrics.risk_metrics import rolling_beta
+
+        f = np.array([0.01, -0.005, 0.015, 0.0, 0.02, -0.01])
+        a = 1.5 * f
+        rb = rolling_beta(a, f, window=4)
+        assert np.isnan(rb[0]) and np.isnan(rb[1]) and np.isnan(rb[2])
+        assert rb[-1] == pytest.approx(1.5, rel=1e-6)
+
+    def test_sample_copula_tail_dependence_returns_unit_interval(self):
+        from src.metrics.risk_metrics import sample_copula_tail_dependence
+
+        rng = np.random.default_rng(7)
+        x = rng.normal(0, 1, 300)
+        y = 0.6 * x + 0.4 * rng.normal(0, 1, 300)
+        lam_l, lam_u = sample_copula_tail_dependence(x, y, quantile=0.95)
+        assert 0.0 <= lam_l <= 1.0
+        assert 0.0 <= lam_u <= 1.0
+
+    def test_diversification_ratio_above_one_for_imperfect_correlation(self):
+        from src.metrics.risk_metrics import diversification_ratio
+
+        w = np.array([0.5, 0.5])
+        cov = np.array([[0.04, 0.01], [0.01, 0.09]])
+        dr = diversification_ratio(w, cov)
+        assert dr > 1.0

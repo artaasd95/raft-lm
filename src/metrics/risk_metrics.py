@@ -665,6 +665,123 @@ def volume_zscore(volume: Array, lookback: int = 20) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------------
+# Dependence & systemic (Phase F3 roadmap)
+# ---------------------------------------------------------------------------
+
+
+def rolling_correlation(x: Array, y: Array, window: int = 60) -> np.ndarray:
+    """
+    Rolling sample correlation between two aligned return series.
+
+    Values before the first full window are NaN.
+    """
+    a = to_numpy(x)
+    b = to_numpy(y)
+    if a.shape != b.shape:
+        raise ValueError("x and y must align")
+    if a.size == 0:
+        raise ValueError("x and y must be non-empty")
+    if window < 2:
+        raise ValueError("window must be >= 2")
+    if window > a.size:
+        raise ValueError("window cannot exceed series length")
+
+    out = np.full(a.shape, np.nan, dtype=np.float64)
+    for t in range(window - 1, a.size):
+        xa = a[t - window + 1 : t + 1]
+        xb = b[t - window + 1 : t + 1]
+        sa = float(np.std(xa, ddof=1))
+        sb = float(np.std(xb, ddof=1))
+        if sa < 1e-15 or sb < 1e-15:
+            out[t] = 0.0
+        else:
+            out[t] = float(np.corrcoef(xa, xb)[0, 1])
+    return out
+
+
+def rolling_beta(asset_returns: Array, factor_returns: Array, window: int = 60) -> np.ndarray:
+    """
+    Rolling beta of asset to factor: Cov(asset, factor) / Var(factor) per window.
+
+    Values before the first full window are NaN.
+    """
+    a = to_numpy(asset_returns)
+    f = to_numpy(factor_returns)
+    if a.shape != f.shape:
+        raise ValueError("asset_returns and factor_returns must align")
+    if a.size == 0:
+        raise ValueError("asset_returns and factor_returns must be non-empty")
+    if window < 2:
+        raise ValueError("window must be >= 2")
+    if window > a.size:
+        raise ValueError("window cannot exceed series length")
+
+    out = np.full(a.shape, np.nan, dtype=np.float64)
+    for t in range(window - 1, a.size):
+        xa = a[t - window + 1 : t + 1]
+        xf = f[t - window + 1 : t + 1]
+        vf = float(np.var(xf, ddof=1))
+        if vf < 1e-15:
+            out[t] = 0.0
+        else:
+            cov = float(np.cov(xa, xf, ddof=1)[0, 1])
+            out[t] = cov / vf
+    return out
+
+
+def sample_copula_tail_dependence(
+    x: Array, y: Array, quantile: float = 0.95
+) -> tuple[float, float]:
+    """
+    Empirical lower/upper tail dependence from pseudo-observations.
+
+    Returns tuple: (lambda_lower, lambda_upper).
+    """
+    if not 0.5 < quantile < 1.0:
+        raise ValueError("quantile must be in (0.5, 1.0)")
+    a = to_numpy(x)
+    b = to_numpy(y)
+    if a.shape != b.shape:
+        raise ValueError("x and y must align")
+    n = a.size
+    if n < 5:
+        raise ValueError("need at least 5 paired observations")
+
+    rx = np.argsort(np.argsort(a)) + 1
+    ry = np.argsort(np.argsort(b)) + 1
+    u = rx / (n + 1.0)
+    v = ry / (n + 1.0)
+
+    ql = 1.0 - quantile
+    qu = quantile
+
+    lower_mask = u <= ql
+    upper_mask = u >= qu
+    lower_denom = int(lower_mask.sum())
+    upper_denom = int(upper_mask.sum())
+
+    lam_l = 0.0 if lower_denom == 0 else float(np.mean(v[lower_mask] <= ql))
+    lam_u = 0.0 if upper_denom == 0 else float(np.mean(v[upper_mask] >= qu))
+    return lam_l, lam_u
+
+
+def diversification_ratio(weights: Array, cov_matrix: np.ndarray) -> float:
+    """
+    Diversification ratio = (w' sigma) / sqrt(w' Σ w), sigma = sqrt(diag(Σ)).
+    """
+    w = to_numpy(weights)
+    if cov_matrix.ndim != 2 or cov_matrix.shape[0] != cov_matrix.shape[1]:
+        raise ValueError("cov_matrix must be square")
+    if w.shape[0] != cov_matrix.shape[0]:
+        raise ValueError("weights length must match cov_matrix dimension")
+    sigma = np.sqrt(np.maximum(np.diag(cov_matrix), 0.0))
+    denom = portfolio_volatility(w, cov_matrix)
+    if denom < 1e-15:
+        return 0.0
+    return float((w @ sigma) / denom)
+
+
+# ---------------------------------------------------------------------------
 # Constraint & batch CVaR (PyTorch — lazy import)
 # ---------------------------------------------------------------------------
 

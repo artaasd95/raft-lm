@@ -52,13 +52,15 @@ Companion to `docs/RISK-METHODS-REQUIREMENTS.md` (definitions) and `docs/IDEA-AN
 
 ### Phase F3 — Dependence & systemic
 
-| Metric | Purpose |
-|--------|---------|
-| Correlation / rolling β to factors | Category 10 |
-| Sample copula tail dependence | Upper/lower tail λ |
-| Diversification ratio | (w'σ) / √(w'Σw) |
+| Metric | Purpose | API |
+|--------|---------|-----|
+| Correlation / rolling β to factors | Category 10 | `rolling_correlation`, `rolling_beta` |
+| Sample copula tail dependence | Upper/lower tail λ | `sample_copula_tail_dependence` |
+| Diversification ratio | (w'σ) / √(w'Σw) | `diversification_ratio` |
 
-**Needs:** Multi-asset panel aligned in time.
+**Status:** Metric primitives added in `src/metrics/risk_metrics.py` with tests in `tests/unit/test_metrics.py` (`TestRoadmapF3Metrics`).
+
+**Needs:** Multi-asset panel aligned in time (dataset/report integration remains).
 
 ### Phase F4 — Options surface (advanced)
 
