@@ -3,6 +3,58 @@
 Last updated: 2026-05-09  
 Scope: Verified against current repository implementation (`src/`, `scripts/`, `tests/`, `docs/`).
 
+**Primary audience (this revision):** You, as a candidate. The roadmap is intentionally biased toward **one sharp, reproducible story with numbers**—not toward accumulating features.
+
+---
+
+## 0) Showcase & Portfolio Strategy: “Good Portfolio” vs “Hire Me Immediately”
+
+Hiring managers and strong technical screeners rarely reward breadth alone. They reward **clarity, reproducibility, and a claim you can defend** when challenged.
+
+### Tier A — “Good portfolio” (table stakes)
+
+What it signals: disciplined engineering and communication.
+
+| Element | What “good” looks like |
+|--------|-------------------------|
+| Repo hygiene | Clear layout, honest README, tests that mean something |
+| Run path | Someone can clone and run *one* documented path without guesswork |
+| Scope honesty | README states what is implemented vs aspirational |
+| Story | “I built X; here is how it works” |
+
+**Risk:** This tier competes with thousands of similar repos. It helps, but it rarely differentiates at senior bar.
+
+### Tier B — “Hire me immediately” (differentiation)
+
+What it signals: research-grade thinking *and* execution—you can own ambiguity end-to-end.
+
+| Element | What “exceptional” looks like |
+|--------|-------------------------------|
+| **Frozen benchmark protocol** | Task, splits, metrics, baselines, compute budget—written down before you optimize |
+| **Numbers with uncertainty** | Mean ± std over **≥3 seeds** (or justified CIs); no single-seed hero plots |
+| **Fair baselines** | At least two: one naive / standard, one strong or domain-relevant; same data and budget |
+| **SOTA language used carefully** | “Matches / exceeds reported X under protocol P” beats “SOTA” without P |
+| **WHY in one paragraph** | Mechanism linked to metrics (not marketing): *when* it wins, *when* it fails |
+| **60-second artifact** | One results table + exact reproduce commands + config snapshot |
+| **Credible write-up** | Short technical report or arXiv preprint *optional* but extremely high leverage at Tier B |
+
+**Non-goals for Tier B:** more modules, more models, or more features **unless** each addition maps to a new row in your benchmark table or strengthens a baseline.
+
+### Anti-patterns that destroy trust (avoid explicitly)
+
+- Claiming superiority without identical preprocessing, splits, and training budget.
+- Reporting only the best seed or cherry-picked slices of the test set.
+- “More robust” without a defined stress test or tail metric.
+- A long roadmap of features with no frozen evaluation protocol.
+
+### The single narrative you want on your resume
+
+One sentence template (fill in after you have numbers):
+
+> On **[dataset / regime]** under **[protocol]**, **[your method]** improves **[primary metric]** by **[delta vs baseline]** (mean ± std, N seeds) because **[mechanism / inductive bias]**; it trades off **[known cost]** as shown in **[secondary metric / ablation]**.
+
+Everything in Sections 3–8 below should **earn** that sentence—not expand scope for its own sake.
+
 ---
 
 ## 1) Current-State Verification (Suggestion Map vs Actual Code)
@@ -19,19 +71,20 @@ Scope: Verified against current repository implementation (`src/`, `scripts/`, `
 
 ### Strategic Interpretation
 - The project currently behaves like a **risk-metrics and quantitative methods toolkit** with early ML training scaffolding.
-- The major opportunity is to convert this into a reproducible, testable, end-to-end training + evaluation platform.
-- A second opportunity is to decide and formalize product direction:
-  - **Option A:** Risk-aware LLM training framework (original intent)
-  - **Option B:** Risk analytics + model benchmarking platform
-  - **Option C (recommended):** Hybrid, implemented in staged workstreams below
+- The highest-leverage opportunity for **portfolio Tier B** is not “more framework”—it is a **frozen benchmark + fair baselines + variance-aware results + a WHY paragraph** that matches the code.
+- Product direction still matters, but **only** as much as it clarifies the benchmark story:
+  - **Option A:** Risk-aware LLM training (only if you can afford compute *and* a clean protocol).
+  - **Option B:** Risk metrics + supervised baselines on tabular or synthetic stress regimes (often faster to credible numbers).
+  - **Option C (recommended for speed-to-proof):** Narrow hybrid—**one** prediction task where tail-sensitive metrics are primary, supported by the existing metrics library.
 
 ---
 
 ## 2) Target Operating Model (Project Management View)
 
 ## Objectives
-- Deliver a reproducible research framework with clear quality gates.
-- Move from placeholder pipeline to production-grade experimentation workflow.
+- Ship a **credible benchmark story** (Tier A → Tier B) before expanding surface area.
+- Keep every workstream accountable to **reportable metrics**, not feature count.
+- Move from placeholder pipeline to **one** reproducible train → eval → compare path that supports the resume narrative.
 - Improve contributor velocity with explicit acceptance criteria per module.
 - Keep roadmap measurable through milestones, KPIs, and release readiness checks.
 
@@ -47,9 +100,64 @@ Scope: Verified against current repository implementation (`src/`, `scripts/`, `
 - Reproducibility check (seeded run)
 - Backward-compatible config migration or migration note
 
+### Portfolio Quality Gate (Tier B only)
+- Primary metric + secondary tail/stress metrics defined **in writing** before tuning.
+- Results table includes **baselines + variance** (mean ± std, seed list).
+- A short **WHY** section passes the “red team” test (limitations included).
+- README links to **one** canonical results file (e.g. `docs/benchmarks/BENCHMARK.md` once created).
+
+---
+
+## 2b) Benchmark & Claims Protocol (Non-Negotiable for Tier B)
+
+This section exists so your repo cannot be dismissed as “well structured but unproven.”
+
+### Before you tune models (freeze the protocol)
+
+Document in `docs/benchmarks/BENCHMARK.md` (create when you commit to a benchmark):
+
+| Field | You must specify |
+|------|------------------|
+| Problem | Exact prediction / classification / ranking task |
+| Data | Source, preprocessing, train/val/test split, leakage checks |
+| Primary metric | The one headline number for your resume |
+| Secondary metrics | Tail risk, calibration, worst-decile error—whatever matches your WHY |
+| Baselines | ≥2, with citations or your reimplementation notes |
+| Budget | Steps/epochs, model size cap, hardware, batch size |
+| Seeds | List of integers; **≥3** for any claim with variance |
+| Statistics | Mean ± std; add tests only with stated assumptions |
+
+### Matching or beating “state of the art”
+
+- **Preferred honest framing:** “Reproduces / matches **published result Y** under **our protocol P**; our method gains **Δ** on **metric M** vs **baseline B** under **same P**.”
+- If true SOTA is infeasible (compute, data access), **do not fake it**. Instead, win on: protocol clarity, tail metrics, ablations, and reproducibility—still Tier B if the story is tight.
+
+### The WHY paragraph (mechanism, not slogans)
+
+Use this structure in README and in any arXiv-style draft:
+
+1. **Inductive bias:** What does your objective or model class emphasize (e.g., CVaR over per-example losses up-weights bad cases in-batch)?
+2. **When it should help:** Regimes (heavy tails, rare stress, label noise in tails).
+3. **What it costs:** Lower average accuracy, slower convergence, sensitivity to batch size—**show in numbers**.
+4. **Failure modes:** Where baselines win; don’t hide this.
+
+### Publication / arXiv path (optional, high leverage)
+
+Use when your benchmark is frozen and numbers are stable:
+
+| Deliverable | Purpose |
+|-------------|---------|
+| `docs/reports/TECH-REPORT.md` | Same content as a short paper: abstract, related work, protocol, results, ethics, limits |
+| arXiv preprint | External timestamp + citation; keep claims **identical** to repo tables |
+| Supplement | Extra plots, per-seed logs, hyperparameter sensitivity |
+
+**Rule:** The paper is not “extra features”—it is **structured evidence** for what the code already proves.
+
 ---
 
 ## 3) Detailed Workstreams and Action Plan
+
+> **Execution rule:** Workstreams below are prioritized by whether they produce **defensible rows in a results table**. If a task does not move a metric you are willing to put on your resume, defer it.
 
 ## Workstream A - End-to-End Training Pipeline (Highest Priority)
 
@@ -210,17 +318,18 @@ Scope: Verified against current repository implementation (`src/`, `scripts/`, `
   - Naming and docs are internally consistent.
 
 ### E2. Introduce capability roadmap by maturity levels
-- **Goal:** Stage advanced features behind stable baseline.
+- **Goal:** Stage work by **evidence maturity**, not feature excitement.
 - **Actions:**
-  - Define M0/M1/M2 levels:
-    - M0: baseline supervised risk modeling
-    - M1: robust experiment platform + ablations
-    - M2: advanced methods (DPO/PPO, distributed training, retrieval modules)
-  - Gate M2 work on M0/M1 quality criteria.
+  - Define M0/M1/M2 as **claim maturity**:
+    - **M0 — Credible baseline:** runnable train/eval, honest README, no inflated claims.
+    - **M1 — Tier B benchmark:** frozen protocol, baselines, multi-seed table, ablation that supports WHY.
+    - **M2 — Optional scale story:** only if M1 already has a number you would defend in an interview.
+  - Gate M2 on a **published-style results table** (even if only in-repo).
 - **Files:**
   - `docs/` roadmap policy doc (new or this file extension)
+  - `docs/benchmarks/BENCHMARK.md` (when M1 starts)
 - **Acceptance Criteria:**
-  - Feature requests map to maturity level and do not bypass prerequisites.
+  - No M2 work without a completed M1 benchmark row for the same task family.
 
 ---
 
@@ -246,28 +355,32 @@ Scope: Verified against current repository implementation (`src/`, `scripts/`, `
 - **Why better:** Faster feedback and lower maintenance than integration-heavy only.
 - **Decision:** 70% unit, 20% integration, 10% smoke/benchmark split for near-term.
 
+## Better Approach 5: Portfolio-first sequencing (fewer bullets, harder proof)
+- **Why better:** Interviewers remember one benchmark you can whiteboard, not twelve half-done ideas.
+- **Decision:** Pick **one** headline task and **two** baselines; refuse scope creep until the table is stable.
+
 ---
 
 ## 5) Release Roadmap (Execution-Ready)
 
-## Release 0.1 (2-4 weeks) - "Runnable Baseline"
-- `train.py` implemented
-- Config validation improved
-- Placeholder model/integration tests replaced
-- Basic run artifact contract
-- Updated README quickstart
+Releases are reframed as **claim milestones**—what a reviewer can verify.
 
-## Release 0.2 (4-8 weeks) - "Reliable Evaluation"
-- Checkpoint-based evaluation path
-- Comparison engine and first ablation report
-- Deterministic seed reproducibility check
-- Regression tests for critical metrics
+## Release 0.1 (2-4 weeks) — "Runnable + Honest" (Tier A solid)
+- **Proof:** One command trains and saves artifacts; README matches reality.
+- **Portfolio output:** “I shipped a reproducible training/eval path on a defined task.”
+- Engineering enablers: `train.py`, config validation, non-placeholder tests, run artifact contract.
 
-## Release 0.3 (8-12 weeks) - "Research-Scale Platform"
-- Optional CI/lint/type gates
-- Experiment tracking integration (lightweight first)
-- Maturity model docs + ADR scope lock
-- Decision point for distributed training and advanced methods
+## Release 0.2 (4-8 weeks) — "Benchmark v1" (Tier B candidate)
+- **Proof:** `docs/benchmarks/BENCHMARK.md` exists; table has **mean ± std** and **≥2 baselines**.
+- **Portfolio output:** “Under protocol P, method A beats baseline B on metric M by Δ.”
+- Engineering enablers: checkpoint eval, compare script, seed sweep discipline.
+
+## Release 0.3 (8-12 weeks) — "Defensible + Published Narrative" (Tier B strong)
+- **Proof:** Ablation supports WHY; limitations section written; optional arXiv/tech report **mirrors** the table.
+- **Portfolio output:** Same as 0.2 plus external timestamp or a report PDF recruiters can skim.
+- Engineering enablers: CI/local quality gate only if it protects the benchmark from regressions—not for vanity.
+
+**Explicitly deprioritized until 0.2 is done:** distributed training, model zoos, serving layers, broad retrieval stacks—unless your benchmark *requires* them.
 
 ---
 
@@ -297,30 +410,56 @@ A roadmap item is complete only when:
 - Relevant docs updated to match behavior.
 - No placeholder TODO/pass remains for that delivered scope.
 
+### Definition of Done — Tier B (portfolio)
+
+Additionally, for any item tied to a **resume claim**:
+- The claim appears in `docs/benchmarks/BENCHMARK.md` (or equivalent) with **protocol + baselines + seeds**.
+- Numbers are **aggregated**, not single-run snapshots.
+- **WHY** and **when it fails** are written next to the table.
+- No contradictory language between README, docs, and scripts.
+
 ---
 
-## 8) Immediate Next 10 Actions (Practical Start)
+## 8) Immediate Next Actions (Portfolio-Ordered)
 
-1. Implement `scripts/train.py` MVP execution path.
-2. Expand `src/utils/config.py` with strict schema validation + defaults.
-3. Add `tests/integration/test_training_workflow.py` real e2e toy training test.
-4. Replace `tests/unit/test_models.py` TODOs with forward/gradient/device tests.
-5. Extend `scripts/evaluate.py` with optional checkpoint inference path.
-6. Implement `scripts/compare_experiments.py` aggregation/report.
-7. Add run artifact schema docs under `experiments/README.md`.
-8. Update `README.md` from minimal placeholder to executable quickstart.
-9. Add local quality command set (format/lint/test).
-10. Run first baseline-vs-tail-aware loss comparison and publish report.
+Order is intentional: **freeze the story, then earn the numbers, then polish engineering**.
+
+1. **Choose one headline benchmark** (task + primary metric + two baselines) and stub `docs/benchmarks/BENCHMARK.md` with *unfilled* protocol—then fill as you run.
+2. **Implement the minimum train → checkpoint → metric path** needed for that task only (`scripts/train.py`, eval hook).
+3. **Run multi-seed sweeps** (same protocol, same budget); record mean ± std in the benchmark doc.
+4. **Run one ablation** that isolates your mechanism (e.g., turn off tail term; change α); table the result.
+5. **Write the WHY paragraph** beside the table; add a “limitations” bullet you are not afraid of.
+6. **Upgrade tests** only where they guard the benchmark (integration test for the exact CLI path you cite).
+7. **README: lead with the results table**, then “how to reproduce”—not the other way around.
+8. **Comparison report** (`compare_experiments.py` or equivalent) that regenerates the table from disk artifacts.
+9. **Optional:** `docs/reports/TECH-REPORT.md` or arXiv—**same numbers as README**, expanded context.
+10. **Resume line:** one sentence from the template in Section 0; delete adjectives that are not in the table.
 
 ---
 
 ## 9) KPI Dashboard (Quarterly)
 
-- Pipeline success rate (% runs completing end-to-end)
-- Reproducibility pass rate (same-seed consistency)
-- Test reliability (flake rate, failure causes)
+- **Benchmark integrity:** % of README claims traceable to a frozen protocol row
+- **Statistical hygiene:** % of reported results with ≥3 seeds
+- **Baseline strength:** number of non-trivial baselines per task (target ≥2)
+- **Reproducibility pass rate:** same-seed / same-artifact checks
+- **Ablations that support WHY:** count per headline claim (target ≥1 causal ablation)
+- **Publication parity:** diff between repo table and paper table (target: zero)
 - Metric regression count (unexpected numerical drift)
-- Experiment throughput (runs/week with complete artifacts)
-- Documentation freshness (features with matching docs)
+- Experiment throughput only **after** protocol freeze (runs/week with complete artifacts)
 
 This KPI set should be reviewed at each release cut.
+
+---
+
+## 10) Pre-Public Checklist (Resume + arXiv Safety)
+
+Use before you link this repo on a resume or submit a preprint:
+
+- [ ] One headline task; no competing “main results” stories.
+- [ ] Table: primary + secondary metrics, baselines, mean ± std, seeds listed.
+- [ ] Compute budget stated; no hidden tuning on test.
+- [ ] Ablation tied to mechanism; not only architecture lottery.
+- [ ] Limitations section exists and matches observed failures.
+- [ ] Reproduce block in README tested on a clean clone.
+- [ ] If arXiv: abstract claims ⊆ README claims ⊆ table claims.
