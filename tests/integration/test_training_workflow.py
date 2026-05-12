@@ -4,25 +4,97 @@ Integration tests for training workflow.
 Tests complete training pipeline from data loading to evaluation.
 """
 
-import torch
+import json
+
 import pytest
-from pathlib import Path
+
+pytest.importorskip("torch", reason="PyTorch not available", exc_type=ImportError)
+
+from scripts.train import run_training  # noqa: E402
+
+
+def _tiny_config(results_dir: str) -> dict:
+    return {
+        "config_version": 1,
+        "experiment_name": "tiny_training_workflow",
+        "description": "Tiny integration test config",
+        "model": {
+            "type": "SimpleMLP",
+            "input_dim": 4,
+            "hidden_dim": 8,
+            "output_dim": 3,
+            "num_layers": 1,
+            "dropout": 0.0,
+        },
+        "data": {
+            "dataset_type": "SyntheticRiskDataset",
+            "train_size": 24,
+            "val_size": 12,
+            "test_size": 12,
+            "batch_size": 6,
+            "num_workers": 0,
+        },
+        "training": {
+            "num_epochs": 2,
+            "optimizer": {
+                "type": "Adam",
+                "lr": 0.01,
+                "weight_decay": 0.0,
+            },
+            "loss": {
+                "type": "CrossEntropyLoss",
+            },
+            "seed": 123,
+            "device": "cpu",
+        },
+        "evaluation": {
+            "metrics": ["accuracy", "cvar"],
+        },
+        "logging": {
+            "log_interval": 1,
+            "save_checkpoints": True,
+            "checkpoint_interval": 1,
+        },
+        "output": {
+            "results_dir": results_dir,
+        },
+    }
+
+
+def _write_config(tmp_path, config: dict) -> str:
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    return str(config_path)
+
+
+def _read_json(path):
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 class TestTrainingWorkflow:
     """Test suite for end-to-end training workflow."""
     
-    def test_complete_training_run(self):
+    def test_complete_training_run(self, tmp_path):
         """Test a complete training run on toy data."""
-        # TODO: Implement test
-        # 1. Create synthetic dataset
-        # 2. Initialize model, optimizer, loss
-        # 3. Create trainer
-        # 4. Run training for a few epochs
-        # 5. Verify checkpoints are saved
-        # 6. Verify metrics are recorded
-        # 7. Verify loss decreases
-        pass
+        config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))
+
+        run_dir = run_training(config_path)
+
+        assert (run_dir / "resolved_config.json").exists()
+        assert (run_dir / "metrics.json").exists()
+        assert (run_dir / "run_info.json").exists()
+        assert (run_dir / "checkpoints" / "best_model.pt").exists()
+
+        resolved_config = _read_json(run_dir / "resolved_config.json")
+        metrics = _read_json(run_dir / "metrics.json")
+        run_info = _read_json(run_dir / "run_info.json")
+
+        assert resolved_config["training"]["seed"] == 123
+        assert len(metrics["train_metrics"]) == 2
+        assert len(metrics["val_metrics"]) == 2
+        assert "accuracy" in metrics["test_metrics"]
+        assert "cvar" in metrics["test_metrics"]
+        assert run_info["seed"] == 123
     
     def test_checkpoint_save_load(self):
         """Test saving and loading checkpoints."""
@@ -43,18 +115,28 @@ class TestTrainingWorkflow:
 class TestExperimentWorkflow:
     """Test suite for experiment workflow."""
     
-    def test_config_loading(self):
+    def test_config_loading(self, tmp_path):
         """Test loading experiment configuration."""
-        # TODO: Implement test
-        pass
+        config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))
+
+        run_dir = run_training(config_path, seed_override=321)
+        resolved_config = _read_json(run_dir / "resolved_config.json")
+
+        assert resolved_config["training"]["seed"] == 321
     
-    def test_reproducibility(self):
+    def test_reproducibility(self, tmp_path):
         """Test that results are reproducible with same seed."""
-        # TODO: Implement test
-        # - Run training with seed X
-        # - Run training again with seed X
-        # - Verify identical results
-        pass
+        config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))
+
+        first_run = run_training(config_path)
+        second_run = run_training(config_path)
+
+        first_metrics = _read_json(first_run / "metrics.json")
+        second_metrics = _read_json(second_run / "metrics.json")
+
+        assert first_metrics["train_metrics"] == second_metrics["train_metrics"]
+        assert first_metrics["val_metrics"] == second_metrics["val_metrics"]
+        assert first_metrics["test_metrics"] == second_metrics["test_metrics"]
     
     def test_multi_seed_experiment(self):
         """Test running experiment with multiple seeds."""

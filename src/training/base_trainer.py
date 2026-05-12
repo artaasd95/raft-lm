@@ -142,6 +142,8 @@ class BaseTrainer:
         if save_dir:
             save_path = Path(save_dir)
             save_path.mkdir(parents=True, exist_ok=True)
+            checkpoint_path = save_path / 'checkpoints'
+            checkpoint_path.mkdir(parents=True, exist_ok=True)
         
         for epoch in range(num_epochs):
             self.current_epoch = epoch
@@ -162,7 +164,7 @@ class BaseTrainer:
             # Save checkpoint if best
             if save_dir and val_metrics['val_loss'] < self.best_val_loss:
                 self.best_val_loss = val_metrics['val_loss']
-                self.save_checkpoint(save_path / 'best_model.pt')
+                self.save_checkpoint(checkpoint_path / 'best_model.pt')
             
             # Save metrics
             if save_dir:
