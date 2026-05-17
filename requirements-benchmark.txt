@@ -1,0 +1,7 @@
+# S2 Enterprise RAG benchmark extras (install after requirements.txt)
+-r requirements.txt
+
+langgraph>=0.2.0
+langchain-core>=0.3.0
+ragas>=0.1.21
+streamlit>=1.28.0

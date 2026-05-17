@@ -1,0 +1,4 @@
+{"question_id": "q1", "question": "What is the minimum CET1 ratio under the capital policy?", "ground_truth": "The minimum Common Equity Tier 1 (CET1) ratio is 8.5%.", "risk_domain": "financial"}
+{"question_id": "q2", "question": "How quickly must suspicious transactions be reported for AML?", "ground_truth": "Suspicious transactions must be escalated within 24 hours.", "risk_domain": "compliance"}
+{"question_id": "q3", "question": "When are quarterly risk reports due?", "ground_truth": "Quarterly risk reports are due within 15 business days after quarter end.", "risk_domain": "operational"}
+{"question_id": "q4", "question": "What liquidity coverage ratio must be maintained?", "ground_truth": "The firm must maintain a Liquidity Coverage Ratio (LCR) of at least 100%.", "risk_domain": "financial"}

@@ -1,10 +1,10 @@
 # RAFT-LM
 
-**Enterprise RAG Accuracy Engine**: a benchmark-first project for proving when a retrieval-augmented system is faithful, precise, and safe enough for high-stakes legal or financial knowledge work.
+**Planned Enterprise RAG Accuracy Engine**: a benchmark-first project that will prove when a retrieval-augmented system is faithful, precise, and safe enough for high-stakes legal or financial knowledge work.
 
 ## Vision
 
-Standard RAG often looks convincing even when it retrieves noisy context, misses the key evidence, or produces unsupported answers. RAFT-LM is being shaped into a reproducible evaluation and demo system that compares **Standard RAG vs RAFT-LM** on complex enterprise documents using Ragas metrics such as Context Precision and Faithfulness, plus project-specific hallucination risk scoring.
+Standard RAG often looks convincing even when it retrieves noisy context, misses the key evidence, or produces unsupported answers. RAFT-LM will become a reproducible evaluation and demo system that compares **Standard RAG vs RAFT-LM** on complex enterprise documents using Ragas metrics such as Context Precision and Faithfulness, plus project-specific hallucination risk scoring.
 
 The long-term goal is not to ship another chatbot. The goal is to make this repo a hiring-grade proof artifact:
 
@@ -12,7 +12,7 @@ The long-term goal is not to ship another chatbot. The goal is to make this repo
 
 ## Current Status
 
-This repository is currently an early **risk-aware ML research framework**, not yet a complete RAG product.
+This repository is currently an early **risk-aware ML research framework** evolving toward the Enterprise RAG benchmark described in `docs/benchmarks/BENCHMARK.md`.
 
 Implemented today:
 
@@ -21,34 +21,33 @@ Implemented today:
 - Quantitative risk metrics in `src/metrics/`, including VaR/CVaR, drawdown, Sharpe/Sortino, ruin, liquidity, dependence, and volatility-surface utilities.
 - Risk-aware loss implementations in `src/losses/`, including CVaR and tail-aware losses.
 - Unit and integration tests for several core components.
+- Frozen benchmark protocol and bundled financial-policy sample corpus.
+- Standard RAG and RAFT-LM v1 pipeline contracts (`src/rag/`), eval harness, and report schema (`src/evals/`).
 
-Not implemented yet:
+Not yet available (future benchmark artifacts):
 
-- RAG ingestion, chunking, embeddings, vector store, retriever, or generator pipeline.
-- Ragas benchmark harness.
-- Standard RAG vs RAFT-LM comparison report.
-- Streamlit/Gradio demo.
-- Docker deployment and `.env.example`.
-- CI and GitHub-ready benchmark artifacts.
+- Published benchmark numbers and comparison charts under `docs/benchmarks/results/`.
+- Live Ragas runs with production LLM providers (stub mode works offline).
+- CI-generated GitHub-ready benchmark artifacts.
 
 ## Strategic Roadmap
 
-The canonical product strategy is documented in:
+The canonical benchmark contract is documented in:
 
-- `docs/ENTERPRISE-RAG-ACCURACY-ENGINE-ROADMAP.md`
+- [`docs/benchmarks/BENCHMARK.md`](docs/benchmarks/BENCHMARK.md)
 
-That roadmap defines the finite showcase goal: build a reproducible benchmark and demo showing RAFT-LM outperforming Standard RAG on one legal or financial corpus, with Ragas-backed metrics, a README graph, and Docker-based reproduction.
+That contract defines the finite showcase goal: a reproducible benchmark and demo that will show RAFT-LM compared to Standard RAG on the bundled financial-policy corpus, with Ragas-backed metrics, saved artifacts, and Docker-based local reproduction.
 
 ## Target Showcase
 
-The finished public version should include:
+The finished public version will include:
 
-- A frozen benchmark protocol in `docs/benchmarks/BENCHMARK.md`.
-- A Standard RAG baseline and RAFT-LM pipeline evaluated under identical conditions.
-- Ragas scores for Context Precision, Faithfulness, and answer quality.
+- A frozen benchmark protocol in `docs/benchmarks/BENCHMARK.md` (available now).
+- A Standard RAG baseline and RAFT-LM pipeline evaluated under identical conditions (contracts implemented; full runs pending artifacts).
+- Ragas scores for Context Precision, Faithfulness, and optional answer quality.
 - A hallucination severity score for enterprise risk.
 - A generated benchmark chart comparing Standard RAG vs RAFT-LM.
-- A Streamlit or Gradio dashboard for exploring questions, retrieved evidence, answers, citations, and scores.
+- A Streamlit dashboard for exploring questions, retrieved evidence, answers, citations, and scores.
 - Docker Compose for a local demo and benchmark run.
 
 ## Quick Start
@@ -57,6 +56,7 @@ Install dependencies:
 
 ```bash
 pip install -r requirements.txt
+pip install -r requirements-benchmark.txt   # LangGraph + optional Ragas
 ```
 
 Run the current synthetic training workflow:
@@ -71,6 +71,13 @@ Run tests:
 pytest
 ```
 
+Benchmark and demo (after configuring `.env` from `.env.example`):
+
+```bash
+make benchmark
+make demo
+```
+
 ## Project Principle
 
-Every public claim should be backed by a reproducible artifact. Until the RAG benchmark exists, RAFT-LM should be described honestly as a risk-aware ML foundation evolving toward an Enterprise RAG Accuracy Engine.
+Every public claim should be backed by a reproducible artifact. Until benchmark results are saved under `docs/benchmarks/results/`, RAFT-LM should be described as a risk-aware ML foundation with benchmark **contracts** in place, not as a completed accuracy proof.

@@ -1,0 +1,32 @@
+{
+  "corpus_id": "financial_policy_v1",
+  "title": "Synthetic Financial Compliance Policy Sample",
+  "description": "Bundled sample for RAFT-LM benchmark contract. Not legal advice.",
+  "license": "synthetic-sample",
+  "documents": [
+  {
+    "doc_id": "policy_capital",
+    "path": "policy_capital.md",
+    "distractor_keywords": ["marketing", "brand awareness"]
+  },
+  {
+    "doc_id": "policy_aml",
+    "path": "policy_aml.md",
+    "distractor_keywords": ["office supplies", "cafeteria"]
+  },
+  {
+    "doc_id": "policy_reporting",
+    "path": "policy_reporting.md",
+    "distractor_keywords": ["social media", "holiday party"]
+  },
+  {
+    "doc_id": "policy_liquidity",
+    "path": "policy_liquidity.md",
+    "distractor_keywords": ["merchandise", "logo redesign"]
+  }
+  ],
+  "chunk_defaults": {
+    "chunk_size": 512,
+    "chunk_overlap": 64
+  }
+}
