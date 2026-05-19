@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.rag.corpus import load_corpus_chunks
-from src.rag.retrievers import BenchmarkBudget, VectorRetriever
+from src.rag.ingestion import ingest_corpus
+from src.rag.retrievers import BenchmarkBudget, ChunkRetriever
 
 
 @pytest.fixture
@@ -15,16 +15,16 @@ def corpus_dir():
 
 
 def test_retriever_returns_top_k(corpus_dir):
-    chunks = load_corpus_chunks(corpus_dir)
-    retriever = VectorRetriever(chunks)
+    chunks = ingest_corpus(corpus_dir)
+    retriever = ChunkRetriever(chunks)
     results = retriever.retrieve("CET1 capital ratio", top_k=2)
     assert len(results) == 2
     assert results[0].score >= results[1].score
 
 
 def test_distractor_penalty_lowers_score(corpus_dir):
-    chunks = load_corpus_chunks(corpus_dir)
-    retriever = VectorRetriever(chunks)
+    chunks = ingest_corpus(corpus_dir)
+    retriever = ChunkRetriever(chunks)
     results = retriever.retrieve("policy", top_k=4)
     penalized = retriever.apply_distractor_penalty(results, penalty=0.5)
     assert penalized[0].score <= results[0].score + 0.01

@@ -11,6 +11,17 @@ from typing import Any, Dict, List, Optional
 
 SCHEMA_VERSION = "1.0.0"
 
+REQUIRED_REPORT_FIELDS = [
+    "schema_version",
+    "corpus_id",
+    "created_at",
+    "standard",
+    "raft_lm",
+    "run_id",
+    "environment",
+    "config",
+]
+
 
 @dataclass
 class CitationRecord:
@@ -48,6 +59,36 @@ class PipelineMetrics:
 
 
 @dataclass
+class RetrievalMetadata:
+    top_k: int = 0
+    chunk_ids: List[str] = field(default_factory=list)
+    scores: List[float] = field(default_factory=list)
+    embedding_model: str = ""
+    vector_store: str = ""
+    context_chars_used: int = 0
+
+
+@dataclass
+class RunEnvironment:
+    embedding_model: str = "deterministic-stub"
+    generation_model: str = "deterministic-stub"
+    model_provider: str = "stub"
+    vector_store: str = "in_memory"
+    benchmark_mode: str = "stub"
+    python_version: str = ""
+
+
+@dataclass
+class RunConfig:
+    corpus_path: str = ""
+    max_retrieval_depth: int = 4
+    max_context_chars: int = 4096
+    run_count: int = 1
+    seed: Optional[int] = None
+    pipeline: str = "both"
+
+
+@dataclass
 class BenchmarkRun:
     question_id: str
     question: str
@@ -56,6 +97,7 @@ class BenchmarkRun:
     citations: List[CitationRecord]
     pipeline_name: str
     risk_domain: str = "operational"
+    retrieval: Optional[RetrievalMetadata] = None
 
 
 @dataclass
@@ -69,6 +111,9 @@ class ComparisonReport:
     chart_labels: List[str] = field(default_factory=list)
     chart_standard_values: List[float] = field(default_factory=list)
     chart_raft_lm_values: List[float] = field(default_factory=list)
+    run_id: str = ""
+    environment: RunEnvironment = field(default_factory=RunEnvironment)
+    config: RunConfig = field(default_factory=RunConfig)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -89,6 +134,9 @@ def export_json_schema() -> Dict[str, Any]:
             "created_at",
             "standard",
             "raft_lm",
+            "run_id",
+            "environment",
+            "config",
         ],
         "properties": {
             "schema_version": {"type": "string"},
@@ -154,6 +202,38 @@ def load_comparison_report(path: Path) -> ComparisonReport:
             artifact_path=d.get("artifact_path", ""),
         )
 
+    def _retrieval(d: Optional[Dict[str, Any]]) -> Optional[RetrievalMetadata]:
+        if not d:
+            return None
+        return RetrievalMetadata(
+            top_k=int(d.get("top_k", 0)),
+            chunk_ids=list(d.get("chunk_ids", [])),
+            scores=[float(s) for s in d.get("scores", [])],
+            embedding_model=str(d.get("embedding_model", "")),
+            vector_store=str(d.get("vector_store", "")),
+            context_chars_used=int(d.get("context_chars_used", 0)),
+        )
+
+    def _environment(d: Dict[str, Any]) -> RunEnvironment:
+        return RunEnvironment(
+            embedding_model=str(d.get("embedding_model", "deterministic-stub")),
+            generation_model=str(d.get("generation_model", "deterministic-stub")),
+            model_provider=str(d.get("model_provider", "stub")),
+            vector_store=str(d.get("vector_store", "in_memory")),
+            benchmark_mode=str(d.get("benchmark_mode", "stub")),
+            python_version=str(d.get("python_version", "")),
+        )
+
+    def _config(d: Dict[str, Any]) -> RunConfig:
+        return RunConfig(
+            corpus_path=str(d.get("corpus_path", "")),
+            max_retrieval_depth=int(d.get("max_retrieval_depth", 4)),
+            max_context_chars=int(d.get("max_context_chars", 4096)),
+            run_count=int(d.get("run_count", 1)),
+            seed=d.get("seed"),
+            pipeline=str(d.get("pipeline", "both")),
+        )
+
     runs = []
     for r in data.get("runs", []):
         citations = [
@@ -168,6 +248,7 @@ def load_comparison_report(path: Path) -> ComparisonReport:
                 citations=citations,
                 pipeline_name=r["pipeline_name"],
                 risk_domain=r.get("risk_domain", "operational"),
+                retrieval=_retrieval(r.get("retrieval")),
             )
         )
 
@@ -181,4 +262,7 @@ def load_comparison_report(path: Path) -> ComparisonReport:
         chart_labels=list(data.get("chart_labels", [])),
         chart_standard_values=list(data.get("chart_standard_values", [])),
         chart_raft_lm_values=list(data.get("chart_raft_lm_values", [])),
+        run_id=data.get("run_id", ""),
+        environment=_environment(data.get("environment", {})),
+        config=_config(data.get("config", {})),
     )

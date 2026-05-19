@@ -2,25 +2,144 @@
 
 from __future__ import annotations
 
+import os
+import sys
 import uuid
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from src.evals.benchmark_schema import (
     BenchmarkRun,
     ComparisonReport,
+    RetrievalMetadata,
+    RunConfig,
+    RunEnvironment,
     new_comparison_report,
 )
 from src.evals.hallucination_risk import aggregate_severity, score_hallucination_risk
 from src.evals.ragas_runner import run_ragas_eval
 from src.evals.report_writer import write_benchmark_report
-from src.rag.corpus import load_manifest, load_questions
+from src.rag.ingestion import load_manifest, load_questions, resolve_corpus_dir
 from src.rag.pipelines import RaftLMPipeline, StandardRAGPipeline
-from src.rag.retrievers import BenchmarkBudget
+from src.rag.retrievers import BenchmarkBudget, budget_from_env
 
 
 def default_corpus_dir() -> Path:
-    return Path(__file__).resolve().parents[2] / "data" / "benchmark_corpus" / "financial_policy"
+    return resolve_corpus_dir()
+
+
+def _environment_from_budget(budget: BenchmarkBudget) -> RunEnvironment:
+    mode = os.getenv("BENCHMARK_MODE", "stub")
+    return RunEnvironment(
+        embedding_model=budget.embedding_model,
+        generation_model=budget.generation_model,
+        model_provider=budget.model_provider,
+        vector_store=budget.vector_store,
+        benchmark_mode=mode,
+        python_version=f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+    )
+
+
+def _retrieval_metadata(result) -> Optional[RetrievalMetadata]:
+    log = result.retrieval_log
+    if log is None:
+        return None
+    return RetrievalMetadata(
+        top_k=log.top_k,
+        chunk_ids=list(log.chunk_ids),
+        scores=list(log.scores),
+        embedding_model=log.embedding_model,
+        vector_store=log.vector_store,
+        context_chars_used=log.context_chars_used,
+    )
+
+
+def run_standard_rag_benchmark(
+    corpus_dir: Optional[Path] = None,
+    out_dir: Optional[Path] = None,
+    budget: Optional[BenchmarkBudget] = None,
+    *,
+    questions_limit: Optional[int] = None,
+) -> ComparisonReport:
+    """Standard RAG-only benchmark path (S3-04 entry)."""
+    corpus_dir = Path(corpus_dir or default_corpus_dir())
+    base_out = Path(
+        out_dir
+        or os.getenv(
+            "BENCHMARK_RESULTS_DIR",
+            str(Path(__file__).resolve().parents[2] / "docs" / "benchmarks" / "results"),
+        )
+    )
+    budget = budget or budget_from_env()
+    manifest = load_manifest(corpus_dir)
+    questions = load_questions(corpus_dir)
+    if questions_limit is not None:
+        questions = questions[:questions_limit]
+
+    pipeline = StandardRAGPipeline(corpus_dir, budget=budget)
+    run_id = str(uuid.uuid4())[:8]
+
+    report = new_comparison_report(manifest.corpus_id)
+    report.run_id = run_id
+    report.environment = _environment_from_budget(budget)
+    report.config = RunConfig(
+        corpus_path=str(corpus_dir),
+        max_retrieval_depth=budget.max_retrieval_depth,
+        max_context_chars=budget.max_context_chars,
+        run_count=budget.run_count,
+        seed=budget.seed,
+        pipeline="standard_rag",
+    )
+    report.standard.run_id = f"standard-{run_id}"
+
+    standard_samples: List[dict] = []
+    standard_severities = []
+    runs: List[BenchmarkRun] = []
+
+    for row in questions:
+        q = row["question"]
+        ground_truth = row.get("ground_truth", "")
+        risk_domain = row.get("risk_domain", "operational")
+        result = pipeline.run(q)
+        context = "\n".join(c.text for c in result.retrieved_chunks)
+        meta = {"risk_domain": risk_domain, "ground_truth": ground_truth}
+        sev = score_hallucination_risk(result.answer, context, meta)
+        standard_severities.append(sev)
+        standard_samples.append(
+            {
+                "question": q,
+                "answer": result.answer,
+                "context": context,
+                "ground_truth": ground_truth,
+                "pipeline_name": "standard_rag",
+            }
+        )
+        runs.append(
+            BenchmarkRun(
+                question_id=row["question_id"],
+                question=q,
+                answer=result.answer,
+                ground_truth=ground_truth,
+                citations=result.citations,
+                pipeline_name="standard_rag",
+                risk_domain=risk_domain,
+                retrieval=_retrieval_metadata(result),
+            )
+        )
+
+    report.runs = runs
+    report.standard.ragas = run_ragas_eval(standard_samples)
+    report.standard.severity = aggregate_severity(standard_severities)
+    report.chart_labels = ["context_precision", "faithfulness"]
+    report.chart_standard_values = [
+        report.standard.ragas.context_precision,
+        report.standard.ragas.faithfulness,
+    ]
+    report.chart_raft_lm_values = [0.0, 0.0]
+
+    paths = write_benchmark_report(report, base_out, run_id=run_id)
+    report.standard.artifact_path = str(paths["report_json"])
+    return report
 
 
 def run_benchmark_comparison(
@@ -29,22 +148,32 @@ def run_benchmark_comparison(
     budget: Optional[BenchmarkBudget] = None,
 ) -> ComparisonReport:
     corpus_dir = Path(corpus_dir or default_corpus_dir())
-    out_dir = Path(
+    base_out = Path(
         out_dir
-        or Path(__file__).resolve().parents[2]
-        / "docs"
-        / "benchmarks"
-        / "results"
+        or os.getenv(
+            "BENCHMARK_RESULTS_DIR",
+            str(Path(__file__).resolve().parents[2] / "docs" / "benchmarks" / "results"),
+        )
     )
-    budget = budget or BenchmarkBudget()
+    budget = budget or budget_from_env()
     manifest = load_manifest(corpus_dir)
     questions = load_questions(corpus_dir)
 
     standard = StandardRAGPipeline(corpus_dir, budget=budget)
     raft = RaftLMPipeline(corpus_dir, budget=budget)
 
-    report = new_comparison_report(manifest.corpus_id)
     run_id = str(uuid.uuid4())[:8]
+    report = new_comparison_report(manifest.corpus_id)
+    report.run_id = run_id
+    report.environment = _environment_from_budget(budget)
+    report.config = RunConfig(
+        corpus_path=str(corpus_dir),
+        max_retrieval_depth=budget.max_retrieval_depth,
+        max_context_chars=budget.max_context_chars,
+        run_count=budget.run_count,
+        seed=budget.seed,
+        pipeline="both",
+    )
     report.standard.run_id = f"standard-{run_id}"
     report.raft_lm.run_id = f"raft-{run_id}"
 
@@ -99,6 +228,7 @@ def run_benchmark_comparison(
                 citations=std_result.citations,
                 pipeline_name="standard_rag",
                 risk_domain=risk_domain,
+                retrieval=_retrieval_metadata(std_result),
             )
         )
         runs.append(
@@ -110,6 +240,7 @@ def run_benchmark_comparison(
                 citations=raft_result.citations,
                 pipeline_name="raft_lm",
                 risk_domain=risk_domain,
+                retrieval=_retrieval_metadata(raft_result),
             )
         )
 
@@ -129,14 +260,18 @@ def run_benchmark_comparison(
         report.raft_lm.ragas.faithfulness,
     ]
 
-    paths = write_benchmark_report(report, out_dir)
+    paths = write_benchmark_report(report, base_out, run_id=run_id)
     report.standard.artifact_path = str(paths["report_json"])
     report.raft_lm.artifact_path = str(paths["report_json"])
     return report
 
 
 def main() -> None:
-    run_benchmark_comparison()
+    mode = os.getenv("BENCHMARK_PIPELINE", "both").lower()
+    if mode == "standard_rag":
+        run_standard_rag_benchmark()
+    else:
+        run_benchmark_comparison()
 
 
 if __name__ == "__main__":

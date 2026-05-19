@@ -5,25 +5,46 @@ from __future__ import annotations
 import csv
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
-from src.evals.benchmark_schema import ComparisonReport
+from src.evals.benchmark_schema import ComparisonReport, REQUIRED_REPORT_FIELDS
 
 
-def write_benchmark_report(comparison: ComparisonReport, out_dir: Path) -> Dict[str, Path]:
+def validate_report_schema(comparison: ComparisonReport) -> List[str]:
+    """Return missing required top-level fields (empty list = valid)."""
+    data = comparison.to_dict()
+    missing = [f for f in REQUIRED_REPORT_FIELDS if f not in data or data[f] in (None, "")]
+    if not comparison.runs and "runs" not in missing:
+        pass
+    return missing
+
+
+def write_benchmark_report(
+    comparison: ComparisonReport,
+    out_dir: Path,
+    *,
+    run_id: str | None = None,
+) -> Dict[str, Path]:
     out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    rid = run_id or comparison.run_id or "latest"
+    run_dir = out_dir / rid
+    run_dir.mkdir(parents=True, exist_ok=True)
+    comparison.run_id = rid
 
-    report_path = out_dir / "report.json"
+    missing = validate_report_schema(comparison)
+    if missing:
+        raise ValueError(f"Report missing required fields: {missing}")
+
+    report_path = run_dir / "report.json"
     report_path.write_text(comparison.to_json(), encoding="utf-8")
 
-    csv_path = out_dir / "metrics.csv"
+    csv_path = run_dir / "metrics.csv"
     _write_metrics_csv(comparison, csv_path)
 
-    md_path = out_dir / "summary.md"
+    md_path = run_dir / "summary.md"
     md_path.write_text(_write_summary_md(comparison), encoding="utf-8")
 
-    chart_path = out_dir / "comparison_chart.json"
+    chart_path = run_dir / "comparison_chart.json"
     chart_path.write_text(
         json.dumps(_chart_payload(comparison), indent=2),
         encoding="utf-8",
@@ -33,6 +54,7 @@ def write_benchmark_report(comparison: ComparisonReport, out_dir: Path) -> Dict[
     comparison.raft_lm.artifact_path = str(report_path)
 
     return {
+        "run_dir": run_dir,
         "report_json": report_path,
         "metrics_csv": csv_path,
         "summary_md": md_path,
@@ -58,6 +80,7 @@ def _chart_payload(comparison: ComparisonReport) -> Dict[str, Any]:
         "standard_rag": standard_vals,
         "raft_lm": raft_vals,
         "artifact_source": "report.json",
+        "run_id": comparison.run_id,
     }
 
 
@@ -93,10 +116,39 @@ def _write_metrics_csv(comparison: ComparisonReport, path: Path) -> None:
 def _write_summary_md(comparison: ComparisonReport) -> str:
     s = comparison.standard
     r = comparison.raft_lm
+    env = comparison.environment
+    cfg = comparison.config
+    ragas_note = (
+        "_Ragas headline metrics are stubbed until S4; slots may be null in live JSON._"
+        if env.benchmark_mode in ("stub", "smoke", "mock")
+        else ""
+    )
     return f"""# Benchmark Summary
 
 **Corpus:** {comparison.corpus_id}  
+**Run ID:** {comparison.run_id}  
 **Created:** {comparison.created_at}
+
+## Environment
+
+| Field | Value |
+|-------|-------|
+| Benchmark mode | {env.benchmark_mode} |
+| Embedding model | {env.embedding_model} |
+| Generation model | {env.generation_model} |
+| Vector store | {env.vector_store} |
+| Model provider | {env.model_provider} |
+
+## Run config
+
+| Field | Value |
+|-------|-------|
+| Corpus path | {cfg.corpus_path} |
+| top-k | {cfg.max_retrieval_depth} |
+| Max context chars | {cfg.max_context_chars} |
+| Run count | {cfg.run_count} |
+| Seed | {cfg.seed} |
+| Pipeline | {cfg.pipeline} |
 
 ## Standard RAG vs RAFT-LM
 
@@ -106,6 +158,8 @@ def _write_summary_md(comparison: ComparisonReport) -> str:
 | Faithfulness | {s.ragas.faithfulness} | {r.ragas.faithfulness} |
 | Severity events | {s.severity.total_events} | {r.severity.total_events} |
 | Max severity | {s.severity.max_severity} | {r.severity.max_severity} |
+
+{ragas_note}
 
 Artifacts: `report.json`, `metrics.csv`, `comparison_chart.json`
 """

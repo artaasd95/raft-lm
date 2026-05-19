@@ -74,9 +74,20 @@ pytest
 Benchmark and demo (after configuring `.env` from `.env.example`):
 
 ```bash
+# Standard RAG-only stub run (no paid API keys)
 make benchmark
+
+# Full Standard vs RAFT-LM comparison
+make benchmark-compare
+
+# Equivalent CLI
+python scripts/run_benchmark.py --mode stub --pipeline standard_rag
+python scripts/run_benchmark.py --mode smoke --pipeline standard_rag --questions-limit 1
+
 make demo
 ```
+
+Results are written under `docs/benchmarks/results/<run_id>/` (`report.json`, `metrics.csv`, `summary.md`, `comparison_chart.json`).
 
 ## Project Principle
 

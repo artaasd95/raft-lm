@@ -4,9 +4,10 @@ import json
 from pathlib import Path
 
 from src.evals.benchmark_schema import (
-    ComparisonReport,
     PipelineMetrics,
     RagasScores,
+    RunConfig,
+    RunEnvironment,
     SeveritySummary,
     new_comparison_report,
 )
@@ -31,8 +32,11 @@ def test_write_benchmark_report_creates_files(tmp_path):
     report.chart_labels = ["context_precision", "faithfulness"]
     report.chart_standard_values = [0.7, 0.6]
     report.chart_raft_lm_values = [0.8, 0.75]
+    report.run_id = "test-run"
+    report.environment = RunEnvironment(benchmark_mode="stub")
+    report.config = RunConfig(corpus_path="/tmp/corpus", pipeline="both")
 
-    paths = write_benchmark_report(report, tmp_path)
+    paths = write_benchmark_report(report, tmp_path, run_id="test-run")
     assert paths["report_json"].exists()
     assert paths["metrics_csv"].exists()
     assert paths["summary_md"].exists()

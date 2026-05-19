@@ -1,18 +1,13 @@
-"""Enterprise RAG pipelines (LangGraph)."""
+"""Enterprise RAG pipelines (LangGraph) and ingestion."""
 
-from src.rag.pipelines import (
-    PipelineResult,
-    RaftDataBuilder,
-    RaftLMPipeline,
-    StandardRAGPipeline,
-)
-from src.rag.retrievers import BenchmarkBudget, VectorRetriever
+from src.rag.ingestion import ChunkRecord, ingest_corpus, resolve_corpus_dir
+from src.rag.retrievers import BenchmarkBudget, ChunkRetriever, VectorRetriever
 
 __all__ = [
     "BenchmarkBudget",
-    "PipelineResult",
-    "RaftDataBuilder",
-    "RaftLMPipeline",
-    "StandardRAGPipeline",
+    "ChunkRecord",
+    "ChunkRetriever",
     "VectorRetriever",
+    "ingest_corpus",
+    "resolve_corpus_dir",
 ]

@@ -7,7 +7,6 @@ RAFT-LM v1: retrieve -> distractor filter -> evidence policy -> generate
 
 from __future__ import annotations
 
-import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -16,8 +15,15 @@ from typing import Any, Dict, List, Optional, TypedDict
 from langgraph.graph import END, StateGraph
 
 from src.evals.benchmark_schema import CitationRecord
-from src.rag.corpus import DocumentChunk, load_corpus_chunks, load_questions
-from src.rag.retrievers import BenchmarkBudget, RetrievedChunk, VectorRetriever
+from src.rag.ingestion import ChunkRecord, load_questions, resolve_corpus_dir
+from src.rag.retrievers import (
+    BenchmarkBudget,
+    ChunkRetriever,
+    RetrievalLog,
+    RetrievedChunk,
+    build_retriever,
+    budget_from_env,
+)
 
 
 class RAGGraphState(TypedDict, total=False):
@@ -28,6 +34,7 @@ class RAGGraphState(TypedDict, total=False):
     citations: List[CitationRecord]
     pipeline_name: str
     budget: BenchmarkBudget
+    retrieval_log: RetrievalLog
 
 
 @dataclass
@@ -39,6 +46,7 @@ class PipelineResult:
     pipeline_name: str
     budget: BenchmarkBudget
     metadata: Dict[str, Any] = field(default_factory=dict)
+    retrieval_log: Optional[RetrievalLog] = None
 
 
 SYSTEM_PROMPT = (
@@ -86,10 +94,13 @@ def _chunks_to_citations(chunks: List[RetrievedChunk]) -> List[CitationRecord]:
     ]
 
 
-def _node_retrieve(state: RAGGraphState, retriever: VectorRetriever) -> RAGGraphState:
+def _node_retrieve(state: RAGGraphState, retriever: ChunkRetriever) -> RAGGraphState:
     budget = state["budget"]
-    retrieved = retriever.retrieve(state["query"], budget.max_retrieval_depth)
-    return {**state, "retrieved": retrieved}
+    log = RetrievalLog(query=state["query"], top_k=budget.max_retrieval_depth)
+    retrieved = retriever.retrieve(
+        state["query"], budget.max_retrieval_depth, log=log
+    )
+    return {**state, "retrieved": retrieved, "retrieval_log": log}
 
 
 def _node_generate(state: RAGGraphState) -> RAGGraphState:
@@ -100,7 +111,7 @@ def _node_generate(state: RAGGraphState) -> RAGGraphState:
     return {**state, "answer": answer, "citations": citations}
 
 
-def _build_standard_graph(retriever: VectorRetriever) -> Any:
+def _build_standard_graph(retriever: ChunkRetriever) -> Any:
     graph = StateGraph(RAGGraphState)
 
     def retrieve(state: RAGGraphState) -> RAGGraphState:
@@ -114,7 +125,7 @@ def _build_standard_graph(retriever: VectorRetriever) -> Any:
     return graph.compile()
 
 
-def _build_raft_graph(retriever: VectorRetriever) -> Any:
+def _build_raft_graph(retriever: ChunkRetriever) -> Any:
     graph = StateGraph(RAGGraphState)
 
     def retrieve(state: RAGGraphState) -> RAGGraphState:
@@ -158,10 +169,9 @@ class StandardRAGPipeline:
         corpus_dir: Path,
         budget: Optional[BenchmarkBudget] = None,
     ) -> None:
-        self.corpus_dir = Path(corpus_dir)
-        self.budget = budget or BenchmarkBudget()
-        chunks = load_corpus_chunks(self.corpus_dir)
-        self._retriever = VectorRetriever(chunks)
+        self.corpus_dir = Path(corpus_dir or resolve_corpus_dir())
+        self.budget = budget or budget_from_env()
+        self._retriever = build_retriever(self.corpus_dir)
         self._graph = _build_standard_graph(self._retriever)
 
     def run(self, query: str) -> PipelineResult:
@@ -172,6 +182,7 @@ class StandardRAGPipeline:
         }
         out = self._graph.invoke(state)
         retrieved = out.get("retrieved") or []
+        rlog = out.get("retrieval_log")
         return PipelineResult(
             query=query,
             answer=out.get("answer", ""),
@@ -179,7 +190,13 @@ class StandardRAGPipeline:
             retrieved_chunks=retrieved,
             pipeline_name="standard_rag",
             budget=self.budget,
-            metadata={"model_provider": self.budget.model_provider},
+            metadata={
+                "model_provider": self.budget.model_provider,
+                "embedding_model": self._retriever.embedding_model,
+                "vector_store": self._retriever.vector_store_name,
+                "generation_model": self.budget.generation_model,
+            },
+            retrieval_log=rlog,
         )
 
 
@@ -191,10 +208,9 @@ class RaftLMPipeline:
         corpus_dir: Path,
         budget: Optional[BenchmarkBudget] = None,
     ) -> None:
-        self.corpus_dir = Path(corpus_dir)
-        self.budget = budget or BenchmarkBudget()
-        chunks = load_corpus_chunks(self.corpus_dir)
-        self._retriever = VectorRetriever(chunks)
+        self.corpus_dir = Path(corpus_dir or resolve_corpus_dir())
+        self.budget = budget or budget_from_env()
+        self._retriever = build_retriever(self.corpus_dir)
         self._graph = _build_raft_graph(self._retriever)
 
     def run(self, query: str) -> PipelineResult:
@@ -205,6 +221,7 @@ class RaftLMPipeline:
         }
         out = self._graph.invoke(state)
         retrieved = out.get("filtered") or out.get("retrieved") or []
+        rlog = out.get("retrieval_log")
         return PipelineResult(
             query=query,
             answer=out.get("answer", ""),
@@ -214,9 +231,13 @@ class RaftLMPipeline:
             budget=self.budget,
             metadata={
                 "model_provider": self.budget.model_provider,
+                "embedding_model": self._retriever.embedding_model,
+                "vector_store": self._retriever.vector_store_name,
+                "generation_model": self.budget.generation_model,
                 "evidence_policy": True,
                 "distractor_aware": True,
             },
+            retrieval_log=rlog,
         )
 
 
@@ -225,7 +246,9 @@ class RaftDataBuilder:
 
     def __init__(self, corpus_dir: Path) -> None:
         self.corpus_dir = Path(corpus_dir)
-        self._chunks: List[DocumentChunk] = load_corpus_chunks(self.corpus_dir)
+        from src.rag.ingestion import ingest_corpus
+
+        self._chunks: List[ChunkRecord] = ingest_corpus(self.corpus_dir)
 
     def build_pairs(self, max_pairs: int = 10) -> List[Dict[str, str]]:
         questions = load_questions(self.corpus_dir)
@@ -241,10 +264,3 @@ class RaftDataBuilder:
         return pairs
 
 
-def budget_from_env() -> BenchmarkBudget:
-    return BenchmarkBudget(
-        max_retrieval_depth=int(os.getenv("MAX_RETRIEVAL_DEPTH", "4")),
-        max_context_chars=int(os.getenv("MAX_CONTEXT_CHARS", "4096")),
-        model_provider=os.getenv("MODEL_PROVIDER", "stub"),
-        run_count=int(os.getenv("BENCHMARK_RUN_COUNT", "1")),
-    )

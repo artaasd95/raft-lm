@@ -4,7 +4,10 @@ test:
 	pytest
 
 benchmark:
-	python -m src.evals.benchmark_runner
+	python scripts/run_benchmark.py --mode stub --pipeline standard_rag
+
+benchmark-compare:
+	python scripts/run_benchmark.py --mode stub --pipeline both
 
 demo:
 	streamlit run src/demo/streamlit_app.py
