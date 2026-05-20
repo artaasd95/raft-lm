@@ -177,6 +177,13 @@ def build_retriever(
     return ChunkRetriever(chunks, embedding=embedding, store=store)
 
 
+def retriever_from_env(corpus_dir) -> ChunkRetriever:
+    """Build retriever using embedding and vector-store adapters from environment."""
+    embed = embedding_from_env()
+    store = vector_store_from_env(embed.dimension)
+    return build_retriever(corpus_dir, embedding=embed, store=store)
+
+
 def budget_from_env() -> BenchmarkBudget:
     return BenchmarkBudget(
         max_retrieval_depth=int(os.getenv("MAX_RETRIEVAL_DEPTH", "4")),

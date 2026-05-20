@@ -1,0 +1,57 @@
+# Manual-only benchmark smoke workflow (S4-06).
+# Does NOT run on push or pull_request — invoke via GitHub Actions "Run workflow".
+
+name: Benchmark Smoke (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Benchmark mode (stub/smoke/mock only in CI)
+        required: true
+        default: mock
+        type: choice
+        options:
+          - stub
+          - smoke
+          - mock
+
+env:
+  BENCHMARK_MODE: ${{ github.event.inputs.mode }}
+  EMBEDDING_MODE: mock
+  EMBEDDING_MODEL: deterministic-stub
+  MODEL_PROVIDER: stub
+  VECTOR_STORE: in_memory
+
+jobs:
+  ragas-benchmark-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-benchmark.txt
+
+      - name: Run unit tests (RAG adapters + evals)
+        run: |
+          pytest tests/unit/test_rag_adapters.py \
+            tests/unit/test_ragas_runner.py \
+            tests/unit/test_hallucination_risk.py \
+            tests/unit/test_report_writer.py \
+            tests/unit/test_benchmark_schema.py \
+            -q
+
+      - name: Run Ragas benchmark integration smoke (mock providers)
+        run: |
+          pytest tests/integration/test_ragas_benchmark_smoke.py -q
+
+      - name: Validate workflow file syntax
+        run: python -c "import yaml, pathlib; yaml.safe_load(pathlib.Path('.github/workflows/benchmark_smoke.yml').read_text())"

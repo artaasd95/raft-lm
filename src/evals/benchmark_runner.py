@@ -124,12 +124,46 @@ def run_standard_rag_benchmark(
                 pipeline_name="standard_rag",
                 risk_domain=risk_domain,
                 retrieval=_retrieval_metadata(result),
+                severity=sev.severity,
+                severity_bucket=sev.bucket,
             )
         )
 
     report.runs = runs
     report.standard.ragas = run_ragas_eval(standard_samples)
     report.standard.severity = aggregate_severity(standard_severities)
+    for run, sample in zip(
+        [r for r in runs if r.pipeline_name == "standard_rag"],
+        standard_samples,
+    ):
+        per = run_ragas_eval([sample])
+        run.ragas_context_precision = per.context_precision
+        run.ragas_faithfulness = per.faithfulness
+        sev = score_hallucination_risk(
+            run.answer,
+            sample["context"],
+            {
+                "risk_domain": run.risk_domain,
+                "ground_truth": run.ground_truth,
+                "faithfulness": per.faithfulness,
+            },
+        )
+        run.severity = sev.severity
+        run.severity_bucket = sev.bucket
+    report.standard.severity = aggregate_severity(
+        [
+            score_hallucination_risk(
+                r.answer,
+                " ".join(c.excerpt for c in r.citations),
+                {
+                    "risk_domain": r.risk_domain,
+                    "ground_truth": r.ground_truth,
+                    "faithfulness": r.ragas_faithfulness,
+                },
+            )
+            for r in runs
+        ]
+    )
     report.chart_labels = ["context_precision", "faithfulness"]
     report.chart_standard_values = [
         report.standard.ragas.context_precision,
@@ -219,36 +253,92 @@ def run_benchmark_comparison(
             }
         )
 
-        runs.append(
-            BenchmarkRun(
-                question_id=row["question_id"],
-                question=q,
-                answer=std_result.answer,
-                ground_truth=ground_truth,
-                citations=std_result.citations,
-                pipeline_name="standard_rag",
-                risk_domain=risk_domain,
-                retrieval=_retrieval_metadata(std_result),
-            )
+        std_run = BenchmarkRun(
+            question_id=row["question_id"],
+            question=q,
+            answer=std_result.answer,
+            ground_truth=ground_truth,
+            citations=std_result.citations,
+            pipeline_name="standard_rag",
+            risk_domain=risk_domain,
+            retrieval=_retrieval_metadata(std_result),
+            severity=std_sev.severity,
+            severity_bucket=std_sev.bucket,
         )
-        runs.append(
-            BenchmarkRun(
-                question_id=row["question_id"],
-                question=q,
-                answer=raft_result.answer,
-                ground_truth=ground_truth,
-                citations=raft_result.citations,
-                pipeline_name="raft_lm",
-                risk_domain=risk_domain,
-                retrieval=_retrieval_metadata(raft_result),
-            )
+        raft_run = BenchmarkRun(
+            question_id=row["question_id"],
+            question=q,
+            answer=raft_result.answer,
+            ground_truth=ground_truth,
+            citations=raft_result.citations,
+            pipeline_name="raft_lm",
+            risk_domain=risk_domain,
+            retrieval=_retrieval_metadata(raft_result),
+            severity=raft_sev.severity,
+            severity_bucket=raft_sev.bucket,
         )
+        runs.append(std_run)
+        runs.append(raft_run)
 
     report.runs = runs
     report.standard.ragas = run_ragas_eval(standard_samples)
     report.raft_lm.ragas = run_ragas_eval(raft_samples)
     report.standard.severity = aggregate_severity(standard_severities)
     report.raft_lm.severity = aggregate_severity(raft_severities)
+
+    for run in runs:
+        sample = {
+            "question": run.question,
+            "answer": run.answer,
+            "context": " ".join(c.excerpt for c in run.citations),
+            "ground_truth": run.ground_truth,
+            "pipeline_name": run.pipeline_name,
+        }
+        per = run_ragas_eval([sample])
+        run.ragas_context_precision = per.context_precision
+        run.ragas_faithfulness = per.faithfulness
+        sev = score_hallucination_risk(
+            run.answer,
+            sample["context"],
+            {
+                "risk_domain": run.risk_domain,
+                "ground_truth": run.ground_truth,
+                "faithfulness": per.faithfulness,
+            },
+        )
+        run.severity = sev.severity
+        run.severity_bucket = sev.bucket
+
+    report.standard.severity = aggregate_severity(
+        [
+            score_hallucination_risk(
+                r.answer,
+                " ".join(c.excerpt for c in r.citations),
+                {
+                    "risk_domain": r.risk_domain,
+                    "ground_truth": r.ground_truth,
+                    "faithfulness": r.ragas_faithfulness,
+                },
+            )
+            for r in runs
+            if r.pipeline_name == "standard_rag"
+        ]
+    )
+    report.raft_lm.severity = aggregate_severity(
+        [
+            score_hallucination_risk(
+                r.answer,
+                " ".join(c.excerpt for c in r.citations),
+                {
+                    "risk_domain": r.risk_domain,
+                    "ground_truth": r.ground_truth,
+                    "faithfulness": r.ragas_faithfulness,
+                },
+            )
+            for r in runs
+            if r.pipeline_name == "raft_lm"
+        ]
+    )
 
     report.chart_labels = ["context_precision", "faithfulness"]
     report.chart_standard_values = [

@@ -98,6 +98,10 @@ class BenchmarkRun:
     pipeline_name: str
     risk_domain: str = "operational"
     retrieval: Optional[RetrievalMetadata] = None
+    severity: str = "none"
+    severity_bucket: str = "operational"
+    ragas_context_precision: Optional[float] = None
+    ragas_faithfulness: Optional[float] = None
 
 
 @dataclass
@@ -249,6 +253,10 @@ def load_comparison_report(path: Path) -> ComparisonReport:
                 pipeline_name=r["pipeline_name"],
                 risk_domain=r.get("risk_domain", "operational"),
                 retrieval=_retrieval(r.get("retrieval")),
+                severity=str(r.get("severity", "none")),
+                severity_bucket=str(r.get("severity_bucket", "operational")),
+                ragas_context_precision=r.get("ragas_context_precision"),
+                ragas_faithfulness=r.get("ragas_faithfulness"),
             )
         )
 
@@ -266,3 +274,35 @@ def load_comparison_report(path: Path) -> ComparisonReport:
         environment=_environment(data.get("environment", {})),
         config=_config(data.get("config", {})),
     )
+
+
+def _ragas_is_empty(scores: RagasScores) -> bool:
+    return scores.context_precision == 0.0 and scores.faithfulness == 0.0
+
+
+def backfill_ragas_scores(
+    report: ComparisonReport,
+    *,
+    standard: Optional[RagasScores] = None,
+    raft_lm: Optional[RagasScores] = None,
+) -> ComparisonReport:
+    """
+    Backfill empty/null Ragas slots on a loaded report when scores are available.
+
+    Used when S3-era runs saved pipeline output without Ragas headline metrics.
+    """
+    if standard and _ragas_is_empty(report.standard.ragas):
+        report.standard.ragas = standard
+        report.chart_standard_values = [
+            standard.context_precision,
+            standard.faithfulness,
+        ]
+    if raft_lm and _ragas_is_empty(report.raft_lm.ragas):
+        report.raft_lm.ragas = raft_lm
+        report.chart_raft_lm_values = [
+            raft_lm.context_precision,
+            raft_lm.faithfulness,
+        ]
+    if not report.chart_labels:
+        report.chart_labels = ["context_precision", "faithfulness"]
+    return report

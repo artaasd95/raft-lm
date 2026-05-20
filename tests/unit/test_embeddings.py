@@ -22,6 +22,7 @@ def test_stub_embed_documents_batch():
 
 
 def test_embedding_from_env_stub(monkeypatch):
+    monkeypatch.setenv("EMBEDDING_MODE", "mock")
     monkeypatch.setenv("EMBEDDING_MODEL", "deterministic-stub")
     adapter = embedding_from_env()
     assert isinstance(adapter, StubEmbeddingAdapter)

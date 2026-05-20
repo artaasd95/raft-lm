@@ -92,6 +92,10 @@ def _write_metrics_csv(comparison: ComparisonReport, path: Path) -> None:
             "faithfulness": comparison.standard.ragas.faithfulness,
             "answer_correctness": comparison.standard.ragas.answer_correctness,
             "severity_total": comparison.standard.severity.total_events,
+            "severity_legal": comparison.standard.severity.legal,
+            "severity_financial": comparison.standard.severity.financial,
+            "severity_compliance": comparison.standard.severity.compliance,
+            "severity_operational": comparison.standard.severity.operational,
             "max_severity": comparison.standard.severity.max_severity,
             "run_id": comparison.standard.run_id,
         },
@@ -101,6 +105,10 @@ def _write_metrics_csv(comparison: ComparisonReport, path: Path) -> None:
             "faithfulness": comparison.raft_lm.ragas.faithfulness,
             "answer_correctness": comparison.raft_lm.ragas.answer_correctness,
             "severity_total": comparison.raft_lm.severity.total_events,
+            "severity_legal": comparison.raft_lm.severity.legal,
+            "severity_financial": comparison.raft_lm.severity.financial,
+            "severity_compliance": comparison.raft_lm.severity.compliance,
+            "severity_operational": comparison.raft_lm.severity.operational,
             "max_severity": comparison.raft_lm.severity.max_severity,
             "run_id": comparison.raft_lm.run_id,
         },
@@ -157,6 +165,7 @@ def _write_summary_md(comparison: ComparisonReport) -> str:
 | Context Precision | {s.ragas.context_precision} | {r.ragas.context_precision} |
 | Faithfulness | {s.ragas.faithfulness} | {r.ragas.faithfulness} |
 | Severity events | {s.severity.total_events} | {r.severity.total_events} |
+| Severity (legal / financial / compliance / operational) | {s.severity.legal}/{s.severity.financial}/{s.severity.compliance}/{s.severity.operational} | {r.severity.legal}/{r.severity.financial}/{r.severity.compliance}/{r.severity.operational} |
 | Max severity | {s.severity.max_severity} | {r.severity.max_severity} |
 
 {ragas_note}

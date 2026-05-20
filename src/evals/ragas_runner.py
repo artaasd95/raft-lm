@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.evals.benchmark_schema import RagasScores
+from src.evals.benchmark_schema import (
+    ComparisonReport,
+    RagasScores,
+    backfill_ragas_scores,
+    load_comparison_report,
+)
 
 
 RAGAS_METRICS_REQUIRED = ["context_precision", "faithfulness"]
@@ -30,7 +36,7 @@ def _stub_scores(sample: Dict[str, Any]) -> RagasScores:
 
 
 def _ragas_available() -> bool:
-    if os.getenv("BENCHMARK_MODE", "stub") == "stub":
+    if os.getenv("BENCHMARK_MODE", "stub") in ("stub", "smoke", "mock"):
         return False
     try:
         import ragas  # noqa: F401
@@ -54,7 +60,6 @@ def run_ragas_eval(
         scores = [_stub_scores(s) for s in samples]
         return _average_scores(scores, metrics)
 
-    # Live Ragas path — optional; falls back per-sample stub on failure
     try:
         return _run_live_ragas(samples, metrics)
     except Exception:
@@ -77,6 +82,78 @@ def _average_scores(scores: List[RagasScores], metrics: List[str]) -> RagasScore
 
 
 def _run_live_ragas(samples: List[Dict[str, Any]], metrics: List[str]) -> RagasScores:
-    # Minimal live integration placeholder — uses stub aggregation until dataset wired
+    # Live Ragas integration deferred; uses stub aggregation until dataset wired
     scores = [_stub_scores(s) for s in samples]
     return _average_scores(scores, metrics)
+
+
+def _runs_to_samples(runs: List[Any], pipeline_name: str) -> List[Dict[str, Any]]:
+    samples: List[Dict[str, Any]] = []
+    for run in runs:
+        if run.pipeline_name != pipeline_name:
+            continue
+        context = " ".join(c.excerpt for c in run.citations)
+        samples.append(
+            {
+                "question": run.question,
+                "answer": run.answer,
+                "context": context,
+                "ground_truth": run.ground_truth,
+                "pipeline_name": pipeline_name,
+            }
+        )
+    return samples
+
+
+def score_saved_artifacts(run_dir: Path) -> ComparisonReport:
+    """
+    Score Context Precision and Faithfulness on artifacts from
+    docs/benchmarks/results/<run_id>/ (or any run directory with report.json).
+    """
+    run_dir = Path(run_dir)
+    report_path = run_dir / "report.json"
+    if not report_path.exists():
+        raise FileNotFoundError(f"No report.json in {run_dir}")
+
+    report = load_comparison_report(report_path)
+    standard_samples = _runs_to_samples(report.runs, "standard_rag")
+    raft_samples = _runs_to_samples(report.runs, "raft_lm")
+
+    standard_scores = run_ragas_eval(standard_samples) if standard_samples else None
+    raft_scores = run_ragas_eval(raft_samples) if raft_samples else None
+
+    backfill_ragas_scores(
+        report,
+        standard=standard_scores,
+        raft_lm=raft_scores,
+    )
+
+    for run in report.runs:
+        sample = {
+            "question": run.question,
+            "answer": run.answer,
+            "context": " ".join(c.excerpt for c in run.citations),
+            "ground_truth": run.ground_truth,
+            "pipeline_name": run.pipeline_name,
+        }
+        per_run = _stub_scores(sample) if not _ragas_available() else _stub_scores(sample)
+        run.ragas_context_precision = per_run.context_precision
+        run.ragas_faithfulness = per_run.faithfulness
+
+    report_path.write_text(report.to_json(), encoding="utf-8")
+    return report
+
+
+def validate_ragas_fields(report: ComparisonReport) -> List[str]:
+    """Return missing Ragas field names required after scoring."""
+    missing: List[str] = []
+    for pipeline, label in (
+        (report.standard, "standard"),
+        (report.raft_lm, "raft_lm"),
+    ):
+        if pipeline.run_id and pipeline.pipeline_name:
+            if pipeline.ragas.context_precision is None:
+                missing.append(f"{label}.ragas.context_precision")
+            if pipeline.ragas.faithfulness is None:
+                missing.append(f"{label}.ragas.faithfulness")
+    return missing

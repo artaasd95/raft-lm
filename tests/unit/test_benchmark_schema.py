@@ -5,6 +5,7 @@ from src.evals.benchmark_schema import (
     ComparisonReport,
     RagasScores,
     SCHEMA_VERSION,
+    backfill_ragas_scores,
     export_json_schema,
     new_comparison_report,
 )
@@ -39,3 +40,17 @@ def test_citation_record_fields():
         score=0.9,
     )
     assert cite.chunk_id.endswith("chunk_0")
+
+
+def test_backfill_ragas_scores_fills_empty_slots():
+    report = new_comparison_report("financial_policy_v1")
+    report.standard.ragas = RagasScores(context_precision=0.0, faithfulness=0.0)
+    report.raft_lm.ragas = RagasScores(context_precision=0.0, faithfulness=0.0)
+    filled = backfill_ragas_scores(
+        report,
+        standard=RagasScores(context_precision=0.72, faithfulness=0.68),
+        raft_lm=RagasScores(context_precision=0.81, faithfulness=0.77),
+    )
+    assert filled.standard.ragas.context_precision == 0.72
+    assert filled.raft_lm.ragas.faithfulness == 0.77
+    assert filled.chart_standard_values == [0.72, 0.68]

@@ -38,8 +38,8 @@ Both pipelines share the same budget and components unless noted.
 |-----------|----------|
 | Ingestion | Load `manifest.json` and markdown files from corpus directory |
 | Chunking | `chunk_size=512`, `chunk_overlap=64` (character proxy) |
-| Embeddings | `EMBEDDING_MODEL` from environment (deterministic stub offline) |
-| Vector store | In-memory index (single store for v1) |
+| Embeddings | `EMBEDDING_MODE` + `EMBEDDING_MODEL` from environment (mock/stub offline default) |
+| Vector store | `VECTOR_STORE` env: `in_memory` (default), `faiss`, or `qdrant` |
 | top-k | `max_retrieval_depth` (default 4) |
 | Prompt | Shared system + user template with citation slots |
 | Generator | `GENERATION_MODEL` / `MODEL_PROVIDER` from environment |
@@ -52,7 +52,26 @@ Both pipelines share the same budget and components unless noted.
 - **Evidence policy**: drop chunks below confidence threshold; require minimum evidence count
 - **RAFT-style data builder**: optional Q/A pair generation hook (no fine-tuning wired)
 
-Implementation: `src/rag/pipelines.py` (LangGraph), `src/rag/retrievers.py`.
+Implementation: `src/rag/pipelines.py` (LangGraph — see `docs/adr/0002-rag-orchestration-framework.md`), `src/rag/retrievers.py`.
+
+### Embedding backends (S4)
+
+| Mode | Env | CI default | Notes |
+|------|-----|------------|-------|
+| Mock / stub | `EMBEDDING_MODE=mock` | **Yes** | Deterministic SHA256 vectors; no API keys |
+| OpenAI live | `EMBEDDING_MODE=live`, `OPENAI_API_KEY`, `EMBEDDING_MODEL=text-embedding-3-small` | No | Preferred production path when keys provisioned |
+| Azure enterprise | `EMBEDDING_MODEL=azure:<deployment>` + Azure env vars | No | `AzureOpenAIEmbeddingAdapter` |
+| Self-hosted | `EMBEDDING_MODEL=compatible:<model>`, `OPENAI_COMPATIBLE_BASE_URL` | No | OpenAI-compatible endpoint |
+
+Benchmark CI and unit tests remain mock-only. Live embedding smoke is documented in `.env.example` but not executed in CI.
+
+### Vector store backends (S4)
+
+| Backend | Env | Notes |
+|---------|-----|-------|
+| In-memory | `VECTOR_STORE=in_memory` | Default; cosine similarity |
+| FAISS | `VECTOR_STORE=faiss` | Requires `faiss-cpu` |
+| Qdrant | `VECTOR_STORE=qdrant`, optional `QDRANT_URL` | Docker/remote or `:memory:` fallback |
 
 ## Evaluation metrics
 

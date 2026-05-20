@@ -41,3 +41,14 @@ def test_aggregate_severity_counts_buckets():
     summary = aggregate_severity([r1, r2])
     assert summary.total_events >= 0
     assert summary.max_severity in ("none", "low", "medium", "high", "critical")
+
+
+def test_low_faithfulness_escalates_financial():
+    result = score_hallucination_risk(
+        "some answer text",
+        "context with different words entirely",
+        {"risk_domain": "financial", "ground_truth": "truth", "faithfulness": 0.2},
+    )
+    assert result.bucket == "financial"
+    assert result.severity == "high"
+    assert result.unsupported_claim is True

@@ -46,17 +46,22 @@ def score_hallucination_risk(
     """
     Score unsupported or risky answers against enterprise buckets.
 
-    metadata may include: risk_domain, ground_truth
+    metadata may include: risk_domain, ground_truth, faithfulness (Ragas 0-1)
     """
     metadata = metadata or {}
     bucket = _normalize_bucket(metadata.get("risk_domain"))
     ground_truth = metadata.get("ground_truth", "")
+    faithfulness = metadata.get("faithfulness")
     overlap = _token_overlap(answer, context)
     gt_overlap = _token_overlap(answer, ground_truth) if ground_truth else overlap
 
     reasons: List[str] = []
+    low_faith = faithfulness is not None and faithfulness < 0.5
     unsupported = overlap < 0.2 and gt_overlap < 0.25
-    if unsupported:
+    if low_faith:
+        reasons.append(f"low Ragas faithfulness ({faithfulness})")
+        unsupported = True
+    if unsupported and not low_faith:
         reasons.append("low overlap with retrieved context and ground truth")
 
     severity = "none"

@@ -1,8 +1,15 @@
 """
 RAG pipelines implemented with LangGraph (LangChain ecosystem).
 
+Orchestration decision: docs/adr/0002-rag-orchestration-framework.md (LangGraph).
+
 Standard RAG: retrieve -> generate
 RAFT-LM v1: retrieve -> distractor filter -> evidence policy -> generate
+
+Ingestion hooks: resolve_corpus_dir / ingest_corpus (src/rag/ingestion.py)
+Retriever wiring: build_retriever with embedding_from_env / vector_store_from_env
+Citation emission: _chunks_to_citations -> CitationRecord in PipelineResult
+Benchmark integration: StandardRAGPipeline.run / RaftLMPipeline.run -> benchmark_runner
 """
 
 from __future__ import annotations
