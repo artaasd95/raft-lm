@@ -22,7 +22,13 @@ from typing import Any, Dict, List, Optional, TypedDict
 from langgraph.graph import END, StateGraph
 
 from src.evals.benchmark_schema import CitationRecord
-from src.rag.ingestion import ChunkRecord, load_questions, resolve_corpus_dir
+from src.rag.ingestion import resolve_corpus_dir
+from src.rag.raft_policy import (
+    RAFT_POLICY_VERSION,
+    DistractorAwareSelector,
+    EvidencePolicyFilter,
+    RaftDataBuilder,
+)
 from src.rag.retrievers import (
     BenchmarkBudget,
     ChunkRetriever,
@@ -141,19 +147,18 @@ def _build_raft_graph(retriever: ChunkRetriever) -> Any:
     def distractor_filter(state: RAGGraphState) -> RAGGraphState:
         budget = state["budget"]
         retrieved = state.get("retrieved") or []
-        filtered = retriever.apply_distractor_penalty(
-            retrieved, budget.distractor_penalty
-        )
+        selector = DistractorAwareSelector(penalty=budget.distractor_penalty)
+        filtered = selector.select(retrieved)
         return {**state, "filtered": filtered}
 
     def evidence_policy(state: RAGGraphState) -> RAGGraphState:
         budget = state["budget"]
         filtered = state.get("filtered") or []
-        kept = retriever.filter_by_evidence_policy(
-            filtered,
+        gate = EvidencePolicyFilter(
             min_count=budget.min_evidence_count,
             threshold=budget.evidence_confidence_threshold,
         )
+        kept = gate.filter(filtered)
         return {**state, "filtered": kept}
 
     graph.add_node("retrieve", retrieve)
@@ -202,6 +207,7 @@ class StandardRAGPipeline:
                 "embedding_model": self._retriever.embedding_model,
                 "vector_store": self._retriever.vector_store_name,
                 "generation_model": self.budget.generation_model,
+                "path": "standard-rag",
             },
             retrieval_log=rlog,
         )
@@ -243,31 +249,10 @@ class RaftLMPipeline:
                 "generation_model": self.budget.generation_model,
                 "evidence_policy": True,
                 "distractor_aware": True,
+                "policy_version": RAFT_POLICY_VERSION,
+                "path": "raft-lm",
             },
             retrieval_log=rlog,
         )
-
-
-class RaftDataBuilder:
-    """RAFT-style Q/A pair builder hook (no training loop wired)."""
-
-    def __init__(self, corpus_dir: Path) -> None:
-        self.corpus_dir = Path(corpus_dir)
-        from src.rag.ingestion import ingest_corpus
-
-        self._chunks: List[ChunkRecord] = ingest_corpus(self.corpus_dir)
-
-    def build_pairs(self, max_pairs: int = 10) -> List[Dict[str, str]]:
-        questions = load_questions(self.corpus_dir)
-        pairs: List[Dict[str, str]] = []
-        for row in questions[:max_pairs]:
-            pairs.append(
-                {
-                    "question": row["question"],
-                    "ground_truth": row.get("ground_truth", ""),
-                    "risk_domain": row.get("risk_domain", "operational"),
-                }
-            )
-        return pairs
 
 

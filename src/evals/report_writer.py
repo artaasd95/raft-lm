@@ -157,6 +157,7 @@ def _write_summary_md(comparison: ComparisonReport) -> str:
 | Run count | {cfg.run_count} |
 | Seed | {cfg.seed} |
 | Pipeline | {cfg.pipeline} |
+| Policy version | {cfg.policy_version or "n/a"} |
 
 ## Standard RAG vs RAFT-LM
 

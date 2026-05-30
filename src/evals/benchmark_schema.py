@@ -86,6 +86,7 @@ class RunConfig:
     run_count: int = 1
     seed: Optional[int] = None
     pipeline: str = "both"
+    policy_version: str = ""
 
 
 @dataclass
@@ -236,6 +237,7 @@ def load_comparison_report(path: Path) -> ComparisonReport:
             run_count=int(d.get("run_count", 1)),
             seed=d.get("seed"),
             pipeline=str(d.get("pipeline", "both")),
+            policy_version=str(d.get("policy_version", "")),
         )
 
     runs = []

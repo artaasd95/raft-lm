@@ -12,6 +12,7 @@ from src.evals.benchmark_schema import (
     backfill_ragas_scores,
     load_comparison_report,
 )
+from src.evals.hallucination_risk import aggregate_severity, score_hallucination_risk
 
 
 RAGAS_METRICS_REQUIRED = ["context_precision", "faithfulness"]
@@ -136,9 +137,53 @@ def score_saved_artifacts(run_dir: Path) -> ComparisonReport:
             "ground_truth": run.ground_truth,
             "pipeline_name": run.pipeline_name,
         }
-        per_run = _stub_scores(sample) if not _ragas_available() else _stub_scores(sample)
+        per_run = run_ragas_eval([sample])
         run.ragas_context_precision = per_run.context_precision
         run.ragas_faithfulness = per_run.faithfulness
+        sev = score_hallucination_risk(
+            run.answer,
+            sample["context"],
+            {
+                "risk_domain": run.risk_domain,
+                "ground_truth": run.ground_truth,
+                "faithfulness": per_run.faithfulness,
+            },
+        )
+        run.severity = sev.severity
+        run.severity_bucket = sev.bucket
+
+    std_runs = [r for r in report.runs if r.pipeline_name == "standard_rag"]
+    raft_runs = [r for r in report.runs if r.pipeline_name == "raft_lm"]
+    if std_runs:
+        report.standard.severity = aggregate_severity(
+            [
+                score_hallucination_risk(
+                    r.answer,
+                    " ".join(c.excerpt for c in r.citations),
+                    {
+                        "risk_domain": r.risk_domain,
+                        "ground_truth": r.ground_truth,
+                        "faithfulness": r.ragas_faithfulness,
+                    },
+                )
+                for r in std_runs
+            ]
+        )
+    if raft_runs:
+        report.raft_lm.severity = aggregate_severity(
+            [
+                score_hallucination_risk(
+                    r.answer,
+                    " ".join(c.excerpt for c in r.citations),
+                    {
+                        "risk_domain": r.risk_domain,
+                        "ground_truth": r.ground_truth,
+                        "faithfulness": r.ragas_faithfulness,
+                    },
+                )
+                for r in raft_runs
+            ]
+        )
 
     report_path.write_text(report.to_json(), encoding="utf-8")
     return report

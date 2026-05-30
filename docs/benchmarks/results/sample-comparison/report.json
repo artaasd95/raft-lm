@@ -1,0 +1,523 @@
+{
+  "schema_version": "1.0.0",
+  "corpus_id": "financial_policy_v1",
+  "created_at": "2026-05-30T15:17:34.294128+00:00",
+  "standard": {
+    "pipeline_name": "standard_rag",
+    "ragas": {
+      "context_precision": 0.6,
+      "faithfulness": 0.5,
+      "answer_correctness": 0.5,
+      "semantic_similarity": 0.55
+    },
+    "severity": {
+      "legal": 0,
+      "financial": 0,
+      "compliance": 0,
+      "operational": 0,
+      "total_events": 0,
+      "max_severity": "none"
+    },
+    "run_id": "standard-5f46a57c",
+    "artifact_path": ""
+  },
+  "raft_lm": {
+    "pipeline_name": "raft_lm",
+    "ragas": {
+      "context_precision": 0.7,
+      "faithfulness": 0.6,
+      "answer_correctness": 0.6,
+      "semantic_similarity": 0.65
+    },
+    "severity": {
+      "legal": 0,
+      "financial": 0,
+      "compliance": 0,
+      "operational": 0,
+      "total_events": 0,
+      "max_severity": "none"
+    },
+    "run_id": "raft-5f46a57c",
+    "artifact_path": ""
+  },
+  "runs": [
+    {
+      "question_id": "q1",
+      "question": "What is the minimum CET1 ratio under the capital policy?",
+      "answer": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions. [policy_liquidity::chunk_0]",
+      "ground_truth": "The minimum Common Equity Tier 1 (CET1) ratio is 8.5%.",
+      "citations": [
+        {
+          "chunk_id": "policy_liquidity::chunk_0",
+          "doc_id": "policy_liquidity",
+          "excerpt": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions.\n\n## Stress Testing\n\nLiquidity st",
+          "score": 0.8024211154661366
+        },
+        {
+          "chunk_id": "policy_aml::chunk_0",
+          "doc_id": "policy_aml",
+          "excerpt": "# Anti-Money Laundering (AML) Policy\n\n## Suspicious Activity Reporting\n\nEmployees must escalate suspicious transactions to the AML office **within 24 hours** of detection.\n\n## Customer Due Diligence\n\n",
+          "score": 0.7838523525317098
+        },
+        {
+          "chunk_id": "policy_capital::chunk_0",
+          "doc_id": "policy_capital",
+          "excerpt": "# Capital Adequacy Policy\n\n## CET1 Requirement\n\nThe institution shall maintain a minimum Common Equity Tier 1 (CET1) ratio of **8.5%** at all times, measured on a consolidated basis.\n\n## Internal Buff",
+          "score": 0.776042035880735
+        },
+        {
+          "chunk_id": "policy_reporting::chunk_0",
+          "doc_id": "policy_reporting",
+          "excerpt": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end.\n\n## M",
+          "score": 0.7053576813604939
+        }
+      ],
+      "pipeline_name": "standard_rag",
+      "risk_domain": "financial",
+      "retrieval": {
+        "top_k": 4,
+        "chunk_ids": [
+          "policy_liquidity::chunk_0",
+          "policy_aml::chunk_0",
+          "policy_capital::chunk_0",
+          "policy_reporting::chunk_0"
+        ],
+        "scores": [
+          0.8024211154661366,
+          0.7838523525317098,
+          0.776042035880735,
+          0.7053576813604939
+        ],
+        "embedding_model": "deterministic-stub",
+        "vector_store": "in_memory",
+        "context_chars_used": 0
+      },
+      "severity": "none",
+      "severity_bucket": "financial",
+      "ragas_context_precision": 0.6,
+      "ragas_faithfulness": 0.5
+    },
+    {
+      "question_id": "q1",
+      "question": "What is the minimum CET1 ratio under the capital policy?",
+      "answer": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions. [policy_liquidity::chunk_0]",
+      "ground_truth": "The minimum Common Equity Tier 1 (CET1) ratio is 8.5%.",
+      "citations": [
+        {
+          "chunk_id": "policy_liquidity::chunk_0",
+          "doc_id": "policy_liquidity",
+          "excerpt": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions.\n\n## Stress Testing\n\nLiquidity st",
+          "score": 0.8024211154661366
+        },
+        {
+          "chunk_id": "policy_aml::chunk_0",
+          "doc_id": "policy_aml",
+          "excerpt": "# Anti-Money Laundering (AML) Policy\n\n## Suspicious Activity Reporting\n\nEmployees must escalate suspicious transactions to the AML office **within 24 hours** of detection.\n\n## Customer Due Diligence\n\n",
+          "score": 0.7838523525317098
+        },
+        {
+          "chunk_id": "policy_capital::chunk_0",
+          "doc_id": "policy_capital",
+          "excerpt": "# Capital Adequacy Policy\n\n## CET1 Requirement\n\nThe institution shall maintain a minimum Common Equity Tier 1 (CET1) ratio of **8.5%** at all times, measured on a consolidated basis.\n\n## Internal Buff",
+          "score": 0.776042035880735
+        },
+        {
+          "chunk_id": "policy_reporting::chunk_0",
+          "doc_id": "policy_reporting",
+          "excerpt": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end.\n\n## M",
+          "score": 0.7053576813604939
+        }
+      ],
+      "pipeline_name": "raft_lm",
+      "risk_domain": "financial",
+      "retrieval": {
+        "top_k": 4,
+        "chunk_ids": [
+          "policy_liquidity::chunk_0",
+          "policy_aml::chunk_0",
+          "policy_capital::chunk_0",
+          "policy_reporting::chunk_0"
+        ],
+        "scores": [
+          0.8024211154661366,
+          0.7838523525317098,
+          0.776042035880735,
+          0.7053576813604939
+        ],
+        "embedding_model": "deterministic-stub",
+        "vector_store": "in_memory",
+        "context_chars_used": 0
+      },
+      "severity": "none",
+      "severity_bucket": "financial",
+      "ragas_context_precision": 0.7,
+      "ragas_faithfulness": 0.6
+    },
+    {
+      "question_id": "q2",
+      "question": "How quickly must suspicious transactions be reported for AML?",
+      "answer": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions. [policy_liquidity::chunk_0]",
+      "ground_truth": "Suspicious transactions must be escalated within 24 hours.",
+      "citations": [
+        {
+          "chunk_id": "policy_liquidity::chunk_0",
+          "doc_id": "policy_liquidity",
+          "excerpt": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions.\n\n## Stress Testing\n\nLiquidity st",
+          "score": 0.7907781349142683
+        },
+        {
+          "chunk_id": "policy_aml::chunk_0",
+          "doc_id": "policy_aml",
+          "excerpt": "# Anti-Money Laundering (AML) Policy\n\n## Suspicious Activity Reporting\n\nEmployees must escalate suspicious transactions to the AML office **within 24 hours** of detection.\n\n## Customer Due Diligence\n\n",
+          "score": 0.7872495418869493
+        },
+        {
+          "chunk_id": "policy_capital::chunk_0",
+          "doc_id": "policy_capital",
+          "excerpt": "# Capital Adequacy Policy\n\n## CET1 Requirement\n\nThe institution shall maintain a minimum Common Equity Tier 1 (CET1) ratio of **8.5%** at all times, measured on a consolidated basis.\n\n## Internal Buff",
+          "score": 0.7459350615624458
+        },
+        {
+          "chunk_id": "policy_reporting::chunk_0",
+          "doc_id": "policy_reporting",
+          "excerpt": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end.\n\n## M",
+          "score": 0.735303312099478
+        }
+      ],
+      "pipeline_name": "standard_rag",
+      "risk_domain": "compliance",
+      "retrieval": {
+        "top_k": 4,
+        "chunk_ids": [
+          "policy_liquidity::chunk_0",
+          "policy_aml::chunk_0",
+          "policy_capital::chunk_0",
+          "policy_reporting::chunk_0"
+        ],
+        "scores": [
+          0.7907781349142683,
+          0.7872495418869493,
+          0.7459350615624458,
+          0.735303312099478
+        ],
+        "embedding_model": "deterministic-stub",
+        "vector_store": "in_memory",
+        "context_chars_used": 0
+      },
+      "severity": "none",
+      "severity_bucket": "compliance",
+      "ragas_context_precision": 0.6,
+      "ragas_faithfulness": 0.5
+    },
+    {
+      "question_id": "q2",
+      "question": "How quickly must suspicious transactions be reported for AML?",
+      "answer": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions. [policy_liquidity::chunk_0]",
+      "ground_truth": "Suspicious transactions must be escalated within 24 hours.",
+      "citations": [
+        {
+          "chunk_id": "policy_liquidity::chunk_0",
+          "doc_id": "policy_liquidity",
+          "excerpt": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions.\n\n## Stress Testing\n\nLiquidity st",
+          "score": 0.7907781349142683
+        },
+        {
+          "chunk_id": "policy_aml::chunk_0",
+          "doc_id": "policy_aml",
+          "excerpt": "# Anti-Money Laundering (AML) Policy\n\n## Suspicious Activity Reporting\n\nEmployees must escalate suspicious transactions to the AML office **within 24 hours** of detection.\n\n## Customer Due Diligence\n\n",
+          "score": 0.7872495418869493
+        },
+        {
+          "chunk_id": "policy_capital::chunk_0",
+          "doc_id": "policy_capital",
+          "excerpt": "# Capital Adequacy Policy\n\n## CET1 Requirement\n\nThe institution shall maintain a minimum Common Equity Tier 1 (CET1) ratio of **8.5%** at all times, measured on a consolidated basis.\n\n## Internal Buff",
+          "score": 0.7459350615624458
+        },
+        {
+          "chunk_id": "policy_reporting::chunk_0",
+          "doc_id": "policy_reporting",
+          "excerpt": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end.\n\n## M",
+          "score": 0.735303312099478
+        }
+      ],
+      "pipeline_name": "raft_lm",
+      "risk_domain": "compliance",
+      "retrieval": {
+        "top_k": 4,
+        "chunk_ids": [
+          "policy_liquidity::chunk_0",
+          "policy_aml::chunk_0",
+          "policy_capital::chunk_0",
+          "policy_reporting::chunk_0"
+        ],
+        "scores": [
+          0.7907781349142683,
+          0.7872495418869493,
+          0.7459350615624458,
+          0.735303312099478
+        ],
+        "embedding_model": "deterministic-stub",
+        "vector_store": "in_memory",
+        "context_chars_used": 0
+      },
+      "severity": "none",
+      "severity_bucket": "compliance",
+      "ragas_context_precision": 0.7,
+      "ragas_faithfulness": 0.6
+    },
+    {
+      "question_id": "q3",
+      "question": "When are quarterly risk reports due?",
+      "answer": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end. [policy_reporting::chunk_0]",
+      "ground_truth": "Quarterly risk reports are due within 15 business days after quarter end.",
+      "citations": [
+        {
+          "chunk_id": "policy_reporting::chunk_0",
+          "doc_id": "policy_reporting",
+          "excerpt": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end.\n\n## M",
+          "score": 0.7547802081165932
+        },
+        {
+          "chunk_id": "policy_aml::chunk_0",
+          "doc_id": "policy_aml",
+          "excerpt": "# Anti-Money Laundering (AML) Policy\n\n## Suspicious Activity Reporting\n\nEmployees must escalate suspicious transactions to the AML office **within 24 hours** of detection.\n\n## Customer Due Diligence\n\n",
+          "score": 0.718395499128594
+        },
+        {
+          "chunk_id": "policy_capital::chunk_0",
+          "doc_id": "policy_capital",
+          "excerpt": "# Capital Adequacy Policy\n\n## CET1 Requirement\n\nThe institution shall maintain a minimum Common Equity Tier 1 (CET1) ratio of **8.5%** at all times, measured on a consolidated basis.\n\n## Internal Buff",
+          "score": 0.6524290383090876
+        },
+        {
+          "chunk_id": "policy_liquidity::chunk_0",
+          "doc_id": "policy_liquidity",
+          "excerpt": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions.\n\n## Stress Testing\n\nLiquidity st",
+          "score": 0.6319946438086892
+        }
+      ],
+      "pipeline_name": "standard_rag",
+      "risk_domain": "operational",
+      "retrieval": {
+        "top_k": 4,
+        "chunk_ids": [
+          "policy_reporting::chunk_0",
+          "policy_aml::chunk_0",
+          "policy_capital::chunk_0",
+          "policy_liquidity::chunk_0"
+        ],
+        "scores": [
+          0.7547802081165932,
+          0.718395499128594,
+          0.6524290383090876,
+          0.6319946438086892
+        ],
+        "embedding_model": "deterministic-stub",
+        "vector_store": "in_memory",
+        "context_chars_used": 0
+      },
+      "severity": "none",
+      "severity_bucket": "operational",
+      "ragas_context_precision": 0.6,
+      "ragas_faithfulness": 0.5
+    },
+    {
+      "question_id": "q3",
+      "question": "When are quarterly risk reports due?",
+      "answer": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end. [policy_reporting::chunk_0]",
+      "ground_truth": "Quarterly risk reports are due within 15 business days after quarter end.",
+      "citations": [
+        {
+          "chunk_id": "policy_reporting::chunk_0",
+          "doc_id": "policy_reporting",
+          "excerpt": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end.\n\n## M",
+          "score": 0.7547802081165932
+        },
+        {
+          "chunk_id": "policy_aml::chunk_0",
+          "doc_id": "policy_aml",
+          "excerpt": "# Anti-Money Laundering (AML) Policy\n\n## Suspicious Activity Reporting\n\nEmployees must escalate suspicious transactions to the AML office **within 24 hours** of detection.\n\n## Customer Due Diligence\n\n",
+          "score": 0.718395499128594
+        },
+        {
+          "chunk_id": "policy_capital::chunk_0",
+          "doc_id": "policy_capital",
+          "excerpt": "# Capital Adequacy Policy\n\n## CET1 Requirement\n\nThe institution shall maintain a minimum Common Equity Tier 1 (CET1) ratio of **8.5%** at all times, measured on a consolidated basis.\n\n## Internal Buff",
+          "score": 0.6524290383090876
+        },
+        {
+          "chunk_id": "policy_liquidity::chunk_0",
+          "doc_id": "policy_liquidity",
+          "excerpt": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions.\n\n## Stress Testing\n\nLiquidity st",
+          "score": 0.6319946438086892
+        }
+      ],
+      "pipeline_name": "raft_lm",
+      "risk_domain": "operational",
+      "retrieval": {
+        "top_k": 4,
+        "chunk_ids": [
+          "policy_reporting::chunk_0",
+          "policy_aml::chunk_0",
+          "policy_capital::chunk_0",
+          "policy_liquidity::chunk_0"
+        ],
+        "scores": [
+          0.7547802081165932,
+          0.718395499128594,
+          0.6524290383090876,
+          0.6319946438086892
+        ],
+        "embedding_model": "deterministic-stub",
+        "vector_store": "in_memory",
+        "context_chars_used": 0
+      },
+      "severity": "none",
+      "severity_bucket": "operational",
+      "ragas_context_precision": 0.7,
+      "ragas_faithfulness": 0.6
+    },
+    {
+      "question_id": "q4",
+      "question": "What liquidity coverage ratio must be maintained?",
+      "answer": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end. [policy_reporting::chunk_0]",
+      "ground_truth": "The firm must maintain a Liquidity Coverage Ratio (LCR) of at least 100%.",
+      "citations": [
+        {
+          "chunk_id": "policy_reporting::chunk_0",
+          "doc_id": "policy_reporting",
+          "excerpt": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end.\n\n## M",
+          "score": 0.794151317103152
+        },
+        {
+          "chunk_id": "policy_aml::chunk_0",
+          "doc_id": "policy_aml",
+          "excerpt": "# Anti-Money Laundering (AML) Policy\n\n## Suspicious Activity Reporting\n\nEmployees must escalate suspicious transactions to the AML office **within 24 hours** of detection.\n\n## Customer Due Diligence\n\n",
+          "score": 0.7555151780584779
+        },
+        {
+          "chunk_id": "policy_liquidity::chunk_0",
+          "doc_id": "policy_liquidity",
+          "excerpt": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions.\n\n## Stress Testing\n\nLiquidity st",
+          "score": 0.7496293563226865
+        },
+        {
+          "chunk_id": "policy_capital::chunk_0",
+          "doc_id": "policy_capital",
+          "excerpt": "# Capital Adequacy Policy\n\n## CET1 Requirement\n\nThe institution shall maintain a minimum Common Equity Tier 1 (CET1) ratio of **8.5%** at all times, measured on a consolidated basis.\n\n## Internal Buff",
+          "score": 0.6820042300630212
+        }
+      ],
+      "pipeline_name": "standard_rag",
+      "risk_domain": "financial",
+      "retrieval": {
+        "top_k": 4,
+        "chunk_ids": [
+          "policy_reporting::chunk_0",
+          "policy_aml::chunk_0",
+          "policy_liquidity::chunk_0",
+          "policy_capital::chunk_0"
+        ],
+        "scores": [
+          0.794151317103152,
+          0.7555151780584779,
+          0.7496293563226865,
+          0.6820042300630212
+        ],
+        "embedding_model": "deterministic-stub",
+        "vector_store": "in_memory",
+        "context_chars_used": 0
+      },
+      "severity": "none",
+      "severity_bucket": "financial",
+      "ragas_context_precision": 0.6,
+      "ragas_faithfulness": 0.5
+    },
+    {
+      "question_id": "q4",
+      "question": "What liquidity coverage ratio must be maintained?",
+      "answer": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end. [policy_reporting::chunk_0]",
+      "ground_truth": "The firm must maintain a Liquidity Coverage Ratio (LCR) of at least 100%.",
+      "citations": [
+        {
+          "chunk_id": "policy_reporting::chunk_0",
+          "doc_id": "policy_reporting",
+          "excerpt": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end.\n\n## M",
+          "score": 0.794151317103152
+        },
+        {
+          "chunk_id": "policy_aml::chunk_0",
+          "doc_id": "policy_aml",
+          "excerpt": "# Anti-Money Laundering (AML) Policy\n\n## Suspicious Activity Reporting\n\nEmployees must escalate suspicious transactions to the AML office **within 24 hours** of detection.\n\n## Customer Due Diligence\n\n",
+          "score": 0.7555151780584779
+        },
+        {
+          "chunk_id": "policy_liquidity::chunk_0",
+          "doc_id": "policy_liquidity",
+          "excerpt": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions.\n\n## Stress Testing\n\nLiquidity st",
+          "score": 0.7496293563226865
+        },
+        {
+          "chunk_id": "policy_capital::chunk_0",
+          "doc_id": "policy_capital",
+          "excerpt": "# Capital Adequacy Policy\n\n## CET1 Requirement\n\nThe institution shall maintain a minimum Common Equity Tier 1 (CET1) ratio of **8.5%** at all times, measured on a consolidated basis.\n\n## Internal Buff",
+          "score": 0.6820042300630212
+        }
+      ],
+      "pipeline_name": "raft_lm",
+      "risk_domain": "financial",
+      "retrieval": {
+        "top_k": 4,
+        "chunk_ids": [
+          "policy_reporting::chunk_0",
+          "policy_aml::chunk_0",
+          "policy_liquidity::chunk_0",
+          "policy_capital::chunk_0"
+        ],
+        "scores": [
+          0.794151317103152,
+          0.7555151780584779,
+          0.7496293563226865,
+          0.6820042300630212
+        ],
+        "embedding_model": "deterministic-stub",
+        "vector_store": "in_memory",
+        "context_chars_used": 0
+      },
+      "severity": "none",
+      "severity_bucket": "financial",
+      "ragas_context_precision": 0.7,
+      "ragas_faithfulness": 0.6
+    }
+  ],
+  "chart_labels": [
+    "context_precision",
+    "faithfulness"
+  ],
+  "chart_standard_values": [
+    0.6,
+    0.5
+  ],
+  "chart_raft_lm_values": [
+    0.7,
+    0.6
+  ],
+  "run_id": "5f46a57c",
+  "environment": {
+    "embedding_model": "deterministic-stub",
+    "generation_model": "deterministic-stub",
+    "model_provider": "stub",
+    "vector_store": "in_memory",
+    "benchmark_mode": "stub",
+    "python_version": "3.9.12"
+  },
+  "config": {
+    "corpus_path": "G:\\repositories\\raft-lm\\data\\benchmark_corpus\\financial_policy",
+    "max_retrieval_depth": 4,
+    "max_context_chars": 4096,
+    "run_count": 1,
+    "seed": null,
+    "pipeline": "both",
+    "policy_version": "1.0.0"
+  }
+}

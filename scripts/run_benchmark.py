@@ -15,6 +15,7 @@ if str(_ROOT) not in sys.path:
 
 from src.evals.benchmark_runner import (  # noqa: E402
     run_benchmark_comparison,
+    run_raft_lm_benchmark,
     run_standard_rag_benchmark,
 )
 from src.rag.retrievers import BenchmarkBudget
@@ -36,9 +37,9 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--pipeline",
-        choices=("standard_rag", "both"),
-        default="standard_rag",
-        help="Pipeline to run (default: standard_rag only)",
+        choices=("standard_rag", "raft_lm", "both"),
+        default=None,
+        help="Pipeline to run (default: BENCHMARK_PIPELINE env or standard_rag)",
     )
     parser.add_argument(
         "--mode",
@@ -80,8 +81,20 @@ def main() -> int:
     if args.mode == "smoke" and limit is None:
         limit = 1
 
-    if args.pipeline == "standard_rag":
+    pipeline = (
+        args.pipeline
+        or os.getenv("BENCHMARK_PIPELINE", "standard_rag").lower()
+    )
+
+    if pipeline == "standard_rag":
         report = run_standard_rag_benchmark(
+            corpus_dir=args.corpus_dir,
+            out_dir=args.out_dir,
+            budget=budget,
+            questions_limit=limit,
+        )
+    elif pipeline == "raft_lm":
+        report = run_raft_lm_benchmark(
             corpus_dir=args.corpus_dir,
             out_dir=args.out_dir,
             budget=budget,
@@ -94,8 +107,9 @@ def main() -> int:
             budget=budget,
         )
 
-    print(f"Benchmark complete run_id={report.run_id}")
-    print(f"Artifacts: {report.standard.artifact_path}")
+    print(f"Benchmark complete run_id={report.run_id} pipeline={pipeline}")
+    artifact = report.standard.artifact_path or report.raft_lm.artifact_path
+    print(f"Artifacts: {artifact}")
     return 0
 
 

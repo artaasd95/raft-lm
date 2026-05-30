@@ -133,23 +133,9 @@ class ChunkRetriever:
         chunks: List[RetrievedChunk],
         penalty: float,
     ) -> List[RetrievedChunk]:
-        adjusted: List[RetrievedChunk] = []
-        for ch in chunks:
-            lower = ch.text.lower()
-            hit = any(kw.lower() in lower for kw in ch.distractor_keywords)
-            score = ch.score - penalty if hit else ch.score
-            adjusted.append(
-                RetrievedChunk(
-                    chunk_id=ch.chunk_id,
-                    doc_id=ch.doc_id,
-                    text=ch.text,
-                    score=score,
-                    distractor_keywords=ch.distractor_keywords,
-                    source_path=ch.source_path,
-                )
-            )
-        adjusted.sort(key=lambda c: c.score, reverse=True)
-        return adjusted
+        from src.rag.raft_policy import apply_distractor_penalty
+
+        return apply_distractor_penalty(chunks, penalty)
 
     def filter_by_evidence_policy(
         self,
@@ -157,10 +143,11 @@ class ChunkRetriever:
         min_count: int,
         threshold: float,
     ) -> List[RetrievedChunk]:
-        kept = [c for c in chunks if c.score >= threshold]
-        if len(kept) < min_count:
-            kept = sorted(chunks, key=lambda c: c.score, reverse=True)[:min_count]
-        return kept
+        from src.rag.raft_policy import filter_by_evidence_policy
+
+        return filter_by_evidence_policy(
+            chunks, min_count=min_count, threshold=threshold
+        )
 
 
 # Backward-compatible alias

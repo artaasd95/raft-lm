@@ -4,7 +4,7 @@ This document locks the **finite showcase** for RAFT-LM: a reproducible comparis
 
 ## Status and claim wording
 
-Until benchmark artifacts exist under `docs/benchmarks/results/`, all performance claims remain **future tense**. The repository will publish JSON, CSV, markdown, and chart-ready outputs when a full benchmark run completes.
+Bundled stub-mode sample artifacts live under `docs/benchmarks/results/sample-comparison/` for dashboard smoke tests. Headline performance comparisons remain **stub-scored** until a verified non-mock run completes; do not publish superiority claims from CI artifacts alone.
 
 ## Corpus
 
@@ -52,7 +52,7 @@ Both pipelines share the same budget and components unless noted.
 - **Evidence policy**: drop chunks below confidence threshold; require minimum evidence count
 - **RAFT-style data builder**: optional Q/A pair generation hook (no fine-tuning wired)
 
-Implementation: `src/rag/pipelines.py` (LangGraph — see `docs/adr/0002-rag-orchestration-framework.md`), `src/rag/retrievers.py`.
+Implementation: `src/rag/raft_policy.py` (distractor + evidence policy), `src/rag/pipelines.py` (LangGraph — see `docs/adr/0002-rag-orchestration-framework.md`), `src/rag/retrievers.py`.
 
 ### Embedding backends (S4)
 
@@ -107,6 +107,19 @@ Aligned with `risk_domain` in `questions.jsonl`. Scoring: `src/evals/hallucinati
 | `metrics.csv` | Flat metrics per pipeline |
 | `summary.md` | Human-readable summary |
 | `comparison_chart.json` | Chart-ready Standard vs RAFT-LM series |
+| `comparison_delta.json` | Side-by-side Ragas + severity + citation deltas (`src/evals/compare_runs.py`) |
+| `comparison_delta.csv` | Flat delta table for dashboards |
+
+### CLI / Make targets
+
+| Target | Command |
+|--------|---------|
+| Standard RAG | `make benchmark` or `python scripts/run_benchmark.py --pipeline standard_rag` |
+| RAFT-LM only | `make benchmark-raft` or `python scripts/run_benchmark.py --pipeline raft_lm` |
+| Both (comparison) | `make benchmark-compare` or `python scripts/run_benchmark.py --pipeline both` |
+| Smoke (1 question) | `make benchmark-smoke` |
+
+Set `BENCHMARK_PIPELINE=standard_rag|raft_lm|both` to select path without changing runner contracts.
 
 Every dashboard number must trace to a saved artifact path.
 
