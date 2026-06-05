@@ -1,0 +1,10 @@
+policy_id: risk_cvar
+training:
+  loss:
+    type: CrossEntropyLoss
+evaluation:
+  metrics:
+    - accuracy
+    - f1_score
+    - cvar
+    - constraint_violation_rate

@@ -1,0 +1,10 @@
+{"record_id": "r001", "features": [0.2, -0.5, 0.8, 0.1, -0.3, 0.4, 0.0, 0.6, -0.2, 0.15], "risk_domain": "market", "scenario_id": "calm-01"}
+{"record_id": "r002", "features": [1.2, 0.5, -0.8, 0.9, 0.3, -0.4, 0.2, -0.6, 0.2, -0.55], "label": 2, "risk_domain": "tail", "scenario_id": "stress-01"}
+{"record_id": "r003", "features": [-0.1, 0.25, 0.35, -0.05, 0.12, 0.08, -0.18, 0.22, 0.05, -0.09], "risk_domain": "liquidity"}
+{"record_id": "r004", "features": [0.9, 0.85, 0.75, 0.65, 0.55, 0.45, 0.35, 0.25, 0.15, 0.05], "stress_tag": "liquidity_stress", "scenario_id": "liq-02"}
+{"record_id": "r005", "features": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "risk_domain": "compliance"}
+{"record_id": "r006", "features": [0.4, -0.1, 0.3, 0.2, -0.15, 0.25, 0.05, -0.05, 0.1, 0.12], "label": 1, "scenario_id": "calm-02"}
+{"record_id": "r007", "features": [1.5, 1.1, 0.9, 0.7, 0.5, 0.3, 0.1, -0.1, -0.3, -0.5], "risk_domain": "tail"}
+{"record_id": "r008", "features": [0.33, 0.27, 0.21, 0.15, 0.09, 0.03, -0.03, -0.09, -0.15, -0.21], "risk_domain": "market"}
+{"record_id": "r009", "features": [0.55, 0.45, 0.35, 0.25, 0.15, 0.05, -0.05, -0.15, -0.25, -0.35], "label": 0}
+{"record_id": "r010", "features": [0.11, 0.22, 0.33, 0.44, 0.55, 0.66, 0.77, 0.88, 0.99, 1.1], "risk_domain": "operational", "scenario_id": "ops-01"}

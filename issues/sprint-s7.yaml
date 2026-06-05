@@ -1,0 +1,77 @@
+# Sprint S7 — Risk data platform + training benchmark seed
+# Parent: RF-2026-28 · Hub: docs/vault/Project-Hub.md
+
+sprint: S7
+theme: engine_labels_to_optimizers_to_benchmark
+status: done
+
+tasks:
+  - id: S7-DP-01
+    title: Data platform docs + configs/data/
+    priority: p0
+    artifacts:
+      - docs/data-platform.md
+      - configs/data/
+    status: done
+
+  - id: S7-DP-02
+    title: Row cards (EngineLabelRow, PreferencePair, ToolCallExample, FeedbackRecord)
+    priority: p0
+    artifacts:
+      - src/data_platform/cards.py
+    status: done
+
+  - id: S7-DP-03
+    title: PipelineConfig + stages (normalize, enrich, label, split, filter)
+    priority: p0
+    artifacts:
+      - src/data_platform/config.py
+      - src/data_platform/pipeline.py
+    status: done
+
+  - id: S7-DP-04
+    title: Sources (file, HF, SQL) + Databricks stub
+    priority: p0
+    artifacts:
+      - src/data_platform/sources/
+    status: done
+
+  - id: S7-DP-05
+    title: scripts/build_dataset.py
+    priority: p0
+    status: done
+
+  - id: S7-DP-06
+    title: Wire train.py / evaluate.py to --data-config
+    priority: p0
+    status: done
+
+  - id: S7-DP-07
+    title: Feedback config + apply_feedback.py stub
+    priority: p1
+    status: done
+
+  - id: S7-DP-08
+    title: README data platform + risk-training quickstart
+    priority: p0
+    status: done
+
+  - id: S0-03
+    title: Risk-training benchmark contract (no live run)
+    priority: p0
+    depends_on: S0-01
+    artifacts:
+      - docs/benchmarks/BENCHMARK.md
+    note: Draft contract only; SP-BENCH-* execution starts task 50+
+    status: done
+
+exit_criteria:
+  - build_dataset produces train/val/test JSONL under data/processed/
+  - train.py accepts --data-config and completes on stub corpus
+  - pytest green for data_platform unit tests
+  - BENCHMARK.md documents risk-training harness separately from RAG showcase
+
+deferred:
+  - SP-TRAIN-* multi-seed training runs (task 50+)
+  - SP-BENCH-* live benchmark runs (task 50+)
+  - S6-01..S6-05 RAG dashboard (superseded)

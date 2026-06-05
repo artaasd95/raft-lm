@@ -1,0 +1,5 @@
+pipeline_id: risk_training_engine_v1
+feedback:
+  input_path: data/raw/feedback_sample.jsonl
+  min_score: 0.0
+  output_weights_path: data/processed/risk_training_engine_v1/feedback_weights.json

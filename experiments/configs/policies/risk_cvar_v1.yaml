@@ -1,0 +1,14 @@
+policy_id: risk_cvar_v1
+description: Emphasize CVaR and constraint metrics in evaluation
+training:
+  loss:
+    type: CrossEntropyLoss
+evaluation:
+  metrics:
+    - accuracy
+    - f1_score
+    - cvar
+    - constraint_violation_rate
+constraints:
+  max_cvar: 2.0
+  violation_threshold: 1.0

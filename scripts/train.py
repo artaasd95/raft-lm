@@ -21,16 +21,28 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.data.dataloaders import create_train_val_test_loaders
 from src.data.datasets import SyntheticRiskDataset
+from src.data_platform.config import load_pipeline_config
+from src.data_platform.dataset import EngineLabelDataset
+from src.data_platform.pipeline import load_engine_label_splits, run_pipeline
 from src.losses.base_losses import CrossEntropyLoss, MSELoss
 from src.metrics.risk_metrics import compute_cvar, constraint_violation_rate
 from src.metrics.task_metrics import accuracy, f1_score, mae, mse
 from src.models.base_models import SimpleMLP
+from src.logging.experiment_logger import create_experiment_logger
 from src.training.base_trainer import BaseTrainer
+from src.training.policies.registry import get_policy_registry
 from src.utils.config import load_config, resolve_config, save_config, validate_config
 from src.utils.reproducibility import get_device, set_seed
 
+POLICIES_DIR = REPO_ROOT / "experiments/configs/policies"
 
-def run_training(config_path: str, seed_override: Optional[int] = None) -> Path:
+
+def run_training(
+    config_path: str,
+    seed_override: Optional[int] = None,
+    data_config_path: Optional[str] = None,
+    policy_id: Optional[str] = None,
+) -> Path:
     """
     Run a complete config-driven training workflow.
 
@@ -43,6 +55,9 @@ def run_training(config_path: str, seed_override: Optional[int] = None) -> Path:
     """
     config_file = _resolve_path(config_path)
     config = resolve_config(load_config(str(config_file)))
+    if policy_id is not None:
+        registry = get_policy_registry(policies_dir=POLICIES_DIR)
+        config = registry.apply_to_config(config, policy_id)
     if seed_override is not None:
         config["training"]["seed"] = seed_override
     validate_config(config)
@@ -65,7 +80,23 @@ def run_training(config_path: str, seed_override: Optional[int] = None) -> Path:
         ),
     )
 
-    train_loader, val_loader, test_loader = _build_dataloaders(config)
+    logging_config = config.get("logging", {})
+    exp_logger = create_experiment_logger(
+        logging_config.get("experiment_backend", "local"),
+        run_dir=run_dir,
+        experiment_name=config["experiment_name"],
+    )
+    exp_logger.log_params(
+        {
+            "seed": config["training"]["seed"],
+            "policy_id": config.get("policy_id"),
+            "data_config": data_config_path,
+        }
+    )
+
+    train_loader, val_loader, test_loader = _build_dataloaders(
+        config, data_config_path=data_config_path
+    )
     model = _build_model(config)
     criterion = _build_loss(config)
     optimizer = _build_optimizer(config, model)
@@ -92,6 +123,9 @@ def run_training(config_path: str, seed_override: Optional[int] = None) -> Path:
         metric_names=config["evaluation"]["metrics"],
     )
     _update_metrics_file(run_dir / "metrics.json", test_metrics)
+    exp_logger.log_metrics({k: float(v) for k, v in test_metrics.items() if isinstance(v, (int, float))})
+    exp_logger.log_artifact(str(run_dir / "metrics.json"), name="metrics")
+    exp_logger.finish()
     _write_json(
         run_dir / "run_info.json",
         _build_run_info(
@@ -125,10 +159,27 @@ def main():
         default=None,
         help='Random seed (overrides config)'
     )
-    
+    parser.add_argument(
+        '--data-config',
+        type=str,
+        default=None,
+        help='Path to data-platform pipeline YAML (configs/data/*.yaml)',
+    )
+    parser.add_argument(
+        '--policy',
+        type=str,
+        default=None,
+        help='Policy bundle id (experiments/configs/policies/<id>.yaml|json)',
+    )
+
     args = parser.parse_args()
 
-    run_dir = run_training(args.config, seed_override=args.seed)
+    run_dir = run_training(
+        args.config,
+        seed_override=args.seed,
+        data_config_path=args.data_config,
+        policy_id=args.policy,
+    )
     print(f"Training complete. Results saved to: {run_dir}")
 
 
@@ -167,7 +218,13 @@ def _slugify(value: str) -> str:
     return slug or "experiment"
 
 
-def _build_dataloaders(config: Dict[str, Any]) -> Tuple[Any, Any, Any]:
+def _build_dataloaders(
+    config: Dict[str, Any],
+    data_config_path: Optional[str] = None,
+) -> Tuple[Any, Any, Any]:
+    if data_config_path is not None:
+        return _build_dataloaders_from_platform(config, data_config_path)
+
     data_config = config["data"]
     model_config = config["model"]
     seed = config["training"]["seed"]
@@ -197,6 +254,39 @@ def _build_dataloaders(config: Dict[str, Any]) -> Tuple[Any, Any, Any]:
         data_config=data_config,
     )
 
+    return create_train_val_test_loaders(
+        train_dataset=train_dataset,
+        val_dataset=val_dataset,
+        test_dataset=test_dataset,
+        batch_size=data_config["batch_size"],
+        num_workers=data_config["num_workers"],
+    )
+
+
+def _build_dataloaders_from_platform(
+    config: Dict[str, Any],
+    data_config_path: str,
+) -> Tuple[Any, Any, Any]:
+    pipeline_path = _resolve_path(data_config_path)
+    pipeline_config = load_pipeline_config(pipeline_path)
+    processed_dir = pipeline_config.resolved_output_dir(REPO_ROOT)
+    if not (processed_dir / "train.jsonl").exists():
+        run_pipeline(pipeline_config, REPO_ROOT)
+
+    train_rows, val_rows, test_rows = load_engine_label_splits(processed_dir)
+    if not train_rows:
+        raise ValueError(f"No training rows in {processed_dir}")
+
+    feature_dim = pipeline_config.label.feature_dim
+    num_classes = pipeline_config.label.num_classes
+    config["model"]["input_dim"] = feature_dim
+    config["model"]["output_dim"] = num_classes
+
+    train_dataset = EngineLabelDataset(train_rows, metadata={"source": "data_platform"})
+    val_dataset = EngineLabelDataset(val_rows or train_rows[:1], metadata={"split": "val"})
+    test_dataset = EngineLabelDataset(test_rows or train_rows[:1], metadata={"split": "test"})
+
+    data_config = config["data"]
     return create_train_val_test_loaders(
         train_dataset=train_dataset,
         val_dataset=val_dataset,

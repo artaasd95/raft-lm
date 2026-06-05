@@ -1,0 +1,41 @@
+# Sprint S8 — Policy registry, experiment logging, unified loaders
+# Parent: RF-2026-28 · Hub: docs/vault/Project-Hub.md
+
+sprint: S8
+theme: policy_logging_loaders
+status: done
+
+tasks:
+  - id: S8-01
+    title: PolicyRegistry + policy YAML/JSON
+    priority: p0
+    artifacts:
+      - src/training/policies/registry.py
+      - experiments/configs/policies/
+    status: done
+
+  - id: S8-02
+    title: BaseExperimentLogger (local, W&B, Comet, optional DB)
+    priority: p0
+    artifacts:
+      - src/logging/experiment_logger.py
+    status: done
+
+  - id: S8-03
+    title: Unified model loaders (PyTorch, HF safetensors, hub/local)
+    priority: p0
+    artifacts:
+      - src/models/loaders/unified.py
+    status: done
+
+  - id: S8-04
+    title: Wire train.py to --policy and local experiment logger
+    priority: p0
+    artifacts:
+      - scripts/train.py
+    status: done
+
+exit_criteria:
+  - train.py accepts --policy and merges evaluation metrics from policy bundle
+  - LocalExperimentLogger writes params/metrics under run directory
+  - pytest green for policy_registry, experiment_logger, model_loaders unit tests

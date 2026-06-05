@@ -1,0 +1,2 @@
+{"feedback_id": "fb001", "target_record_id": "r002", "score": 0.9, "severity": "medium", "comment": "confirm tail label"}
+{"feedback_id": "fb002", "target_record_id": "r005", "score": -0.5, "severity": "high", "comment": "zero vector suspect"}

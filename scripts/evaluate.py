@@ -51,9 +51,27 @@ def main():
         help="Optional .npz with strikes(K), maturities(M), call_prices(M,K), optional log_moneyness(K), total_variance(K)",
     )
     parser.add_argument("--output", type=str, default=None, help="Path to save evaluation results JSON")
+    parser.add_argument(
+        "--data-config",
+        type=str,
+        default=None,
+        help="Optional data-platform YAML; attaches processed manifest to results",
+    )
     args = parser.parse_args()
 
     results = {"checkpoint": args.checkpoint, "metrics": {}}
+
+    if args.data_config is not None:
+        from src.data_platform.config import load_pipeline_config
+
+        repo_root = Path(__file__).resolve().parents[1]
+        pipeline_config = load_pipeline_config(_resolve_data_config(args.data_config, repo_root))
+        processed_dir = pipeline_config.resolved_output_dir(repo_root)
+        manifest_path = processed_dir / "manifest.json"
+        if manifest_path.exists():
+            results["data_manifest"] = json.loads(manifest_path.read_text(encoding="utf-8"))
+        results["data_config"] = str(args.data_config)
+        results["processed_dir"] = str(processed_dir)
 
     if args.panel_npz is not None:
         panel = np.load(args.panel_npz)
@@ -105,6 +123,16 @@ def main():
     output.write_text(json.dumps(_to_jsonable(results), indent=2), encoding="utf-8")
     print(f"Evaluating checkpoint: {args.checkpoint}")
     print(f"Saved evaluation results to: {output}")
+
+
+def _resolve_data_config(path: str, repo_root: Path) -> Path:
+    candidate = Path(path)
+    if candidate.is_absolute():
+        return candidate
+    cwd_candidate = Path.cwd() / candidate
+    if cwd_candidate.exists():
+        return cwd_candidate
+    return repo_root / candidate
 
 
 if __name__ == "__main__":

@@ -1,0 +1,12 @@
+{
+  "policy_id": "baseline_v1",
+  "description": "Standard classification metrics only",
+  "training": {
+    "loss": {
+      "type": "CrossEntropyLoss"
+    }
+  },
+  "evaluation": {
+    "metrics": ["accuracy", "f1_score"]
+  }
+}

@@ -1,0 +1,23 @@
+pipeline_id: risk_training_engine_v1
+stages:
+  - normalize
+  - enrich
+  - label
+  - split
+  - filter
+sources:
+  - type: file
+    path: data/raw/risk_engine_sample.jsonl
+split:
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+  seed: 42
+label:
+  engine_version: engine-stub-v1
+  num_classes: 3
+  feature_dim: 10
+filter:
+  min_feature_norm: 0.01
+enrich:
+  source: meridian_stub

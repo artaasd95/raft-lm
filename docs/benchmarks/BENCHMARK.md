@@ -1,6 +1,75 @@
-# Enterprise RAG Benchmark Contract
+# RAFT-LM Benchmark Contracts
 
-This document locks the **finite showcase** for RAFT-LM: a reproducible comparison of **Standard RAG vs RAFT-LM** on one enterprise corpus under identical conditions.
+This file defines **two** contracts:
+
+1. **Risk-training benchmark** (primary, RF-2026-28) — engine-label holdout evaluation for the training path.
+2. **Enterprise RAG showcase** (regression) — frozen Standard RAG vs RAFT-LM comparison on `financial_policy_v1`.
+
+---
+
+## 1. Risk-training benchmark contract (S7 / S0-03)
+
+**Status:** Draft — schema and artifact layout only; **no live multi-seed run** in S7 (execution starts at task 50+ / `SP-BENCH-*`).
+
+### Goal
+
+Score models trained on **engine-derived labels** (`EngineLabelRow`) under identical splits produced by the data platform (`scripts/build_dataset.py`).
+
+### Dataset identity
+
+| Field | Value |
+|-------|-------|
+| Benchmark ID | `risk_training_engine_v1` |
+| Builder | `python scripts/build_dataset.py --config configs/data/risk_training_stub.yaml` |
+| Output root | `data/processed/risk_training_engine_v1/` |
+| Splits | `train.jsonl`, `val.jsonl`, `test.jsonl` |
+| Row schema | `EngineLabelRow` in `src/data_platform/cards.py` |
+
+### Required fields per row
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `record_id` | string | Stable key |
+| `features` | float[] | Model inputs (MLP baseline: fixed `input_dim`) |
+| `label` | int | Engine bucket / class |
+| `risk_domain` | string | e.g. `market`, `liquidity`, `compliance` |
+| `engine_version` | string | Label provenance |
+| `scenario_id` | string | Optional Meridian join |
+
+### Training entry
+
+```bash
+python scripts/build_dataset.py --config configs/data/risk_training_stub.yaml
+python scripts/train.py \
+  --config experiments/configs/example_config.json \
+  --data-config configs/data/risk_training_stub.yaml
+```
+
+### Evaluation metrics (minimum)
+
+| Metric | Source |
+|--------|--------|
+| `accuracy`, `f1_score` | `scripts/train.py` test pass |
+| `cvar`, `constraint_violation_rate` | Risk block in config |
+| Optional vol-surface / panel block | `scripts/evaluate.py --panel-npz` |
+
+### Report artifacts (when SP-BENCH-* runs)
+
+| Artifact | Path pattern |
+|----------|----------------|
+| Resolved experiment config | `experiments/results/<run_id>/resolved_config.json` |
+| Test metrics | `experiments/results/<run_id>/metrics.json` |
+| Data manifest | `data/processed/risk_training_engine_v1/manifest.json` |
+
+### Claim wording
+
+Do not publish risk-training superiority claims until **≥3 seeds** and manifest hashes are recorded under `docs/benchmarks/results/` (task 50+).
+
+---
+
+## 2. Enterprise RAG benchmark contract
+
+This section locks the **finite showcase** for RAFT-LM RAG regression: a reproducible comparison of **Standard RAG vs RAFT-LM** on one enterprise corpus under identical conditions.
 
 ## Status and claim wording
 
