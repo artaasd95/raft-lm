@@ -1,0 +1,2 @@
+{"engine_version": "engine-stub-v1", "features": [0.2, -0.5, 0.8, 0.1, -0.3, 0.4, 0.0, 0.6, -0.2, 0.15], "label": 0, "metadata": {"enrich_source": "meridian_stub"}, "record_id": "r001", "risk_domain": "market", "scenario_id": "calm-01"}
+{"engine_version": "engine-stub-v1", "features": [1.2, 0.5, -0.8, 0.9, 0.3, -0.4, 0.2, -0.6, 0.2, -0.55], "label": 2, "metadata": {"enrich_source": "meridian_stub"}, "record_id": "r002", "risk_domain": "tail", "scenario_id": "stress-01"}

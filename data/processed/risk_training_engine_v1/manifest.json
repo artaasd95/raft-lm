@@ -1,0 +1,20 @@
+{
+  "pipeline_id": "risk_training_engine_v1",
+  "stages": [
+    "normalize",
+    "enrich",
+    "label",
+    "split",
+    "filter"
+  ],
+  "counts": {
+    "train": 6,
+    "val": 1,
+    "test": 2
+  },
+  "label": {
+    "engine_version": "engine-stub-v1",
+    "num_classes": 3,
+    "feature_dim": 10
+  }
+}
