@@ -1,192 +1,200 @@
-# Getting Started with Raft-LM
+# Getting Started with RAFT-LM
 
-Welcome to Raft-LM! This guide will help you start working with the project structure.
+This guide walks you through a first successful run: install dependencies, run tests, train a baseline model, and execute the RAG benchmark harness.
 
-## Project Status
+For the full project overview, see [README.md](README.md). For contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-✅ **Structure Complete**: All folders and base modules are in place  
-🔨 **Ready to Implement**: Placeholder code is ready for your implementations
+## Prerequisites
 
-## Quick Setup
+- **Python 3.9+** (3.11 recommended for CI parity)
+- **pip** and a virtual environment
+- **Git**
 
-### 1. Install Dependencies
+GPU is optional for the current baseline trainer and stub benchmarks.
+
+## 1. Clone and install
+
+```bash
+git clone https://github.com/artaasd95/raft-lm.git
+cd raft-lm
+
+python -m venv venv
+```
+
+Activate the environment:
+
+```bash
+# Windows (PowerShell)
+venv\Scripts\Activate.ps1
+
+# Windows (cmd)
+venv\Scripts\activate.bat
+
+# macOS / Linux
+source venv/bin/activate
+```
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
+pip install -r requirements-benchmark.txt
 ```
 
-### 2. Verify Installation
+## 2. Verify installation
 
 ```bash
-# Run tests (all will pass as placeholders)
-pytest tests/
+# Full test suite
+pytest
 
-# Or just check imports work
-python -c "import src; print('✓ Import successful')"
+# Quick import check
+python -c "import src; print('RAFT-LM', src.__version__)"
 ```
 
-## Project Structure Summary
+All tests should pass. The suite covers training, RAG pipelines, Ragas scoring, and benchmark artifact generation — mostly in stub/mock mode without external API calls.
+
+## 3. Train your first model
+
+The bundled example trains a `SimpleMLP` on synthetic risk-classification data:
+
+```bash
+python scripts/train.py --config experiments/configs/example_config.json
+```
+
+Output is written to `experiments/results/<timestamp>_<experiment_name>_seed<seed>/`, including:
+
+- `config.json` — resolved experiment configuration
+- `metrics.json` — training and evaluation metrics
+- `checkpoints/` — model checkpoints (when enabled)
+- `training_log.txt` — run log
+
+Override the seed:
+
+```bash
+python scripts/train.py --config experiments/configs/example_config.json --seed 123
+```
+
+## 4. Run the RAG benchmark
+
+The enterprise benchmark compares **Standard RAG** and **RAFT-LM v1** on the bundled `financial_policy_v1` corpus (`data/benchmark_corpus/financial_policy/`).
+
+### Stub mode (default — no API keys)
+
+```bash
+make benchmark-compare
+```
+
+Equivalent CLI:
+
+```bash
+python scripts/run_benchmark.py --mode stub --pipeline both
+```
+
+### Smoke test (one question)
+
+```bash
+make benchmark-smoke
+```
+
+### View results
+
+Artifacts are saved under `docs/benchmarks/results/<run_id>/`:
+
+| File | Description |
+|------|-------------|
+| `report.json` | Full structured results |
+| `metrics.csv` | Flat metrics per pipeline |
+| `summary.md` | Human-readable summary |
+| `comparison_chart.json` | Chart-ready comparison data |
+| `comparison_delta.json` | Side-by-side deltas |
+
+A pre-generated sample is available at `docs/benchmarks/results/sample-comparison/` for dashboard smoke tests.
+
+### Live providers (optional)
+
+Copy `.env.example` to `.env` and set embedding/generation provider variables. See [docs/benchmarks/BENCHMARK.md](docs/benchmarks/BENCHMARK.md) for the full contract.
+
+```bash
+python scripts/run_benchmark.py --mode live --pipeline both
+```
+
+## 5. Launch the demo dashboard
+
+```bash
+make demo
+```
+
+Opens the Streamlit app at `http://localhost:8501`, reading benchmark artifacts from `docs/benchmarks/results/`.
+
+## Project layout (essentials)
 
 ```
 raft-lm/
-├── src/               # All implementation code
-│   ├── models/       # Neural network architectures
-│   ├── losses/       # Loss functions (CVaR, tail-aware, etc.)
-│   ├── metrics/      # Evaluation metrics
-│   ├── training/     # Training loops (base trainer + specialized)
-│   ├── data/         # Datasets and dataloaders
-│   └── utils/        # Configuration, logging, reproducibility
-├── experiments/       # Configs and results
-├── data/             # Raw and processed data
-├── tests/            # Unit and integration tests
-├── scripts/          # Training, evaluation, comparison scripts
-└── docs/             # Documentation and research notes
+├── src/                    # Core library
+│   ├── training/           # BaseTrainer and training loop
+│   ├── models/             # SimpleMLP and base model classes
+│   ├── losses/             # CVaR, tail-aware, standard losses
+│   ├── metrics/            # Task and financial risk metrics
+│   ├── rag/                # Pipelines, retrievers, vector stores
+│   ├── evals/              # Benchmark runner, Ragas, reports
+│   └── utils/              # Config, logging, seeds
+├── scripts/                # CLI entry points
+├── experiments/configs/    # Training experiment JSON configs
+├── data/benchmark_corpus/    # Frozen RAG benchmark corpus
+├── tests/                  # Unit and integration tests
+└── docs/                   # Protocols, ADRs, research notes
 ```
 
-## The Three-Phase Workflow
-
-Every method follows this cycle:
-
-### 1. Research Phase
-- Read papers and theory
-- Understand the mathematical foundation
-- Design the experiment
-- Document in `docs/research_notes/`
-
-### 2. Implementation Phase
-- Write code in appropriate `src/` module
-- Keep it simple and well-documented
-- Add unit tests in `tests/unit/`
-- Verify on toy data
-
-### 3. Evaluation Phase
-- Create experiment config in `experiments/configs/`
-- Run training with multiple seeds (≥3)
-- Compute metrics and statistical tests
-- Make decision: Keep / Modify / Remove
-- Document results
-
-## What's Already Built (Placeholders)
-
-### ✅ Data Module (`src/data/`)
-- `BaseRiskDataset` - Base dataset class
-- `SyntheticRiskDataset` - For synthetic data
-- `create_dataloader()` - DataLoader creation
-- **Status**: Structure ready, relies on PyTorch
-
-### ✅ Base Trainer (`src/training/base_trainer.py`)
-- `BaseTrainer` - Core training loop
-- Training, validation, checkpointing
-- Metrics tracking
-- **Status**: Simple template, ready to extend
-
-### ✅ Models (`src/models/`)
-- `BaseRiskModel` - Base model class
-- `SimpleMLP` - Baseline MLP implementation
-- **Status**: Basic structure, add specialized models as needed
-
-### ✅ Losses (`src/losses/`)
-- Base losses: MSE, CrossEntropy
-- Risk losses: CVaRLoss, TailAwareLoss (placeholders)
-- **Status**: Templates ready for implementation
-
-### ✅ Metrics (`src/metrics/`)
-- Task metrics: accuracy, MSE, MAE, F1
-- Risk metrics: CVaR, VaR, Sharpe, drawdown
-- **Status**: Basic implementations, ready to use
-
-### ✅ Utilities (`src/utils/`)
-- Config loading/saving
-- Logging setup
-- Seed setting and device management
-- **Status**: Functional basics
-
-### ✅ Testing Suite (`tests/`)
-- Unit test structure for all modules
-- Integration test structure for workflows
-- **Status**: Templates with TODOs
-
-### ✅ Scripts
-- `train.py` - Training pipeline
-- `evaluate.py` - Evaluation pipeline
-- `compare_experiments.py` - Experiment comparison
-- **Status**: Skeleton scripts with TODOs
-
-## Your First Steps
-
-### Option 1: Start with Phase 0 (Baseline)
-1. Implement a simple supervised baseline
-2. Generate synthetic data in `scripts/generate_data.py`
-3. Train with `scripts/train.py`
-4. Evaluate and document results
-
-### Option 2: Implement a Specific Component
-1. Pick a component (e.g., CVaR loss)
-2. Research the method
-3. Implement in appropriate module
-4. Write tests
-5. Run experiments
-
-### Option 3: Follow the Project Plan
-1. Read `docs/ideas-plan.md` for the roadmap
-2. Follow `docs/project-plan-docs/00-START-HERE.md`
-3. Use `docs/project-plan-docs/QUICK-REFERENCE.md` as guide
-
-## Key Files to Reference
-
-- **Quick Reference**: `docs/project-plan-docs/QUICK-REFERENCE.md`
-- **Project Plan**: `docs/ideas-plan.md`
-- **Structure Overview**: `PROJECT_STRUCTURE.md`
-- **Example Config**: `experiments/configs/example_config.json`
-
-## Essential Principles
-
-1. **Research-First**: Correctness over speed
-2. **Experimental**: Try, evaluate, decide
-3. **Measurable**: Back claims with data
-4. **Reproducible**: Use ≥3 seeds, track everything
-5. **Simple**: Don't overcomplicate - start simple
-
-## Common Commands
+## Common commands
 
 ```bash
-# Train a model
-python scripts/train.py --config experiments/configs/my_experiment.json
+# Training
+python scripts/train.py --config experiments/configs/example_config.json
 
-# Evaluate a checkpoint
-python scripts/evaluate.py --checkpoint path/to/checkpoint
+# Benchmark (individual pipelines)
+make benchmark          # Standard RAG
+make benchmark-raft     # RAFT-LM v1
 
-# Run tests
-pytest tests/
+# Ragas scoring on saved artifacts
+python scripts/run_ragas_eval.py <run_id>
 
-# Run specific test file
-pytest tests/unit/test_losses.py
+# Unit tests only (faster)
+pytest tests/unit/ -v
+
+# Integration tests
+pytest tests/integration/ -v
 ```
 
-## Decision Framework
+## Research workflow
 
-After implementing and testing something:
+RAFT-LM is research-first: formulate a hypothesis, implement in `src/`, test, run experiments with multiple seeds, and document decisions.
 
-- ✅ **Keep** if: Significant improvement + stable + reasonable cost
-- 🔄 **Modify** if: Shows promise but needs tuning
-- ❌ **Remove** if: No improvement after 3 iterations
+| Task | Guide |
+|------|-------|
+| Add a loss or metric | [docs/project-plan-docs/03-ADD-A-MODULE.md](docs/project-plan-docs/03-ADD-A-MODULE.md) |
+| Design an experiment | [docs/project-plan-docs/04-RESEARCH-WORKFLOW.md](docs/project-plan-docs/04-RESEARCH-WORKFLOW.md) |
+| Review result quality | [docs/project-plan-docs/05-EXPERIMENT-REVIEW.md](docs/project-plan-docs/05-EXPERIMENT-REVIEW.md) |
+| RAG benchmark contract | [docs/benchmarks/BENCHMARK.md](docs/benchmarks/BENCHMARK.md) |
 
-Always document the decision with data.
+## Docker (local only)
 
-## Need Help?
+For containerized benchmark or demo runs:
 
-- **What to build next?** → `docs/project-plan-docs/01-RD-PHASES.md`
-- **How to add a module?** → `docs/project-plan-docs/03-ADD-A-MODULE.md`
-- **How to run experiments?** → `docs/project-plan-docs/04-RESEARCH-WORKFLOW.md`
-- **Are my results good?** → `docs/project-plan-docs/05-EXPERIMENT-REVIEW.md`
+```bash
+cd deploy
+docker compose up demo
+```
 
-## Remember
+Docker Compose is for local development and demos — not production deployment. See `deploy/docker-compose.yml`.
 
-> "If it's not measured, compared, and documented, it didn't happen."
+## Next steps
 
-Keep this in mind as you build. The structure is ready - now it's time to implement!
+1. Read the [benchmark contract](docs/benchmarks/BENCHMARK.md) before publishing RAG comparisons.
+2. Create a new config in `experiments/configs/` for your experiment.
+3. Follow [CONTRIBUTING.md](CONTRIBUTING.md) when opening a pull request.
 
----
+## Need help?
 
-**Status**: Ready to begin implementation. Start with your first research phase! 🚀
-
+- [README.md](README.md) — feature overview and links
+- [CONTRIBUTING.md](CONTRIBUTING.md) — development setup and PR process
+- [GitHub Issues](https://github.com/artaasd95/raft-lm/issues) — bugs and feature requests

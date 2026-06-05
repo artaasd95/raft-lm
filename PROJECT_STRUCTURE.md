@@ -1,162 +1,141 @@
-# Raft-LM Project Structure
+# RAFT-LM Project Structure
 
-This document describes the complete folder structure of the Raft-LM project.
+Complete directory reference for the RAFT-LM repository.
 
 ## Overview
 
-The project follows a three-phase workflow:
-1. **Research** - Investigate and prototype methods
-2. **Implementation** - Build and integrate components
-3. **Evaluation** - Test, measure, and decide
+RAFT-LM follows a research loop: **formulate → implement → train/evaluate → decide**. Code lives in `src/`, experiments in `experiments/`, and the enterprise RAG benchmark in `data/benchmark_corpus/` with results under `docs/benchmarks/results/`.
 
-## Complete Structure
+## Directory tree
 
 ```
 raft-lm/
-├── README.md                          # Project overview
-├── PROJECT_STRUCTURE.md               # This file
-├── requirements.txt                   # Python dependencies
-├── .gitignore                         # Git ignore rules
+├── README.md
+├── GETTING_STARTED.md
+├── CONTRIBUTING.md
+├── PROJECT_STRUCTURE.md
+├── LICENSE
+├── Makefile                        # test, benchmark, demo targets
+├── requirements.txt                # Core dependencies (PyTorch, pytest, LangGraph)
+├── requirements-benchmark.txt      # Ragas, Streamlit, optional vector backends
+├── .env.example                    # Benchmark/demo environment template
+├── conftest.py                     # Pytest fixtures
 │
-├── src/                               # Source code
+├── src/
+│   ├── __init__.py                 # Package version (0.1.0)
 │   ├── README.md
-│   ├── __init__.py
-│   │
-│   ├── models/                        # Model architectures
-│   │   ├── __init__.py
-│   │   └── base_models.py            # Base model classes (SimpleMLP, etc.)
-│   │
-│   ├── losses/                        # Loss functions
-│   │   ├── __init__.py
-│   │   ├── base_losses.py            # Standard losses (MSE, CrossEntropy)
-│   │   └── risk_losses.py            # Risk-aware losses (CVaR, tail-aware)
-│   │
-│   ├── metrics/                       # Evaluation metrics
-│   │   ├── __init__.py
-│   │   ├── task_metrics.py           # Task metrics (accuracy, F1, MSE)
-│   │   └── risk_metrics.py           # Risk metrics (CVaR, VaR, Sharpe, drawdown)
-│   │
-│   ├── training/                      # Training loops
-│   │   ├── __init__.py
-│   │   └── base_trainer.py           # Base trainer class
-│   │
-│   ├── data/                          # Data loading
-│   │   ├── __init__.py
-│   │   ├── datasets.py               # Dataset classes
-│   │   └── dataloaders.py            # DataLoader utilities
-│   │
-│   └── utils/                         # Utilities
-│       ├── __init__.py
-│       ├── config.py                 # Configuration management
-│       ├── logging.py                # Logging utilities
-│       └── reproducibility.py        # Seed setting, device management
+│   ├── models/
+│   │   ├── base_models.py          # BaseRiskModel, SimpleMLP
+│   ├── losses/
+│   │   ├── base_losses.py          # MSE, CrossEntropy
+│   │   └── risk_losses.py          # CVaRLoss, TailAwareLoss
+│   ├── metrics/
+│   │   ├── task_metrics.py         # accuracy, F1, MSE, MAE
+│   │   ├── risk_metrics.py         # VaR, CVaR, Sharpe, drawdown, constraints
+│   │   ├── vol_surface.py          # Volatility surface helpers
+│   │   └── conventions.py
+│   ├── training/
+│   │   └── base_trainer.py         # Config-driven training loop
+│   ├── data/
+│   │   ├── datasets.py             # SyntheticRiskDataset
+│   │   ├── dataloaders.py
+│   │   └── adapters.py             # Feature adapters for evaluation
+│   ├── rag/
+│   │   ├── pipelines.py            # LangGraph Standard RAG + RAFT-LM v1
+│   │   ├── retrievers.py           # Retrieval budget and search
+│   │   ├── raft_policy.py          # Distractor filter, evidence policy
+│   │   ├── ingestion.py            # Corpus chunking
+│   │   ├── embeddings.py           # Mock, OpenAI, Azure, compatible adapters
+│   │   ├── vector_stores.py        # in_memory, FAISS, Qdrant
+│   │   └── corpus.py
+│   ├── evals/
+│   │   ├── benchmark_runner.py     # Orchestrates Standard vs RAFT-LM runs
+│   │   ├── benchmark_schema.py     # Report JSON schema
+│   │   ├── ragas_runner.py         # Ragas metric integration
+│   │   ├── hallucination_risk.py   # Enterprise severity scoring
+│   │   ├── report_writer.py        # JSON, CSV, Markdown artifacts
+│   │   └── compare_runs.py         # Comparison deltas
+│   ├── demo/
+│   │   └── streamlit_app.py        # Interactive benchmark dashboard
+│   └── utils/
+│       ├── config.py               # Load, validate, resolve configs
+│       ├── logging.py
+│       └── reproducibility.py      # Seeds, device selection
 │
-├── experiments/                       # All experiments
-│   ├── README.md
-│   ├── configs/                       # Experiment configurations
-│   │   └── example_config.json       # Example configuration
-│   └── results/                       # Experiment results
-│       └── .gitkeep
+├── scripts/
+│   ├── train.py                    # Training CLI
+│   ├── evaluate.py                 # Risk/vol-surface evaluation CLI
+│   ├── run_benchmark.py            # RAG benchmark CLI
+│   ├── run_ragas_eval.py           # Ragas scoring on saved runs
+│   └── compare_experiments.py      # Training experiment comparison
 │
-├── data/                              # Data storage
-│   ├── README.md
-│   ├── raw/                           # Original data
-│   │   └── .gitkeep
-│   └── processed/                     # Preprocessed data
-│       └── .gitkeep
+├── experiments/
+│   ├── configs/
+│   │   └── example_config.json
+│   └── results/                    # Training run outputs
 │
-├── tests/                             # Testing suite
-│   ├── README.md
-│   ├── __init__.py
-│   ├── unit/                          # Unit tests
-│   │   ├── __init__.py
-│   │   ├── test_models.py
-│   │   ├── test_losses.py
-│   │   ├── test_metrics.py
-│   │   └── test_data.py
-│   └── integration/                   # Integration tests
-│       ├── __init__.py
-│       ├── test_training_workflow.py
-│       └── test_evaluation.py
+├── data/
+│   ├── benchmark_corpus/
+│   │   └── financial_policy/       # financial_policy_v1 benchmark corpus
+│   ├── raw/
+│   └── processed/
 │
-├── scripts/                           # Helper scripts
-│   ├── README.md
-│   ├── train.py                      # Training script
-│   ├── evaluate.py                   # Evaluation script
-│   └── compare_experiments.py        # Experiment comparison
+├── tests/
+│   ├── unit/                       # Per-module tests
+│   └── integration/                # Training and benchmark workflow tests
 │
-└── docs/                              # Documentation
-    ├── ideas-plan.md                 # Project plan and ideas
-    ├── research_notes/               # Research findings
-    │   └── README.md
-    └── project-plan-docs/            # Process documentation
-        ├── 00-START-HERE.md
-        ├── 01-RD-PHASES.md
-        ├── 02-CHECKLISTS.md
-        ├── 03-ADD-A-MODULE.md
-        ├── 04-RESEARCH-WORKFLOW.md
-        ├── 05-EXPERIMENT-REVIEW.md
-        ├── 06-PERFORMANCE-PROTOCOL.md
-        ├── QUICK-REFERENCE.md
-        ├── README.md
-        └── SUMMARY.md
+├── docs/
+│   ├── benchmarks/
+│   │   ├── BENCHMARK.md            # Frozen benchmark contract
+│   │   └── results/                # Published benchmark artifacts
+│   ├── adr/                        # Architecture decision records
+│   ├── project-plan-docs/          # Research workflow guides
+│   ├── research_notes/
+│   └── risk-metrics/
+│
+├── deploy/
+│   ├── Dockerfile
+│   └── docker-compose.yml          # Local benchmark + demo only
+│
+└── .github/
+    └── workflows/
+        └── benchmark_smoke.yml       # Manual benchmark smoke (workflow_dispatch)
 ```
 
-## Key Components Status
+## Key entry points
 
-### ✅ Complete (Placeholder Structure)
-- Folder structure with all directories
-- README files in each main folder
-- Base trainer class (blank template)
-- Data loading modules (PyTorch-based placeholders)
-- Model, loss, and metric modules (placeholder implementations)
-- Utils (config, logging, reproducibility)
-- Test suite structure (unit and integration)
-- Example scripts (train, evaluate, compare)
+| Goal | Command |
+|------|---------|
+| Install | `pip install -r requirements.txt -r requirements-benchmark.txt` |
+| Test | `pytest` or `make test` |
+| Train | `python scripts/train.py --config experiments/configs/example_config.json` |
+| Benchmark | `make benchmark-compare` |
+| Demo | `make demo` |
 
-### 🔨 To Be Implemented
-All modules are currently placeholders with proper structure and docstrings.
-You will implement the actual functionality as you research and develop methods.
+## Module status
 
-## Usage Workflow
+| Module | Status | Notes |
+|--------|--------|-------|
+| `src/training/` | Implemented | Config-driven baseline trainer |
+| `src/models/` | Implemented | `SimpleMLP` baseline |
+| `src/losses/` | Implemented | CVaR, tail-aware, standard losses |
+| `src/metrics/` | Implemented | Task + financial risk metrics |
+| `src/data/` | Implemented | Synthetic dataset and loaders |
+| `src/rag/` | Implemented | LangGraph pipelines, pluggable stores |
+| `src/evals/` | Implemented | Benchmark harness, Ragas, reports |
+| `src/demo/` | Implemented | Streamlit dashboard |
+| `src/utils/` | Implemented | Config validation and reproducibility |
 
-### 1. Research Phase
-- Read relevant papers and theory
-- Document findings in `docs/research_notes/`
-- Design experiments
+## Artifact locations
 
-### 2. Implementation Phase
-- Implement methods in appropriate modules:
-  - Models → `src/models/`
-  - Losses → `src/losses/`
-  - Metrics → `src/metrics/`
-  - Specialized trainers → `src/training/`
-- Write unit tests in `tests/unit/`
+**Training runs** — `experiments/results/<run_id>/`
 
-### 3. Evaluation Phase
-- Create experiment config in `experiments/configs/`
-- Run training: `python scripts/train.py --config path/to/config.json`
-- Evaluate model: `python scripts/evaluate.py --checkpoint path/to/checkpoint`
-- Compare experiments: `python scripts/compare_experiments.py --experiments exp1 exp2`
-- Document results in `docs/research_notes/`
+**Benchmark runs** — `docs/benchmarks/results/<run_id>/` (override with `BENCHMARK_RESULTS_DIR`)
 
-## Next Steps
+**Sample comparison** — `docs/benchmarks/results/sample-comparison/` (bundled for demos)
 
-1. **Set up environment**: `pip install -r requirements.txt`
-2. **Start with Phase 0**: Implement baseline supervised learning
-3. **Follow the workflow**: Research → Implement → Evaluate → Decide
-4. **Use checklists**: See `docs/project-plan-docs/QUICK-REFERENCE.md`
+## Related documentation
 
-## Guidelines
-
-- All modules are simple placeholders - keep implementations focused
-- Follow the three-phase workflow
-- Use ≥3 seeds for experiments
-- Document all decisions in research notes
-- Write tests for new functionality
-- Keep code clean and well-documented
-
----
-
-**Status**: Project structure ready. Ready to begin implementation.
-
+- [GETTING_STARTED.md](GETTING_STARTED.md) — first-run walkthrough
+- [docs/benchmarks/BENCHMARK.md](docs/benchmarks/BENCHMARK.md) — RAG benchmark contract
+- [docs/project-plan-docs/00-START-HERE.md](docs/project-plan-docs/00-START-HERE.md) — research playbook

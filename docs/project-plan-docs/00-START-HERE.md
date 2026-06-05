@@ -1,6 +1,8 @@
 # Start Here (First Month Playbook)
 
-This repo is **research-first**: we build a framework for training LLMs to understand and make decisions based on risk. All work is experimental, measurable, and reproducible.
+> **New to the repo?** For installation and first commands, read [GETTING_STARTED.md](../../GETTING_STARTED.md) and [README.md](../../README.md). This document is the **research operating playbook** for ongoing development.
+
+This repo is **research-first**: we build a framework for training models to understand and make decisions based on risk. All work is experimental, measurable, and reproducible.
 
 ---
 

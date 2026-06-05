@@ -1,246 +1,229 @@
 # RAFT-LM
 
-**Risk-Aware Fine-Tuning for Language Models**: A comprehensive training framework for risk-aware LLM development with integrated RAG evaluation and enterprise-grade benchmarking.
+**Risk-Aware Fine-Tuning for Language Models** — a research framework for risk-aware model training, enterprise RAG evaluation, and reproducible benchmarking.
+
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-pytest-brightgreen.svg)](tests/)
+
+**Repository:** [github.com/artaasd95/raft-lm](https://github.com/artaasd95/raft-lm)
 
 ## Overview
 
-RAFT-LM is a production-ready framework that combines:
+RAFT-LM combines:
 
-- **Full LLM Training Pipeline**: Config-driven training with modern architectures, optimizers, and learning rate scheduling
-- **Risk-Aware Learning**: CVaR losses, tail-aware training, constraint-based optimization for safety-critical applications
-- **RAG Integration**: Standard RAG vs RAFT-LM (Retrieval-Augmented Fine-Tuning) pipelines with LangGraph orchestration
-- **Enterprise Evaluation**: Ragas-backed metrics (Context Precision, Faithfulness), custom hallucination risk scoring, and reproducible benchmarking
-- **Reproducibility First**: Config-driven workflows, seed management, experiment tracking, and artifact generation
+- **Config-driven training** — reproducible experiments with validation, seed control, and artifact output
+- **Risk-aware learning** — CVaR and tail-aware losses, VaR/CVaR/Sharpe metrics, constraint tracking
+- **RAG evaluation** — Standard RAG vs RAFT-LM (distractor-aware retrieval + evidence policy) on a frozen enterprise benchmark
+- **Enterprise metrics** — Ragas (Context Precision, Faithfulness), hallucination severity scoring, comparison reports
+- **Offline-first benchmarks** — stub/mock modes run without API keys; live providers supported via environment config
 
-**Use RAFT-LM to**: Train LLMs with risk constraints, evaluate RAG systems in enterprise domains (financial, legal), develop safer language models, and generate reproducible benchmarks.
-
-## Core Capabilities
-
-### 1. Model Training (`src/training/`, `src/models/`)
-- Base trainer with gradient accumulation, checkpoint management, and metrics tracking
-- Support for custom architectures and optimizers
-- Config-driven training workflows with Hydra-style resolution
-- Multi-seed experiments for statistical validation
-
-### 2. Risk-Aware Components (`src/losses/`, `src/metrics/`)
-- **Losses**: CVaR (Conditional Value-at-Risk), tail-aware, constraint-based
-- **Metrics**: VaR, CVaR, Sharpe ratio, Sortino ratio, drawdown analysis, ruin probability, liquidity constraints, volatility surfaces
-- **Constraints**: Violation rate tracking and enforcement
-
-### 3. RAG Pipelines (`src/rag/`)
-- **Standard RAG**: Retrieve → Generate
-- **RAFT-LM v1**: Retrieve → Distractor Filter → Evidence Policy → Generate
-- **LangGraph Integration**: Graph-based orchestration for complex retrieval workflows
-- **Vector Stores & Embeddings**: Pluggable backends (Milvus, Pinecone, local)
-- **Retrieval Budgets**: Configurable top-k, embedding models, and generation models
-
-### 4. Evaluation Framework (`src/evals/`)
-- **Ragas Integration**: Context Precision, Faithfulness, Answer Relevance
-- **Hallucination Risk Scoring**: Domain-aware severity assessment
-- **Benchmark Runner**: Automated Standard RAG vs RAFT-LM comparison
-- **Report Generation**: JSON, CSV, Markdown, and comparison charts
-
-### 5. Data & Reproducibility (`src/data/`, `src/utils/`)
-- Synthetic datasets for rapid prototyping and testing
-- Custom dataset adapters for enterprise corpora
-- Configuration validation and schema enforcement
-- Seed management, device selection, and logging utilities
+Use RAFT-LM to train risk-constrained models on synthetic financial scenarios, compare RAG pipelines under identical budgets, and publish reproducible benchmark artifacts.
 
 ## Quick Start
 
 ### Installation
 
 ```bash
-# Clone and install dependencies
 git clone https://github.com/artaasd95/raft-lm.git
 cd raft-lm
 
-pip install -r requirements.txt                    # Core dependencies
-pip install -r requirements-benchmark.txt          # LangGraph + Ragas (optional)
+python -m venv venv
+# Windows: venv\Scripts\activate
+# macOS/Linux: source venv/bin/activate
+
+pip install -r requirements.txt
+pip install -r requirements-benchmark.txt   # LangGraph, Ragas, Streamlit demo
 ```
 
-### Run Training
+Requires **Python 3.9+**. PyTorch is installed via `requirements.txt`.
+
+### Verify setup
 
 ```bash
-# Train with a config file
-python scripts/train.py --config experiments/configs/example_config.json
-
-# Training will:
-# - Create a run directory under experiments/results/<run_id>/
-# - Save checkpoints, config, metrics, and run info
-# - Output test metrics and training logs
-```
-
-### Run Tests
-
-```bash
-# Full test suite
 pytest
-
-# Unit tests only
-pytest tests/unit/
-
-# Integration tests
-pytest tests/integration/
-
-# With verbose output
-pytest -v
+python -c "import src; print(src.__version__)"
 ```
 
-### Benchmark RAG Pipelines
+### Train a baseline model
 
 ```bash
-# Stub mode (no API calls, testing only)
+python scripts/train.py --config experiments/configs/example_config.json
+```
+
+Each run writes artifacts under `experiments/results/<run_id>/` (config, metrics, checkpoints, logs).
+
+### Run the RAG benchmark
+
+```bash
+# Standard RAG only (stub mode — no API keys)
 make benchmark
 
-# Full Standard vs RAFT-LM comparison
+# RAFT-LM v1 only
+make benchmark-raft
+
+# Side-by-side comparison
 make benchmark-compare
 
-# Custom CLI invocations
-python scripts/run_benchmark.py --mode stub --pipeline standard_rag
-python scripts/run_benchmark.py --mode smoke --pipeline standard_rag --questions-limit 1
-
-# Launch interactive dashboard
-make demo
+# Single-question smoke test
+make benchmark-smoke
 ```
 
-Results are saved to `docs/benchmarks/results/<run_id>/` with:
-- `report.json`: Detailed results
-- `metrics.csv`: Aggregated metrics
-- `summary.md`: Executive summary
-- `comparison_chart.json`: Visual comparison data
+Or via CLI:
+
+```bash
+python scripts/run_benchmark.py --mode stub --pipeline both
+python scripts/run_benchmark.py --mode smoke --pipeline standard_rag --questions-limit 1
+```
+
+Results land in `docs/benchmarks/results/<run_id>/` (`report.json`, `metrics.csv`, `summary.md`, `comparison_chart.json`). A bundled sample comparison is at [`docs/benchmarks/results/sample-comparison/`](docs/benchmarks/results/sample-comparison/).
+
+### Interactive demo
+
+```bash
+make demo
+# or: streamlit run src/demo/streamlit_app.py
+```
+
+Copy `.env.example` to `.env` when configuring live embedding or generation providers.
+
+## Core Capabilities
+
+| Area | Module | Highlights |
+|------|--------|------------|
+| Training | `src/training/`, `src/models/` | `BaseTrainer`, gradient accumulation, checkpoints, `SimpleMLP` baseline |
+| Risk losses | `src/losses/` | `CVaRLoss`, `TailAwareLoss`, standard MSE/CrossEntropy |
+| Risk metrics | `src/metrics/` | VaR, CVaR, Sharpe, Sortino, drawdown, vol-surface helpers |
+| RAG | `src/rag/` | LangGraph pipelines, ingestion, retrievers, RAFT evidence policy |
+| Evaluation | `src/evals/` | Ragas runner, hallucination risk, benchmark schema, report writer |
+| Data | `src/data/` | `SyntheticRiskDataset`, adapters, dataloader utilities |
+| Utils | `src/utils/` | Config load/validate/resolve, logging, reproducibility |
+
+### RAG pipelines
+
+1. **Standard RAG** — retrieve → generate (LangGraph)
+2. **RAFT-LM v1** — retrieve → distractor filter → evidence policy → generate
+
+Both pipelines share identical retrieval budgets. Vector stores: **in-memory** (default), **FAISS**, **Qdrant**. Embeddings support mock/stub (CI default), OpenAI, Azure OpenAI, and OpenAI-compatible endpoints. See [docs/benchmarks/BENCHMARK.md](docs/benchmarks/BENCHMARK.md).
 
 ## Project Structure
 
 ```
 raft-lm/
-├── src/                          # Implementation
-│   ├── models/                  # Model architectures
-│   ├── losses/                  # Standard and risk-aware losses
-│   ├── metrics/                 # Task and risk metrics
-│   ├── training/                # Training loops and base trainer
-│   ├── data/                    # Datasets and dataloaders
-│   ├── rag/                     # RAG pipelines and retrievers
-│   ├── evals/                   # Evaluation framework
-│   └── utils/                   # Config, logging, reproducibility
-├── scripts/                      # Helper scripts
-│   ├── train.py                # Training entry point
-│   ├── evaluate.py             # Evaluation script
-│   ├── run_benchmark.py        # Benchmark orchestrator
-│   └── compare_experiments.py  # Experiment comparison
-├── experiments/                 # Configs and results
-│   ├── configs/                # Experiment configurations
-│   └── results/                # Training runs
-├── data/                        # Data storage
-│   ├── raw/                    # Original datasets
-│   ├── processed/              # Preprocessed data
-│   └── benchmark_corpus/       # Benchmark reference data
-├── tests/                       # Test suite
-│   ├── unit/                   # Unit tests
-│   └── integration/            # Integration tests
-├── docs/                        # Documentation
-│   ├── benchmarks/             # Benchmark protocol and results
-│   ├── research_notes/         # Research findings
-│   └── project-plan-docs/      # Development process docs
-└── deploy/                      # Deployment configs
-    ├── Dockerfile             # Container definition
-    └── docker-compose.yml     # Local demo orchestration
+├── src/
+│   ├── models/          # Model architectures
+│   ├── losses/          # Standard and risk-aware losses
+│   ├── metrics/         # Task and risk metrics
+│   ├── training/        # Training loops
+│   ├── data/            # Datasets and dataloaders
+│   ├── rag/             # RAG pipelines, retrievers, vector stores
+│   ├── evals/           # Benchmark harness and Ragas integration
+│   ├── demo/            # Streamlit dashboard
+│   └── utils/           # Config, logging, reproducibility
+├── scripts/             # train, evaluate, run_benchmark, run_ragas_eval
+├── experiments/         # Configs and training run outputs
+├── data/
+│   ├── benchmark_corpus/   # Frozen enterprise benchmark corpus
+│   ├── raw/                # Original datasets
+│   └── processed/          # Preprocessed data
+├── tests/               # Unit and integration tests
+├── docs/                # Benchmark protocol, ADRs, research notes
+└── deploy/              # Docker Compose for local benchmark/demo
 ```
+
+See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for a detailed tree.
 
 ## Configuration
 
-Training is configured via JSON:
+Training configs are JSON files validated by `src/utils/config.py`:
 
 ```json
 {
-  "training": {
-    "num_epochs": 20,
-    "batch_size": 32,
-    "learning_rate": 1e-3,
-    "optimizer": "adam",
-    "seed": 42,
-    "device": "auto"
-  },
-  "data": {
-    "dataset_type": "synthetic",
-    "num_samples": 1000
-  },
+  "config_version": 1,
+  "experiment_name": "baseline_classification",
   "model": {
     "type": "SimpleMLP",
     "input_dim": 10,
-    "hidden_dims": [64, 32],
-    "output_dim": 2
+    "hidden_dim": 128,
+    "output_dim": 3
   },
-  "loss": {
-    "type": "cross_entropy"
+  "data": {
+    "dataset_type": "SyntheticRiskDataset",
+    "train_size": 1000,
+    "batch_size": 32
+  },
+  "training": {
+    "num_epochs": 5,
+    "optimizer": { "type": "Adam", "lr": 0.001 },
+    "loss": { "type": "CrossEntropyLoss" },
+    "seed": 42
   },
   "evaluation": {
-    "metrics": ["accuracy", "f1", "cvar"]
+    "metrics": ["accuracy", "f1_score", "cvar"]
   }
 }
 ```
 
-See `experiments/configs/example_config.json` for a full example.
+Full example: [`experiments/configs/example_config.json`](experiments/configs/example_config.json).
 
-## Key References
+## Documentation
 
-- **Benchmark Protocol**: [docs/benchmarks/BENCHMARK.md](docs/benchmarks/BENCHMARK.md)
-- **RAG Orchestration**: [docs/adr/0002-rag-orchestration-framework.md](docs/adr/0002-rag-orchestration-framework.md)
-- **Development Workflow**: [docs/project-plan-docs/00-START-HERE.md](docs/project-plan-docs/00-START-HERE.md)
-- **Getting Started**: [GETTING_STARTED.md](GETTING_STARTED.md)
+| Document | Purpose |
+|----------|---------|
+| [GETTING_STARTED.md](GETTING_STARTED.md) | First-run guide for new contributors |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Development workflow and code standards |
+| [docs/benchmarks/BENCHMARK.md](docs/benchmarks/BENCHMARK.md) | Frozen RAG benchmark contract |
+| [docs/adr/0002-rag-orchestration-framework.md](docs/adr/0002-rag-orchestration-framework.md) | LangGraph orchestration decision |
+| [docs/README.md](docs/README.md) | Documentation index |
+| [docs/project-plan-docs/00-START-HERE.md](docs/project-plan-docs/00-START-HERE.md) | Research workflow playbook |
+| [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) | Complete directory reference |
 
 ## Design Principles
 
-1. **Reproducibility First**: Every experiment is config-driven, seed-controlled, and generates artifacts
-2. **Risk-Aware**: Safety constraints and risk metrics are first-class citizens, not afterthoughts
-3. **Modular**: Components (models, losses, metrics) are independently testable and composable
-4. **Enterprise-Grade**: Designed for high-stakes domains like finance and legal with hallucination detection
-5. **Benchmarkable**: Systematic comparison of approaches using frozen protocols and published artifacts
-
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, development setup, and the contribution workflow.
+1. **Reproducibility first** — config-driven runs, fixed seeds, saved artifacts
+2. **Risk-aware by design** — losses and metrics aligned with financial risk conventions
+3. **Modular** — models, losses, metrics, and RAG components are independently testable
+4. **Benchmarkable** — Standard vs RAFT-LM compared under a published contract
+5. **Offline-safe** — stub/mock modes for CI and local development without API keys
 
 ## Development Status
 
-✅ **Complete**:
-- Config-driven training pipeline
-- Risk-aware losses and metrics
-- RAG pipeline implementations (Standard + RAFT-LM v1)
-- Ragas integration
-- Hallucination risk scoring
-- Unit and integration tests
-- Benchmark orchestration framework
+**Implemented**
 
-🔄 **In Progress**:
-- Published benchmark artifacts and comparison charts
-- Production LLM provider integration
-- Streamlit dashboard refinement
-- CI/CD pipeline for automated benchmarks
+- Config-driven training pipeline with synthetic risk classification baseline
+- CVaR and tail-aware loss functions; VaR, CVaR, Sharpe, and related metrics
+- Standard RAG and RAFT-LM v1 LangGraph pipelines
+- Ragas integration, hallucination severity scoring, comparison reports
+- Bundled `financial_policy_v1` benchmark corpus and sample comparison artifacts
+- Unit and integration test suite; manual GitHub Actions benchmark smoke workflow
+
+**Roadmap**
+
+- Live-provider benchmark runs with published non-stub results
+- LLM fine-tuning integration beyond the current MLP baseline
+- Optional Hydra/OmegaConf for large experiment matrices
+- Expanded vector-store and embedding provider coverage
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing, and pull request guidelines.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+Apache License 2.0 — see [LICENSE](LICENSE).
 
 ## Citation
 
-If you use RAFT-LM in your research, please cite:
-
 ```bibtex
-@software{raftlm2024,
+@software{raftlm2026,
   title={RAFT-LM: Risk-Aware Fine-Tuning for Language Models},
-  author={Your Name},
-  year={2024},
+  author={RAFT-LM Contributors},
+  year={2026},
   url={https://github.com/artaasd95/raft-lm}
 }
 ```
 
 ## Support
 
-- **Documentation**: Start with [docs/project-plan-docs/00-START-HERE.md](docs/project-plan-docs/00-START-HERE.md)
-- **Issues**: Report bugs and request features on GitHub
-- **Discussion**: Join us in Discussions for architecture questions
-
----
-
-**RAFT-LM**: Training safer, more reliable language models with risk awareness and systematic evaluation.
+- **Issues:** [github.com/artaasd95/raft-lm/issues](https://github.com/artaasd95/raft-lm/issues)
+- **Getting started:** [GETTING_STARTED.md](GETTING_STARTED.md)

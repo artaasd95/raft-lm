@@ -1,6 +1,10 @@
 # Contributing to RAFT-LM
 
-Thank you for your interest in contributing to RAFT-LM! This document provides guidelines and instructions for getting started.
+Thank you for your interest in contributing to RAFT-LM. This document covers development setup, code standards, testing, and the pull request workflow.
+
+**Repository:** [github.com/artaasd95/raft-lm](https://github.com/artaasd95/raft-lm)
+
+New to the project? Start with [GETTING_STARTED.md](GETTING_STARTED.md), then return here before opening a PR.
 
 ## Code of Conduct
 
@@ -17,16 +21,17 @@ Clone and set up your development environment:
 git clone https://github.com/artaasd95/raft-lm.git
 cd raft-lm
 
-# Create a virtual environment (recommended: Python 3.9+)
+# Create a virtual environment (Python 3.9+; 3.11 matches CI)
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# macOS/Linux: source venv/bin/activate
+# Windows: venv\Scripts\Activate.ps1
 
 # Install dependencies
 pip install -r requirements.txt
 pip install -r requirements-benchmark.txt  # For RAG evaluation
 
-# Install development tools
-pip install pytest pytest-cov black flake8 mypy
+# Development tools are included in requirements.txt (pytest, black, flake8)
+# Optional: pip install mypy
 ```
 
 ### 2. Verify Installation
@@ -36,7 +41,7 @@ pip install pytest pytest-cov black flake8 mypy
 pytest tests/unit/ -v
 
 # Check imports work
-python -c "import src; print('✓ Setup complete')"
+python -c "import src; print('RAFT-LM', src.__version__)"
 ```
 
 ## Development Workflow
@@ -412,8 +417,8 @@ Documentation is in Markdown. Review before submitting:
 ### Adding New Dependencies
 
 1. **Core**: Add to `requirements.txt` with version constraints
-2. **Optional (Benchmarking)**: Add to `requirements-benchmark.txt`
-3. **Development**: Add to `requirements-dev.txt` (if you create it)
+2. **Benchmark / demo extras**: Add to `requirements-benchmark.txt` (Ragas, Streamlit, optional vector backends)
+3. **Dev-only tools**: Add to `requirements.txt` under the `# Development` section, or introduce a `requirements-dev.txt` if the set grows large
 
 Always pin versions to avoid breaking changes:
 
