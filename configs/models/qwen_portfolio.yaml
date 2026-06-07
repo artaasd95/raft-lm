@@ -1,0 +1,51 @@
+defaults:
+  models_root_env: RAFT_MODELS_ROOT
+  adapters_root_env: RAFT_ADAPTERS_ROOT
+  allow_large_env: RAFT_ALLOW_LARGE_MODELS
+
+tiers:
+  smoke:
+    default_model_id: qwen2.5-0.5b
+    description: CI and integration smoke tests
+  mid:
+    default_model_id: qwen2.5-3b
+    description: Benchmark runs
+  large:
+    default_model_id: qwen2.5-7b
+    description: Gated behind RAFT_ALLOW_LARGE_MODELS=1
+
+models:
+  - id: qwen3-4b-instruct-2507
+    hub_path: Qwen/Qwen3-4B-Instruct-2507
+    size_tier: large
+    instruct: true
+
+  - id: qwen3-4b
+    hub_path: Qwen/Qwen3-4B
+    size_tier: large
+    instruct: false
+
+  - id: qwen3-0.6b
+    hub_path: Qwen/Qwen3-0.6B
+    size_tier: smoke
+    instruct: false
+
+  - id: qwen2.5-coder-3b
+    hub_path: Qwen/Qwen2.5-Coder-3B
+    size_tier: mid
+    instruct: false
+
+  - id: qwen2.5-0.5b
+    hub_path: Qwen/Qwen2.5-0.5B
+    size_tier: smoke
+    instruct: false
+
+  - id: qwen2.5-3b
+    hub_path: Qwen/Qwen2.5-3B
+    size_tier: mid
+    instruct: false
+
+  - id: qwen2.5-7b
+    hub_path: Qwen/Qwen2.5-7B
+    size_tier: large
+    instruct: false

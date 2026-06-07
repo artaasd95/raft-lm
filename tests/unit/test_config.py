@@ -52,3 +52,36 @@ def test_validate_config_rejects_unknown_nested_field():
 
     with pytest.raises(ValueError, match="training.optimizer.momentum"):
         validate_config(config)
+
+
+def test_validate_unsloth_hf_lora_config():
+    config = {
+        "config_version": 1,
+        "experiment_name": "unsloth_test",
+        "description": "",
+        "model": {
+            "type": "hf_lora",
+            "model_id": "qwen2.5-0.5b",
+            "lora": {"r": 8},
+            "quantization": {"load_in_4bit": True},
+        },
+        "data": {
+            "dataset_type": "SFTJsonl",
+            "data_source": "distilled",
+            "distilled_corpus": "risk_sft_v1",
+            "batch_size": 2,
+            "num_workers": 0,
+            "max_seq_length": 256,
+        },
+        "training": {
+            "backend": "unsloth",
+            "num_epochs": 1,
+            "seed": 42,
+            "device": "cpu",
+            "optimizer": {"type": "Adam", "lr": 0.0002, "weight_decay": 0.0},
+            "loss": {"type": "CrossEntropyLoss"},
+        },
+        "evaluation": {"metrics": ["perplexity", "cvar"]},
+        "output": {"results_dir": "experiments/results", "adapters_dir": "experiments/adapters"},
+    }
+    assert validate_config(config) is True

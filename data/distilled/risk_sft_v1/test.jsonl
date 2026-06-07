@@ -1,0 +1,2 @@
+{"record_id": "d007", "prompt": "Assess liquidity under redemption stress.", "completion": "Liquidity risk is critical. Activate contingency funding plan.", "risk_label": 2, "engine_version": "distill-stub-v1", "risk_domain": "liquidity"}
+{"record_id": "d008", "prompt": "Baseline market risk in low-vol regime.", "completion": "Market risk is low with stable correlations.", "risk_label": 0, "engine_version": "distill-stub-v1", "risk_domain": "market"}

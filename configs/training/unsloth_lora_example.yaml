@@ -1,0 +1,53 @@
+config_version: 1
+experiment_name: unsloth_lora_smoke
+description: Reference Unsloth LoRA config — smoke tier qwen2.5-0.5b
+
+model:
+  type: hf_lora
+  model_id: qwen2.5-0.5b
+  lora:
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
+    target_modules:
+      - q_proj
+      - k_proj
+      - v_proj
+      - o_proj
+  quantization:
+    load_in_4bit: true
+
+data:
+  dataset_type: SFTJsonl
+  data_source: distilled
+  distilled_corpus: risk_sft_v1
+  max_seq_length: 512
+  batch_size: 2
+  num_workers: 0
+
+training:
+  backend: unsloth
+  num_epochs: 1
+  seed: 42
+  device: auto
+  optimizer:
+    type: Adam
+    lr: 0.0002
+    weight_decay: 0.01
+  loss:
+    type: CrossEntropyLoss
+
+evaluation:
+  metrics:
+    - perplexity
+    - cvar
+    - tail_error_rate
+
+logging:
+  log_interval: 1
+  save_checkpoints: false
+  checkpoint_interval: 1
+
+output:
+  results_dir: experiments/results
+  adapters_dir: experiments/adapters

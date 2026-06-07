@@ -1,0 +1,15 @@
+{
+  "corpus_id": "risk_sft_v1",
+  "source": "offline_distillation_stub",
+  "teacher_model": "Qwen/Qwen3-4B-Instruct-2507",
+  "description": "Stub distilled SFT corpus for integration tests and local smoke runs",
+  "counts": {
+    "train": 5,
+    "val": 1,
+    "test": 2
+  },
+  "schema": {
+    "required_fields": ["record_id", "prompt", "completion"],
+    "optional_fields": ["risk_label", "engine_version", "risk_domain"]
+  }
+}

@@ -1,0 +1,45 @@
+sprint: S13
+title: Unsloth LoRA/PEFT acceleration, portfolio Qwen model lineup, pre/post-train comparison
+window: 2026-06-07 → 2026-09-30
+
+issues:
+  - id: S13-01
+    title: Introduce Unsloth for LoRA/PEFT training
+    priority: p0
+    status: done
+    artifacts:
+      - src/training/backends/unsloth_trainer.py
+      - configs/training/unsloth_lora_example.yaml
+      - docs/training.md
+      - tests/integration/test_unsloth_smoke.py
+      - pyproject.toml
+
+  - id: S13-02
+    title: Lock portfolio Qwen model registry
+    priority: p1
+    status: done
+    artifacts:
+      - configs/models/qwen_portfolio.yaml
+      - src/models/model_registry.py
+      - scripts/download_models.py
+      - docs/models.md
+
+  - id: S13-03
+    title: Pre-train vs post-train comparison harness
+    priority: p1
+    status: done
+    artifacts:
+      - scripts/compare_pre_post_train.py
+      - src/evaluation/pre_post_compare.py
+      - docs/benchmarks/pre-post-comparison.md
+      - tests/integration/test_pre_post_compare.py
+
+  - id: S13-04
+    title: Teacher distillation dataset
+    priority: p1
+    status: done
+    note: Required for LLM SFT; risk_training_engine_v1 tabular corpus insufficient
+    artifacts:
+      - notebooks/distill_teacher_colab.ipynb
+      - data/distilled/README.md
+      - docs/training.md

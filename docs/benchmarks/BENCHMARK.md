@@ -65,6 +65,26 @@ python scripts/train.py \
 
 Do not publish risk-training superiority claims until **≥3 seeds** and manifest hashes are recorded under `docs/benchmarks/results/` (task 50+).
 
+### LLM LoRA pre/post comparison (S13-03)
+
+For Qwen fine-tuning, compare **base model** vs **post-train LoRA adapter** on distilled SFT holdout:
+
+| Field | Value |
+|-------|-------|
+| Harness | `scripts/compare_pre_post_train.py` |
+| Docs | `docs/benchmarks/pre-post-comparison.md` |
+| Min variants | ≥1 `model_id` × ≥2 methods (e.g. `ce`, `cvar_penalized`) |
+| Metrics | `test_loss`, `perplexity`, `cvar`, `tail_error_rate`, `delta_*` |
+
+```bash
+python scripts/compare_pre_post_train.py \
+  --model-id qwen3-0.6b \
+  --methods ce,cvar_penalized \
+  --eval-config configs/training/unsloth_lora_example.yaml \
+  --adapter-dirs experiments/adapters/run_ce experiments/adapters/run_cvar \
+  --output docs/benchmarks/results/pre-post-qwen3-0.6b.md
+```
+
 ---
 
 ## 2. Enterprise RAG benchmark contract
