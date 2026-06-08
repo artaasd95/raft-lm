@@ -4,21 +4,56 @@ Integration tests for evaluation workflow.
 Tests model evaluation, metric computation, and report generation.
 """
 
-import torch
+import json
+
 import pytest
+
+pytest.importorskip("torch", reason="PyTorch not available", exc_type=ImportError)
+
+from scripts.train import run_training
+from src.evaluation.report import evaluate_checkpoint
 
 
 class TestEvaluationWorkflow:
-    """Test suite for evaluation workflow."""
-    
-    def test_model_evaluation(self):
-        """Test evaluating a trained model."""
-        # TODO: Implement test
-        # - Load trained model
-        # - Run evaluation on test set
-        # - Compute all metrics
-        # - Verify metric ranges
-        pass
+    def test_model_evaluation_report_schema(self, tmp_path):
+        config = {
+            "config_version": 1,
+            "experiment_name": "eval_schema",
+            "model": {
+                "type": "SimpleMLP",
+                "input_dim": 4,
+                "hidden_dim": 8,
+                "output_dim": 3,
+                "num_layers": 1,
+                "dropout": 0.0,
+            },
+            "data": {
+                "train_size": 12,
+                "val_size": 6,
+                "test_size": 6,
+                "batch_size": 4,
+                "num_workers": 0,
+            },
+            "training": {
+                "num_epochs": 1,
+                "optimizer": {"type": "Adam", "lr": 0.01, "weight_decay": 0.0},
+                "loss": {"type": "ce"},
+                "seed": 1,
+                "device": "cpu",
+            },
+            "evaluation": {"metrics": ["accuracy", "cvar", "f1_score"]},
+            "logging": {"save_checkpoints": True},
+            "output": {"results_dir": str(tmp_path / "runs")},
+        }
+        config_path = tmp_path / "config.json"
+        config_path.write_text(json.dumps(config), encoding="utf-8")
+        run_dir = run_training(str(config_path))
+        checkpoint = run_dir / "checkpoints" / "best_model.pt"
+
+        report = evaluate_checkpoint(checkpoint, config_path)
+        assert set(report.keys()) == {"task_metrics", "risk_metrics", "provenance"}
+        assert "accuracy" in report["task_metrics"]
+        assert "cvar" in report["risk_metrics"]
     
     def test_risk_metric_computation(self):
         """Test computing risk metrics on predictions."""

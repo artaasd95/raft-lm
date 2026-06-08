@@ -1,19 +1,26 @@
 """
-Evaluation script for risk metric blocks.
+Evaluation script for trained checkpoints.
 
-Usage example:
-    python scripts/evaluate.py --checkpoint foo --panel-npz data/panel.npz
+Usage:
+    python scripts/evaluate.py --checkpoint path/to/best_model.pt --config configs/risk_training.yaml
+    python scripts/evaluate.py --checkpoint foo --panel-npz data/panel.npz  # optional vol blocks
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from src.data.adapters import compute_f2_liquidity_features, compute_f3_dependence_features
+from src.evaluation.report import evaluate_checkpoint
 from src.metrics.vol_surface import (
     butterfly_no_arb_check,
     calendar_no_arb_check,
@@ -39,6 +46,12 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate a trained Raft-LM model")
     parser.add_argument("--checkpoint", type=str, required=True, help="Path to model checkpoint")
     parser.add_argument(
+        "--config",
+        type=str,
+        default="configs/risk_training.yaml",
+        help="Experiment config used for training",
+    )
+    parser.add_argument(
         "--panel-npz",
         type=str,
         default=None,
@@ -59,20 +72,27 @@ def main():
     )
     args = parser.parse_args()
 
-    results = {"checkpoint": args.checkpoint, "metrics": {}}
+    config_path = _resolve_path(args.config)
+    checkpoint_path = _resolve_path(args.checkpoint)
+
+    results = evaluate_checkpoint(
+        checkpoint_path,
+        config_path,
+        data_config_path=args.data_config,
+    )
 
     if args.data_config is not None:
         from src.data_platform.config import load_pipeline_config
 
-        repo_root = Path(__file__).resolve().parents[1]
-        pipeline_config = load_pipeline_config(_resolve_data_config(args.data_config, repo_root))
-        processed_dir = pipeline_config.resolved_output_dir(repo_root)
+        pipeline_config = load_pipeline_config(_resolve_data_config(args.data_config, REPO_ROOT))
+        processed_dir = pipeline_config.resolved_output_dir(REPO_ROOT)
         manifest_path = processed_dir / "manifest.json"
         if manifest_path.exists():
             results["data_manifest"] = json.loads(manifest_path.read_text(encoding="utf-8"))
-        results["data_config"] = str(args.data_config)
-        results["processed_dir"] = str(processed_dir)
+        results["provenance"]["data_config"] = str(args.data_config)
+        results["provenance"]["processed_dir"] = str(processed_dir)
 
+    optional_metrics: dict = {}
     if args.panel_npz is not None:
         panel = np.load(args.panel_npz)
         returns = panel["returns"]
@@ -85,8 +105,8 @@ def main():
         f3 = compute_f3_dependence_features(
             returns, factor_returns=factor, weights=weights, rolling_window=60, tail_quantile=0.95
         )
-        results["metrics"]["phase_f2"] = _to_jsonable(f2)
-        results["metrics"]["phase_f3"] = _to_jsonable(f3)
+        optional_metrics["phase_f2"] = _to_jsonable(f2)
+        optional_metrics["phase_f3"] = _to_jsonable(f3)
 
     if args.option_npz is not None:
         opt = np.load(args.option_npz)
@@ -107,7 +127,7 @@ def main():
         calendar_ok = calendar_no_arb_check(maturities, total_var_surface)
         local_vol = dupire_local_vol(strikes, maturities, call_prices)
 
-        results["metrics"]["phase_f4"] = _to_jsonable(
+        optional_metrics["phase_f4"] = _to_jsonable(
             {
                 "svi_fit": svi,
                 "ssvi_fit": ssvi,
@@ -119,22 +139,28 @@ def main():
             }
         )
 
+    if optional_metrics:
+        results["optional_metrics"] = optional_metrics
+
     output = Path(args.output) if args.output else Path("evaluation.json")
     output.write_text(json.dumps(_to_jsonable(results), indent=2), encoding="utf-8")
-    print(f"Evaluating checkpoint: {args.checkpoint}")
+    print(f"Evaluating checkpoint: {checkpoint_path}")
     print(f"Saved evaluation results to: {output}")
 
 
-def _resolve_data_config(path: str, repo_root: Path) -> Path:
+def _resolve_path(path: str) -> Path:
     candidate = Path(path)
     if candidate.is_absolute():
         return candidate
     cwd_candidate = Path.cwd() / candidate
     if cwd_candidate.exists():
         return cwd_candidate
-    return repo_root / candidate
+    return REPO_ROOT / candidate
+
+
+def _resolve_data_config(path: str, repo_root: Path) -> Path:
+    return _resolve_path(path)
 
 
 if __name__ == "__main__":
     main()
-
