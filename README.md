@@ -40,7 +40,9 @@ git clone https://github.com/artaasd95/raft-lm.git
 cd raft-lm
 python -m venv venv
 # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -e .
+pip install -e '.[dev]'    # pytest, linting
+pip install -e '.[hf]'      # transformers, datasets, peft, huggingface_hub (optional)
 ```
 
 ### Build engine-label dataset

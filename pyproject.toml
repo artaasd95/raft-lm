@@ -31,6 +31,13 @@ benchmark = [
     "langgraph>=0.2.0",
     "langchain-core>=0.3.0",
 ]
+hf = [
+    "transformers>=4.41",
+    "datasets",
+    "peft",
+    "huggingface_hub",
+    "safetensors",
+]
 unsloth = [
     "unsloth",
     "transformers>=4.41",
