@@ -72,6 +72,19 @@ class TestPipeline:
         assert manifest["pipeline_id"] == "risk_training_engine_v1"
         assert manifest["counts"]["train"] >= 1
 
+    def test_engine_labels_enrichment(self, tmp_path):
+        config = load_pipeline_config(REPO_ROOT / "configs/data/risk_training_stub.yaml")
+        config.output_dir = str(tmp_path / "labeled")
+        out_dir = run_pipeline(config, REPO_ROOT)
+        train_path = out_dir / "train.jsonl"
+        assert train_path.exists()
+        first_line = train_path.read_text(encoding="utf-8").splitlines()[0]
+        row = json.loads(first_line)
+        assert "engine_labels" in row
+        assert "cvar" in row["engine_labels"]
+        assert "var" in row["engine_labels"]
+        assert row["engine_labels"]["engine_version"]
+
     def test_filters_zero_vector(self, tmp_path):
         config = load_pipeline_config(REPO_ROOT / "configs/data/risk_training_stub.yaml")
         config.output_dir = str(tmp_path / "filtered")

@@ -22,6 +22,7 @@ class EngineLabelRow:
     risk_domain: str = "market"
     engine_version: str = "engine-stub-v1"
     scenario_id: Optional[str] = None
+    engine_labels: Optional[Dict[str, Any]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -36,6 +37,7 @@ class EngineLabelRow:
             risk_domain=str(data.get("risk_domain", "market")),
             engine_version=str(data.get("engine_version", "engine-stub-v1")),
             scenario_id=data.get("scenario_id"),
+            engine_labels=dict(data["engine_labels"]) if data.get("engine_labels") else None,
             metadata=dict(data.get("metadata") or {}),
         )
 

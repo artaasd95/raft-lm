@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import math
 import random
+
+from src.metrics.label_enrichment import enrich_row_labels
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -82,22 +84,17 @@ class DataPipeline:
 
     def _stage_label(self, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         num_classes = self.config.label.num_classes
+        engine_version = self.config.label.engine_version
+        alpha = float(getattr(self.config.label, "alpha", 0.95))
         labeled: List[Dict[str, Any]] = []
         for row in rows:
-            if "label" in row:
-                label = int(row["label"])
-            else:
-                # Engine stub: bucket by L2 norm of features
-                norm = math.sqrt(sum(v * v for v in row["features"]))
-                label = min(num_classes - 1, int(norm * num_classes) % num_classes)
             labeled.append(
-                {
-                    **row,
-                    "label": label,
-                    "engine_version": row.get(
-                        "engine_version", self.config.label.engine_version
-                    ),
-                }
+                enrich_row_labels(
+                    row,
+                    num_classes=num_classes,
+                    alpha=alpha,
+                    engine_version=row.get("engine_version", engine_version),
+                )
             )
         return labeled
 

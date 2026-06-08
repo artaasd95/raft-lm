@@ -17,7 +17,7 @@ Executed in order (subset configurable per YAML):
 
 1. **normalize** — coerce types, required keys, feature vector length
 2. **enrich** — scenario tags, metadata merge
-3. **label** — assign `label` from engine stub or existing engine fields
+3. **label** — assign `label` and `engine_labels` via `src/metrics/label_enrichment.py` (VaR/CVaR on feature-derived or explicit returns)
 4. **split** — stratified or random train/val/test
 5. **filter** — drop rows failing min feature norm / feedback flags
 
