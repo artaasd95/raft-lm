@@ -8,12 +8,14 @@ from src.models.loaders.unified import load_from_hub_or_local, load_pytorch_chec
 
 
 def test_load_pytorch_checkpoint(tmp_path):
-    model = SimpleMLP(input_dim=4, hidden_dim=8, output_dim=2)
+    model = SimpleMLP(input_dim=4, hidden_dim=8, output_dim=2, dropout=0.0)
     ckpt = tmp_path / "model.pt"
     torch.save(model.state_dict(), ckpt)
 
-    fresh = SimpleMLP(input_dim=4, hidden_dim=8, output_dim=2)
+    fresh = SimpleMLP(input_dim=4, hidden_dim=8, output_dim=2, dropout=0.0)
     loaded = load_pytorch_checkpoint(ckpt, fresh)
+    model.eval()
+    loaded.module.eval()
     x = torch.randn(2, 4)
     assert torch.allclose(model(x), loaded.module(x))
 
