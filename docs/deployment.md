@@ -2,6 +2,9 @@
 
 RAFT-LM ships a **CPU-only** multi-stage Docker image for mini-train smoke tests and local reproducibility.
 
+**Operators:** deploy, rollback, and incident steps → [runbook-production.md](runbook-production.md).  
+**Pre-deploy gate:** `./scripts/deploy_check.sh`
+
 ## Build
 
 ```bash

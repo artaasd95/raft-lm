@@ -1,0 +1,1 @@
+{"metrics": {"accuracy": 0.71875, "constraint_violation_rate": 0.28125, "cvar": 1.4984830617904663, "f1_score": 0.8000000000000002, "num_samples": 32.0, "test_loss": 0.8149317502975464}, "step": null}

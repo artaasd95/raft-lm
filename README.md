@@ -79,6 +79,7 @@ Artifacts per run: `resolved_config.json`, `metrics.json`, `checkpoints/best_mod
 | [docs/benchmarks/reproduce.md](docs/benchmarks/reproduce.md) | Exact reproduce commands |
 | [docs/data-platform.md](docs/data-platform.md) | Pipeline stages |
 | [docs/deployment.md](docs/deployment.md) | Docker + CI |
+| [docs/runbook-production.md](docs/runbook-production.md) | Deploy, rollback, incidents |
 | [docs/artifacts-schema.md](docs/artifacts-schema.md) | Run artifact schema |
 
 ## License

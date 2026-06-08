@@ -1,0 +1,14 @@
+{
+  "backend": "mlp",
+  "completed_at": "2026-06-08T18:04:13.315751+00:00",
+  "config_path": "G:\\repositories\\raft-lm\\configs\\risk_training.yaml",
+  "config_version": 1,
+  "cuda_available": false,
+  "device": "cpu",
+  "experiment_name": "risk_training_smoke",
+  "git_commit": "5423cf804591bb1a57c827056f4371489d1de4a0",
+  "seed": 42,
+  "started_at": "2026-06-08T18:04:11.368238+00:00",
+  "timestamp": "2026-06-08T18:04:11.368238+00:00",
+  "torch_version": "2.8.0+cpu"
+}
