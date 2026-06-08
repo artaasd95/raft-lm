@@ -9,7 +9,57 @@ This file defines **two** contracts:
 
 ## 1. Risk-training benchmark contract (S7 / S0-03)
 
-**Status:** Draft — schema and artifact layout only; **no live multi-seed run** in S7 (execution starts at task 50+ / `SP-BENCH-*`).
+**Status:** Protocol locked — **results table TBD** (multi-seed execution deferred).
+
+### Baselines (required)
+
+| ID | Loss | Config |
+|----|------|--------|
+| `ce_baseline` | Cross-entropy (`ce`) | `configs/risk_training_v1_locked.yaml` with `loss.type: ce` |
+| `mse_baseline` | MSE regression proxy | Same config with `loss.type: MSELoss` on regression slice (TBD) |
+
+### Primary metrics
+
+| Metric | Role |
+|--------|------|
+| `accuracy` | Task quality |
+| `cvar` | Tail risk on per-sample losses |
+| `constraint_violation_rate` | Policy constraint stress |
+
+### Secondary metrics
+
+| Metric | Role |
+|--------|------|
+| `f1_score` | Class balance |
+| `tail_error_rate` | CVaR / test_loss ratio from `scripts/evaluate.py` |
+
+### Protocol
+
+1. Build dataset: `scripts/build_dataset.py --config configs/data/risk_training_stub.yaml`
+2. Train locked config: `configs/risk_training_v1_locked.yaml` — **any hyperparameter change = new benchmark row**
+3. Seeds: `{42, 123, 456}` (placeholder — see [reproduce.md](reproduce.md))
+4. Compare: `python scripts/compare_experiments.py --runs-dir experiments/results`
+
+### Results (TBD)
+
+| Method | Accuracy | CVaR | Constraint viol. | Seeds |
+|--------|----------|------|-------------------|-------|
+| CE baseline | TBD | TBD | TBD | 3 |
+| CVaR penalized | TBD | TBD | TBD | 3 |
+| Tail-aware | TBD | TBD | TBD | 3 |
+
+### WHY
+
+Risk-aware training should reduce tail losses without collapsing task accuracy. This benchmark isolates engine-label generalization under identical splits.
+
+### Limitations
+
+- MLP tabular baseline only; LLM LoRA results tracked separately (S13).
+- Engine labels use metrics enrichment stub on feature-derived pseudo-returns.
+- No production market data in v1.0 smoke path.
+
+**Locked config:** [configs/risk_training_v1_locked.yaml](../../configs/risk_training_v1_locked.yaml)  
+**Reproduce:** [reproduce.md](reproduce.md)
 
 ### Goal
 
