@@ -333,7 +333,7 @@ def _validate_logging(logging_config: Any) -> None:
     _validate_known_fields(
         logging_config,
         "logging",
-        {"log_interval", "save_checkpoints", "checkpoint_interval", "experiment_backend"},
+        {"log_interval", "save_checkpoints", "checkpoint_interval", "experiment_backend", "callbacks"},
     )
     _require_int(logging_config.get("log_interval"), "logging.log_interval", minimum=1)
     _require_type(logging_config.get("save_checkpoints"), bool, "logging.save_checkpoints")

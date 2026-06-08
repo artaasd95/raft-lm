@@ -99,6 +99,7 @@ def run_training(
         config=config,
         run_dir=run_dir,
         data_config_path=data_config_path,
+        exp_logger=exp_logger,
     )
 
     _update_metrics_file(run_dir / "metrics.json", test_metrics)

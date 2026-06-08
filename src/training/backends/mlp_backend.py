@@ -20,6 +20,7 @@ from src.models.base_models import SimpleMLP
 from src.models.loaders.unified import UnifiedModelLoader
 from src.training.backends.base import TrainingBackend
 from src.training.base_trainer import BaseTrainer
+from src.training.callbacks import build_callbacks
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -32,6 +33,7 @@ class MLPBackend(TrainingBackend):
         config: Dict[str, Any],
         run_dir: Path,
         data_config_path: Optional[str] = None,
+        exp_logger: Optional[Any] = None,
     ) -> Dict[str, Any]:
         from src.utils.reproducibility import get_device
 
@@ -55,11 +57,13 @@ class MLPBackend(TrainingBackend):
             device=device,
             config=config,
         )
+        callbacks = build_callbacks(config, exp_logger) if exp_logger is not None else []
         trainer.train(
             train_loader=train_loader,
             val_loader=val_loader,
             num_epochs=config["training"]["num_epochs"],
             save_dir=str(run_dir),
+            callbacks=callbacks,
         )
         return _evaluate_model(
             model=trainer.model,

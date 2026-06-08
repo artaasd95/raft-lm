@@ -7,7 +7,7 @@ All specialized trainers should inherit from this base class.
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from typing import Dict, Any, Optional, Callable
+from typing import Any, Dict, List, Optional
 from pathlib import Path
 import json
 
@@ -60,7 +60,12 @@ class BaseTrainer:
         self.train_metrics = []
         self.val_metrics = []
         
-    def train_epoch(self, train_loader: DataLoader) -> Dict[str, float]:
+    def train_epoch(
+        self,
+        train_loader: DataLoader,
+        *,
+        collect_per_sample_losses: bool = False,
+    ) -> Dict[str, float]:
         """
         Train for one epoch.
         
@@ -73,7 +78,8 @@ class BaseTrainer:
         self.model.train()
         epoch_loss = 0.0
         num_batches = 0
-        
+        per_sample_chunks: List[torch.Tensor] = []
+
         for batch_idx, (inputs, targets) in enumerate(train_loader):
             inputs = inputs.to(self.device)
             targets = targets.to(self.device)
@@ -82,18 +88,26 @@ class BaseTrainer:
             self.optimizer.zero_grad()
             outputs = self.model(inputs)
             loss = self.criterion(outputs, targets)
-            
+
+            if collect_per_sample_losses:
+                per_sample_chunks.append(
+                    torch.nn.functional.cross_entropy(outputs, targets, reduction="none").detach()
+                )
+
             # Backward pass
             loss.backward()
             self.optimizer.step()
-            
+
             # Track metrics
             epoch_loss += loss.item()
             num_batches += 1
             self.global_step += 1
-            
+
         avg_loss = epoch_loss / num_batches
-        return {'train_loss': avg_loss}
+        metrics: Dict[str, Any] = {"train_loss": avg_loss}
+        if per_sample_chunks:
+            metrics["_per_sample_losses"] = torch.cat(per_sample_chunks)
+        return metrics
     
     def validate(self, val_loader: DataLoader) -> Dict[str, float]:
         """
@@ -128,7 +142,8 @@ class BaseTrainer:
         train_loader: DataLoader,
         val_loader: DataLoader,
         num_epochs: int,
-        save_dir: Optional[str] = None
+        save_dir: Optional[str] = None,
+        callbacks: Optional[List[Any]] = None,
     ) -> None:
         """
         Main training loop.
@@ -149,8 +164,16 @@ class BaseTrainer:
             self.current_epoch = epoch
             
             # Train
-            train_metrics = self.train_epoch(train_loader)
+            train_metrics = self.train_epoch(
+                train_loader,
+                collect_per_sample_losses=bool(callbacks),
+            )
+            per_sample = train_metrics.pop("_per_sample_losses", None)
             self.train_metrics.append(train_metrics)
+            if callbacks and per_sample is not None:
+                for cb in callbacks:
+                    if hasattr(cb, "on_epoch_losses"):
+                        cb.on_epoch_losses(epoch, per_sample)
             
             # Validate
             val_metrics = self.validate(val_loader)

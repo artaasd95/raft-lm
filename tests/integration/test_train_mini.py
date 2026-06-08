@@ -33,3 +33,18 @@ def test_mini_train_artifacts(tmp_path):
     metrics = json.loads((run_dir / "metrics.json").read_text(encoding="utf-8"))
     assert "test_metrics" in metrics
     assert "accuracy" in metrics["test_metrics"]
+
+
+@pytest.mark.timeout(30)
+def test_mini_train_with_callbacks(tmp_path):
+    config = resolve_config(load_config(str(LOCKED_CONFIG)))
+    config["output"] = {"results_dir": str(tmp_path / "results_cb")}
+    config["training"]["num_epochs"] = 1
+    config.setdefault("logging", {})["callbacks"] = True
+    config_path = tmp_path / "mini_cb.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+
+    run_dir = run_training(str(config_path))
+    logged = run_dir / "logged_metrics.jsonl"
+    assert logged.exists()
+    assert "loss_cvar" in logged.read_text(encoding="utf-8")

@@ -16,5 +16,6 @@ class TrainingBackend(ABC):
         config: Dict[str, Any],
         run_dir: Path,
         data_config_path: Optional[str] = None,
+        exp_logger: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """Execute training and return test metrics."""
