@@ -2,7 +2,8 @@ policy_id: risk_cvar_v1
 description: Emphasize CVaR and constraint metrics in evaluation
 training:
   loss:
-    type: CrossEntropyLoss
+    type: cvar_penalized
+    alpha: 0.95
 evaluation:
   metrics:
     - accuracy

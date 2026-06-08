@@ -18,7 +18,15 @@ CONFIG_VERSION = 1
 SUPPORTED_MODELS = {"SimpleMLP", "hf_lora"}
 SUPPORTED_DATASETS = {"SyntheticRiskDataset", "SFTJsonl"}
 SUPPORTED_BACKENDS = {"mlp", "unsloth"}
-SUPPORTED_LOSSES = {"CrossEntropyLoss", "MSELoss", "CVaRLoss"}
+SUPPORTED_LOSSES = {
+    "CrossEntropyLoss",
+    "MSELoss",
+    "CVaRLoss",
+    "TailAwareLoss",
+    "ce",
+    "cvar_penalized",
+    "tail_aware",
+}
 SUPPORTED_OPTIMIZERS = {"Adam", "SGD"}
 SUPPORTED_METRICS = {
     "accuracy",
@@ -300,9 +308,10 @@ def _validate_training(training: Any) -> None:
 
     loss = training.get("loss")
     _require_mapping(loss, "training.loss")
-    loss_fields = {"type"}
-    if loss.get("type") == "CVaRLoss":
-        loss_fields.add("alpha")
+    loss_fields = {"type", "loss", "alpha", "tail_weight"}
+    loss_type = str(loss.get("type", "")).lower()
+    if loss_type in {"cvarloss", "cvar_penalized", "tailawareloss", "tail_aware"}:
+        loss_fields.update({"alpha", "tail_weight"})
     _validate_known_fields(loss, "training.loss", loss_fields)
     _require_choice(loss.get("type"), SUPPORTED_LOSSES, "training.loss.type")
     if loss.get("alpha") is not None:

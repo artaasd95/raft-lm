@@ -13,9 +13,11 @@ from src.data_platform.config import load_pipeline_config
 from src.data_platform.dataset import EngineLabelDataset
 from src.data_platform.pipeline import load_engine_label_splits, run_pipeline
 from src.losses.base_losses import CrossEntropyLoss, MSELoss
+from src.training.loss_factory import build_loss
 from src.metrics.risk_metrics import compute_cvar, constraint_violation_rate
 from src.metrics.task_metrics import accuracy, f1_score, mae, mse
 from src.models.base_models import SimpleMLP
+from src.models.loaders.unified import UnifiedModelLoader
 from src.training.backends.base import TrainingBackend
 from src.training.base_trainer import BaseTrainer
 
@@ -40,7 +42,10 @@ class MLPBackend(TrainingBackend):
             config, data_config_path=data_config_path
         )
         model = _build_model(config)
-        criterion = _build_loss(config)
+        loader = UnifiedModelLoader()
+        loaded = loader.load(config, model)
+        model = loaded.module
+        criterion = build_loss(config)
         optimizer = _build_optimizer(config, model)
 
         trainer = BaseTrainer(
@@ -192,20 +197,6 @@ def _build_model(config: Dict[str, Any]) -> torch.nn.Module:
         num_layers=model_config["num_layers"],
         dropout=model_config["dropout"],
     )
-
-
-def _build_loss(config: Dict[str, Any]) -> torch.nn.Module:
-    loss_type = config["training"]["loss"]["type"]
-    if loss_type == "CrossEntropyLoss":
-        return CrossEntropyLoss()
-    if loss_type == "MSELoss":
-        return MSELoss()
-    if loss_type == "CVaRLoss":
-        from src.losses.risk_losses import CVaRLoss
-
-        alpha = config["training"]["loss"].get("alpha", 0.95)
-        return CVaRLoss(alpha=alpha)
-    raise ValueError(f"Unsupported loss type: {loss_type}")
 
 
 def _build_optimizer(
