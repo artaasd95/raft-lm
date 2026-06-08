@@ -45,8 +45,9 @@ evaluation:
 
 logging:
   log_interval: 1
-  save_checkpoints: false
-  checkpoint_interval: 1
+  save_checkpoints: true
+  checkpoint_interval: 100
+  checkpoint_keep_last: 3
 
 output:
   results_dir: experiments/results

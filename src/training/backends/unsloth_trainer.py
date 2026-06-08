@@ -82,6 +82,13 @@ class UnslothTrainer(TrainingBackend):
             use_gradient_checkpointing=lora_cfg.get("use_gradient_checkpointing", True),
         )
 
+        logging_cfg = config.get("logging", {})
+        training_cfg = config.get("training", {})
+        save_checkpoints = bool(logging_cfg.get("save_checkpoints", True))
+        save_steps = int(logging_cfg.get("checkpoint_interval", 100))
+        save_total_limit = int(logging_cfg.get("checkpoint_keep_last", 3))
+        resume_from = training_cfg.get("resume_from_checkpoint") or None
+
         training_args = SFTConfig(
             output_dir=str(run_dir / "checkpoints"),
             num_train_epochs=config["training"]["num_epochs"],
@@ -89,8 +96,11 @@ class UnslothTrainer(TrainingBackend):
             per_device_eval_batch_size=int(data_cfg.get("batch_size", 2)),
             learning_rate=float(config["training"]["optimizer"]["lr"]),
             weight_decay=float(config["training"]["optimizer"]["weight_decay"]),
-            logging_steps=int(config.get("logging", {}).get("log_interval", 10)),
-            save_strategy="no",
+            logging_steps=int(logging_cfg.get("log_interval", 10)),
+            save_strategy="steps" if save_checkpoints else "no",
+            save_steps=save_steps if save_checkpoints else None,
+            save_total_limit=save_total_limit if save_checkpoints else None,
+            resume_from_checkpoint=resume_from,
             report_to="none",
             seed=int(config["training"]["seed"]),
             max_seq_length=max_seq_length,
