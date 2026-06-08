@@ -1,40 +1,38 @@
-"""
-Unit tests for model architectures.
+"""Unit tests for model architectures."""
 
-Tests model forward pass, output shapes, and gradient flow.
-"""
+import pytest
+
+pytest.importorskip("torch", reason="PyTorch not available", exc_type=ImportError)
 
 import torch
-import pytest
+
 from src.models.base_models import SimpleMLP
 
 
-class TestModels:
-    """Test suite for model architectures."""
-    
-    def test_simple_mlp_forward(self):
-        """Test SimpleMLP forward pass."""
-        # TODO: Implement test
-        # - Test output shape
-        # - Test with different input sizes
-        # - Test gradient flow
-        pass
-    
-    def test_model_initialization(self):
-        """Test model initialization."""
-        # TODO: Implement test
-        # - Check weight initialization
-        # - Check parameter count
-        pass
-    
-    def test_model_device_transfer(self):
-        """Test moving model to different devices."""
-        # TODO: Implement test for CPU/GPU transfer
-        pass
+class TestSimpleMLP:
+    def test_forward_output_shape(self):
+        model = SimpleMLP(input_dim=8, hidden_dim=16, output_dim=3, num_layers=2)
+        x = torch.randn(5, 8)
+        out = model(x)
+        assert out.shape == (5, 3)
 
+    def test_parameter_count_positive(self):
+        model = SimpleMLP(input_dim=4, hidden_dim=8, output_dim=2, num_layers=1)
+        n_params = sum(p.numel() for p in model.parameters())
+        assert n_params > 0
 
-# Placeholder for future tests
-# TODO: Add tests for all model architectures
-# TODO: Add tests for custom layers
-# TODO: Add memory consumption tests
+    def test_gradient_flow(self):
+        model = SimpleMLP(input_dim=4, hidden_dim=8, output_dim=2, num_layers=1)
+        x = torch.randn(3, 4, requires_grad=True)
+        out = model(x)
+        loss = out.sum()
+        loss.backward()
+        assert x.grad is not None
+        assert any(p.grad is not None for p in model.parameters())
 
+    def test_device_transfer_cpu(self):
+        model = SimpleMLP(input_dim=4, hidden_dim=8, output_dim=2, num_layers=1)
+        model_cpu = model.to("cpu")
+        x = torch.randn(2, 4, device="cpu")
+        out = model_cpu(x)
+        assert out.device.type == "cpu"
