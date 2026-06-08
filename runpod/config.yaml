@@ -1,0 +1,54 @@
+config_version: 1
+experiment_name: runpod_unsloth_lora
+description: RunPod overrides for raft-lm Unsloth LoRA training
+
+model:
+  type: hf_lora
+  model_id: qwen2.5-0.5b
+  lora:
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
+    target_modules:
+      - q_proj
+      - k_proj
+      - v_proj
+      - o_proj
+  quantization:
+    load_in_4bit: true
+
+data:
+  dataset_type: SFTJsonl
+  data_source: distilled
+  distilled_corpus: risk_sft_v1
+  max_seq_length: 512
+  batch_size: 4
+  num_workers: 2
+
+training:
+  backend: unsloth
+  num_epochs: 3
+  seed: 42
+  device: auto
+  optimizer:
+    type: Adam
+    lr: 0.0002
+    weight_decay: 0.01
+  loss:
+    type: CrossEntropyLoss
+
+evaluation:
+  metrics:
+    - perplexity
+    - cvar
+    - tail_error_rate
+
+logging:
+  log_interval: 10
+  save_checkpoints: true
+  checkpoint_interval: 100
+  checkpoint_keep_last: 3
+
+output:
+  results_dir: experiments/results/runpod
+  adapters_dir: experiments/adapters
