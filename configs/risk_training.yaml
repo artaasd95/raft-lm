@@ -1,0 +1,48 @@
+# Canonical CPU smoke config for risk-aware MLP training (RAFT-06).
+config_version: 1
+experiment_name: risk_training_smoke
+description: SimpleMLP baseline on synthetic risk data for benchmark prep
+
+model:
+  type: SimpleMLP
+  input_dim: 10
+  hidden_dim: 32
+  output_dim: 3
+  num_layers: 1
+  dropout: 0.0
+
+data:
+  dataset_type: SyntheticRiskDataset
+  train_size: 128
+  val_size: 32
+  test_size: 32
+  batch_size: 16
+  num_workers: 0
+
+training:
+  backend: mlp
+  num_epochs: 2
+  optimizer:
+    type: Adam
+    lr: 0.01
+    weight_decay: 0.0
+  loss:
+    type: ce
+  seed: 42
+  device: cpu
+
+evaluation:
+  metrics:
+    - accuracy
+    - f1_score
+    - cvar
+    - constraint_violation_rate
+
+logging:
+  log_interval: 1
+  save_checkpoints: true
+  checkpoint_interval: 1
+  experiment_backend: local
+
+output:
+  results_dir: experiments/results
