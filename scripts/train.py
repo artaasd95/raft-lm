@@ -24,7 +24,7 @@ from src.logging.experiment_logger import create_experiment_logger
 from src.training.backends.factory import get_training_backend
 from src.training.policies.registry import get_policy_registry
 from src.utils.config import load_config, resolve_config, save_config, validate_config
-from src.utils.reproducibility import get_device, set_seed
+from src.utils.reproducibility import get_device, get_git_commit_hash, set_seed
 
 POLICIES_DIR = REPO_ROOT / "experiments/configs/policies"
 
@@ -34,6 +34,8 @@ def run_training(
     seed_override: Optional[int] = None,
     data_config_path: Optional[str] = None,
     policy_id: Optional[str] = None,
+    checkpoint_path: Optional[str] = None,
+    loss_override: Optional[str] = None,
 ) -> Path:
     """
     Run a complete config-driven training workflow.
@@ -52,6 +54,10 @@ def run_training(
         config = registry.apply_to_config(config, policy_id)
     if seed_override is not None:
         config["training"]["seed"] = seed_override
+    if checkpoint_path is not None:
+        config["training"]["resume_from"] = str(_resolve_path(checkpoint_path))
+    if loss_override is not None:
+        config["training"].setdefault("loss", {})["type"] = loss_override
     validate_config(config)
 
     seed = config["training"]["seed"]
@@ -142,6 +148,19 @@ def main():
         default=None,
         help="Policy bundle id (experiments/configs/policies/<id>.yaml|json)",
     )
+    parser.add_argument(
+        "--checkpoint",
+        type=str,
+        default=None,
+        help="Resume training from checkpoint path",
+    )
+    parser.add_argument(
+        "--loss",
+        type=str,
+        choices=["ce", "cvar_penalized", "tail_aware"],
+        default=None,
+        help="Override training loss (ce, cvar_penalized, tail_aware)",
+    )
 
     args = parser.parse_args()
 
@@ -150,6 +169,8 @@ def main():
         seed_override=args.seed,
         data_config_path=args.data_config,
         policy_id=args.policy,
+        checkpoint_path=args.checkpoint,
+        loss_override=args.loss,
     )
     print(f"Training complete. Results saved to: {run_dir}")
 
@@ -201,9 +222,11 @@ def _build_run_info(
         "config_version": config["config_version"],
         "experiment_name": config["experiment_name"],
         "seed": config["training"]["seed"],
+        "git_commit": get_git_commit_hash(str(REPO_ROOT)),
         "backend": config["training"].get("backend", "mlp"),
         "device": str(device),
         "started_at": started_at.isoformat(),
+        "timestamp": started_at.isoformat(),
         "torch_version": torch.__version__,
         "cuda_available": torch.cuda.is_available(),
     }

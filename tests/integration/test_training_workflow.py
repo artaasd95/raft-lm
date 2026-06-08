@@ -95,6 +95,10 @@ class TestTrainingWorkflow:
         assert "accuracy" in metrics["test_metrics"]
         assert "cvar" in metrics["test_metrics"]
         assert run_info["seed"] == 123
+        assert "git_commit" in run_info
+        assert "timestamp" in run_info
+        assert "started_at" in run_info
+        assert "completed_at" in run_info
     
     def test_checkpoint_save_load(self):
         """Test saving and loading checkpoints."""

@@ -5,9 +5,11 @@ Functions to ensure reproducible experiments across runs.
 """
 
 import random
+import subprocess
+from typing import Optional
+
 import numpy as np
 import torch
-from typing import Optional
 
 
 def set_seed(seed: int) -> None:
@@ -46,8 +48,17 @@ def get_device(device: Optional[str] = None) -> torch.device:
     return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-# Placeholder for future reproducibility utilities
-# TODO: Add environment capture (Python version, package versions)
-# TODO: Add hardware info logging
-# TODO: Add deterministic dataloader configuration
+def get_git_commit_hash(repo_root: Optional[str] = None) -> Optional[str]:
+    """Return current git HEAD hash, or None if unavailable."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=repo_root,
+        )
+        return result.stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
 
