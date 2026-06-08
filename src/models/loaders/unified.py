@@ -131,6 +131,33 @@ def load_from_hub_or_local(
     return load_from_hub_or_local(cache_dir, model=model)
 
 
+class UnifiedModelLoader:
+    """Facade for checkpoint resume and HF/local weight loading."""
+
+    def load(
+        self,
+        config: Dict[str, Any],
+        model: torch.nn.Module,
+        *,
+        checkpoint_path: Optional[Union[str, Path]] = None,
+    ) -> LoadedModel:
+        model_cfg = config.get("model", {})
+        source = str(model_cfg.get("source", "pytorch")).lower()
+        resume = checkpoint_path or config.get("training", {}).get("resume_from")
+
+        if resume:
+            return load_pytorch_checkpoint(resume, model)
+
+        if source == "hf":
+            hub_id = model_cfg.get("hub_id") or model_cfg.get("model_id")
+            if not hub_id:
+                raise ValueError("model.hub_id required when model.source is 'hf'")
+            revision = model_cfg.get("revision")
+            return load_from_hub_or_local(hub_id, model=model, revision=revision)
+
+        return LoadedModel(module=model, source="initialized", metadata={})
+
+
 class _StateDictModule(torch.nn.Module):
     """Minimal module exposing a state dict for inspection/tests."""
 
