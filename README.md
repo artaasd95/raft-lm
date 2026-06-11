@@ -1,7 +1,12 @@
+<p align="center">
+  <img src="assets/logo.png" alt="RAFT-LM logo" width="120" />
+</p>
+
 # RAFT-LM
 
 **Risk Aware Framework for Training Language Models** — engine-labeled training, risk-aware losses, and reproducible benchmarks.
 
+[![CI](https://github.com/artaasd95/raft-lm/actions/workflows/ci.yml/badge.svg)](https://github.com/artaasd95/raft-lm/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-pytest-brightgreen.svg)](tests/)
@@ -69,6 +74,7 @@ Artifacts per run: `resolved_config.json`, `metrics.json`, `checkpoints/best_mod
 | Metrics | `src/metrics/` |
 | Data platform | `src/data_platform/` |
 | Tools (LLM) | `src/tools/` |
+| LLM integration (BYOK) | `src/llm_integration/`, [docs/llm-integration.md](docs/llm-integration.md) |
 | RAG (deferred) | `src/rag/` |
 
 ## Documentation
