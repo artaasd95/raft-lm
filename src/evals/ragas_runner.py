@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -14,6 +15,7 @@ from src.evals.benchmark_schema import (
 )
 from src.evals.hallucination_risk import aggregate_severity, score_hallucination_risk
 
+logger = logging.getLogger(__name__)
 
 RAGAS_METRICS_REQUIRED = ["context_precision", "faithfulness"]
 OPTIONAL_METRICS = ["answer_correctness", "semantic_similarity"]
@@ -25,9 +27,6 @@ def _stub_scores(sample: Dict[str, Any]) -> RagasScores:
     ground_truth = sample.get("ground_truth", "")
     ctx_hit = 1.0 if ground_truth and ground_truth.lower() in context.lower() else 0.6
     faith = 1.0 if ground_truth and ground_truth.lower() in answer.lower() else 0.5
-    if sample.get("pipeline_name") == "raft_lm":
-        ctx_hit = min(1.0, ctx_hit + 0.1)
-        faith = min(1.0, faith + 0.1)
     return RagasScores(
         context_precision=round(ctx_hit, 4),
         faithfulness=round(faith, 4),
@@ -63,7 +62,10 @@ def run_ragas_eval(
 
     try:
         return _run_live_ragas(samples, metrics)
-    except Exception:
+    except NotImplementedError:
+        raise
+    except Exception as exc:
+        logger.warning("Live Ragas failed, falling back to stub: %s", exc)
         scores = [_stub_scores(s) for s in samples]
         return _average_scores(scores, metrics)
 
@@ -83,9 +85,9 @@ def _average_scores(scores: List[RagasScores], metrics: List[str]) -> RagasScore
 
 
 def _run_live_ragas(samples: List[Dict[str, Any]], metrics: List[str]) -> RagasScores:
-    # Live Ragas integration deferred; uses stub aggregation until dataset wired
-    scores = [_stub_scores(s) for s in samples]
-    return _average_scores(scores, metrics)
+    raise NotImplementedError(
+        "Live Ragas evaluation is not yet wired. Set BENCHMARK_MODE=stub for offline runs."
+    )
 
 
 def _runs_to_samples(runs: List[Any], pipeline_name: str) -> List[Dict[str, Any]]:

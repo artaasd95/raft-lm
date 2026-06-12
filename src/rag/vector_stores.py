@@ -34,8 +34,17 @@ class VectorStoreAdapter(ABC):
         ...
 
 
+def _normalize(vec: Sequence[float]) -> list[float]:
+    norm = sum(x * x for x in vec) ** 0.5
+    if norm == 0:
+        return list(vec)
+    return [x / norm for x in vec]
+
+
 def _cosine(a: Sequence[float], b: Sequence[float]) -> float:
-    return sum(x * y for x, y in zip(a, b))
+    na = _normalize(a)
+    nb = _normalize(b)
+    return sum(x * y for x, y in zip(na, nb))
 
 
 class InMemoryVectorStore(VectorStoreAdapter):
@@ -79,7 +88,7 @@ class InMemoryVectorStore(VectorStoreAdapter):
 
 
 class FaissVectorStore(VectorStoreAdapter):
-    """FAISS index (optional dependency). Falls back to in-memory if unavailable."""
+    """FAISS index (optional dependency). Raises if faiss-cpu is not installed."""
 
     def __init__(self) -> None:
         try:
@@ -146,6 +155,8 @@ class QdrantVectorStore(VectorStoreAdapter):
         self,
         collection_name: str = "raft_lm_benchmark",
         url: Optional[str] = None,
+        *,
+        dimension: int = 32,
     ) -> None:
         try:
             from qdrant_client import QdrantClient
@@ -157,14 +168,14 @@ class QdrantVectorStore(VectorStoreAdapter):
         self._qmodels = qmodels
         self._collection = collection_name
         self._client = QdrantClient(url=url or ":memory:")
+        self._dim = dimension
         self._client.recreate_collection(
             collection_name=collection_name,
             vectors_config=qmodels.VectorParams(
-                size=32,
+                size=dimension,
                 distance=qmodels.Distance.COSINE,
             ),
         )
-        self._dim: Optional[int] = None
 
     @property
     def store_name(self) -> str:
@@ -232,5 +243,6 @@ def vector_store_from_env(dimension: int = 32) -> VectorStoreAdapter:
         return QdrantVectorStore(
             url=os.getenv("QDRANT_URL"),
             collection_name=os.getenv("QDRANT_COLLECTION", "raft_lm_benchmark"),
+            dimension=dimension,
         )
     return InMemoryVectorStore()

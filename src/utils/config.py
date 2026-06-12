@@ -283,7 +283,15 @@ def _validate_training(training: Any) -> None:
     _validate_known_fields(
         training,
         "training",
-        {"backend", "num_epochs", "seed", "device", "optimizer", "loss"},
+        {
+            "backend",
+            "num_epochs",
+            "seed",
+            "device",
+            "optimizer",
+            "loss",
+            "resume_from_checkpoint",
+        },
     )
     backend = training.get("backend", "mlp")
     _require_choice(backend, SUPPORTED_BACKENDS, "training.backend")
@@ -315,7 +323,11 @@ def _validate_training(training: Any) -> None:
     _validate_known_fields(loss, "training.loss", loss_fields)
     _require_choice(loss.get("type"), SUPPORTED_LOSSES, "training.loss.type")
     if loss.get("alpha") is not None:
-        _require_number(loss.get("alpha"), "training.loss.alpha", minimum=0.0, maximum=1.0)
+        alpha = float(loss.get("alpha"))
+        if not (0.0 < alpha < 1.0):
+            raise ValueError(
+                "Invalid config field training.loss.alpha: must be in (0, 1) exclusive"
+            )
 
 
 def _validate_evaluation(evaluation: Any) -> None:
@@ -333,7 +345,14 @@ def _validate_logging(logging_config: Any) -> None:
     _validate_known_fields(
         logging_config,
         "logging",
-        {"log_interval", "save_checkpoints", "checkpoint_interval", "experiment_backend", "callbacks"},
+        {
+            "log_interval",
+            "save_checkpoints",
+            "checkpoint_interval",
+            "checkpoint_keep_last",
+            "experiment_backend",
+            "callbacks",
+        },
     )
     _require_int(logging_config.get("log_interval"), "logging.log_interval", minimum=1)
     _require_type(logging_config.get("save_checkpoints"), bool, "logging.save_checkpoints")
@@ -342,6 +361,12 @@ def _validate_logging(logging_config: Any) -> None:
         "logging.checkpoint_interval",
         minimum=1,
     )
+    if logging_config.get("checkpoint_keep_last") is not None:
+        _require_int(
+            logging_config.get("checkpoint_keep_last"),
+            "logging.checkpoint_keep_last",
+            minimum=1,
+        )
 
 
 def _validate_output(output: Any) -> None:

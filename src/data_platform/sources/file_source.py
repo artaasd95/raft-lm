@@ -11,13 +11,20 @@ from src.data_platform.sources.base import BaseSource
 
 
 class FileSource(BaseSource):
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, *, allowed_root: Path | None = None) -> None:
         self.path = path
+        self.allowed_root = allowed_root
 
     @classmethod
     def from_spec(cls, spec: Dict[str, Any]) -> "FileSource":
         path = Path(spec["path"])
-        return cls(path=path)
+        allowed_root = Path(spec["allowed_root"]) if spec.get("allowed_root") else None
+        if allowed_root is not None:
+            resolved = path.resolve()
+            root_resolved = allowed_root.resolve()
+            if not resolved.is_relative_to(root_resolved):
+                raise ValueError(f"File source path escapes allowed root: {path}")
+        return cls(path=path, allowed_root=allowed_root)
 
     def load_rows(self) -> List[Dict[str, Any]]:
         if not self.path.exists():

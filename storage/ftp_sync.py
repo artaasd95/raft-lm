@@ -13,7 +13,7 @@ DEFAULT_UPLOAD_DIRS = [
     "experiments/results",
     "experiments/adapters",
     "data/distilled",
-    "benchmarks/results",
+    "docs/benchmarks/results",
 ]
 
 
@@ -122,10 +122,11 @@ def sync_sftp(
     uploaded = 0
     skipped = 0
 
-    transport = paramiko.Transport((host, port))
-    transport.connect(username=user, password=password)
-    sftp = paramiko.SFTPClient.from_transport(transport)
-    assert sftp is not None
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.RejectPolicy())
+    client.connect(hostname=host, port=port, username=user, password=password or None)
+    sftp = client.open_sftp()
 
     def ensure_remote_dir(remote_path: str) -> None:
         parts = [p for p in remote_path.split("/") if p]
@@ -164,19 +165,34 @@ def sync_sftp(
             print(f"uploaded {rel_path}")
 
     sftp.close()
-    transport.close()
+    client.close()
     return {"uploaded": uploaded, "skipped": skipped}
 
 
 def main(argv: list[str] | None = None) -> int:
+    script_dir = Path(__file__).resolve().parent
+    if str(script_dir) not in sys.path:
+        sys.path.insert(0, str(script_dir))
     from disk_monitor import exceeds_threshold
 
     parser = argparse.ArgumentParser(description="Sync local dirs to FTP/SFTP storage.")
     parser.add_argument("--local-root", default=".", help="Repository root")
     parser.add_argument("--check-threshold", type=float, default=None, help="Skip sync below threshold")
-    parser.add_argument("--protocol", choices=("ftp", "sftp"), default="ftp")
+    parser.add_argument("--protocol", choices=("ftp", "sftp"), default="sftp")
+    parser.add_argument(
+        "--allow-insecure-ftp",
+        action="store_true",
+        help="Allow cleartext FTP (not recommended)",
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
+
+    if args.protocol == "ftp" and not args.allow_insecure_ftp:
+        print(
+            "Plain FTP is disabled by default. Use --protocol sftp or pass --allow-insecure-ftp.",
+            file=sys.stderr,
+        )
+        return 2
 
     local_root = Path(args.local_root).resolve()
     if args.check_threshold is not None and not exceeds_threshold(local_root, args.check_threshold):

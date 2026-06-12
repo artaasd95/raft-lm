@@ -104,7 +104,10 @@ class ChunkRetriever:
         hits = self._store.search(q_vec, top_k)
         results: List[RetrievedChunk] = []
         for hit in hits:
-            chunk = self._by_id[hit.id]
+            chunk = self._by_id.get(hit.id)
+            if chunk is None:
+                logger.warning("vector store returned unknown chunk id: %s", hit.id)
+                continue
             results.append(
                 RetrievedChunk(
                     chunk_id=chunk.chunk_id,
@@ -174,15 +177,16 @@ def retriever_from_env(corpus_dir) -> ChunkRetriever:
 
 
 def effective_max_context_tokens(budget: BenchmarkBudget, *, model_id: str = "gpt-4") -> int:
-    """Resolve RAG input token budget; prefers MAX_CONTEXT_TOKENS over char fallback."""
-    from src.llm_integration.context import max_context_from_env, tokens_from_chars
+    """Resolve RAG input token budget using model registry limits and env caps."""
+    from src.llm_integration.context import max_context_from_env, resolve_model_limits, tokens_from_chars
 
+    model_cap = resolve_model_limits(model_id).max_input_tokens
     if budget.max_context_tokens is not None:
-        return budget.max_context_tokens
+        return min(budget.max_context_tokens, model_cap)
     env_tokens = max_context_from_env()
     if env_tokens is not None:
-        return env_tokens
-    return tokens_from_chars(budget.max_context_chars)
+        return min(env_tokens, model_cap)
+    return min(tokens_from_chars(budget.max_context_chars), model_cap)
 
 
 def budget_from_env() -> BenchmarkBudget:
@@ -196,5 +200,5 @@ def budget_from_env() -> BenchmarkBudget:
         embedding_model=os.getenv("EMBEDDING_MODEL", "deterministic-stub"),
         vector_store=os.getenv("VECTOR_STORE", "in_memory"),
         generation_model=os.getenv("GENERATION_MODEL", "deterministic-stub"),
-        seed=int(os.getenv("BENCHMARK_SEED", "0")) or None,
+        seed=int(os.getenv("BENCHMARK_SEED")) if os.getenv("BENCHMARK_SEED") is not None else None,
     )

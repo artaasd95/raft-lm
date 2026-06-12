@@ -26,7 +26,12 @@ def apply_feedback(config_path: Path):
         raw = yaml.safe_load(f) or {}
 
     feedback_cfg = raw.get("feedback") or {}
-    input_path = _resolve_path(str(feedback_cfg.get("input_path", "")))
+    input_path_raw = feedback_cfg.get("input_path")
+    if not input_path_raw:
+        raise ValueError("feedback.input_path is required in config")
+    input_path = _resolve_path(str(input_path_raw))
+    if not input_path.exists():
+        raise FileNotFoundError(f"Feedback input not found: {input_path}")
     min_score = float(feedback_cfg.get("min_score", 0.0))
 
     weights: dict[str, float] = {}

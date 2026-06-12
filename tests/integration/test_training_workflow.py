@@ -7,6 +7,7 @@ Tests complete training pipeline from data loading to evaluation.
 import json
 
 import pytest
+import torch
 
 pytest.importorskip("torch", reason="PyTorch not available", exc_type=ImportError)
 
@@ -100,20 +101,23 @@ class TestTrainingWorkflow:
         assert "started_at" in run_info
         assert "completed_at" in run_info
     
-    def test_checkpoint_save_load(self):
-        """Test saving and loading checkpoints."""
-        # TODO: Implement test
-        # - Train for N epochs
-        # - Save checkpoint
-        # - Load checkpoint
-        # - Verify state is restored
-        # - Continue training
-        pass
-    
-    def test_training_with_validation(self):
-        """Test training with validation set."""
-        # TODO: Implement test
-        pass
+    def test_checkpoint_save_load(self, tmp_path):
+        """Saved best checkpoint can be loaded with weights_only=True."""
+        config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))
+        run_dir = run_training(config_path)
+        checkpoint = run_dir / "checkpoints" / "best_model.pt"
+        assert checkpoint.exists()
+        state = torch.load(checkpoint, map_location="cpu", weights_only=True)
+        assert "model_state_dict" in state
+        assert "optimizer_state_dict" in state
+
+    def test_training_with_validation(self, tmp_path):
+        """Validation metrics are recorded during training."""
+        config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))
+        run_dir = run_training(config_path)
+        metrics = _read_json(run_dir / "metrics.json")
+        assert metrics["val_metrics"]
+        assert all("val_loss" in row for row in metrics["val_metrics"])
 
 
 class TestExperimentWorkflow:
@@ -142,10 +146,14 @@ class TestExperimentWorkflow:
         assert first_metrics["val_metrics"] == second_metrics["val_metrics"]
         assert first_metrics["test_metrics"] == second_metrics["test_metrics"]
     
-    def test_multi_seed_experiment(self):
-        """Test running experiment with multiple seeds."""
-        # TODO: Implement test
-        pass
+    def test_multi_seed_experiment(self, tmp_path):
+        """Different seeds produce different synthetic training outcomes."""
+        config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))
+        first = run_training(config_path, seed_override=1)
+        second = run_training(config_path, seed_override=2)
+        first_loss = _read_json(first / "metrics.json")["test_metrics"]["test_loss"]
+        second_loss = _read_json(second / "metrics.json")["test_metrics"]["test_loss"]
+        assert first_loss != second_loss
 
 
 # Placeholder for future integration tests

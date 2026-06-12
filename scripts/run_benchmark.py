@@ -105,6 +105,7 @@ def main() -> int:
             corpus_dir=args.corpus_dir,
             out_dir=args.out_dir,
             budget=budget,
+            questions_limit=limit,
         )
 
     print(f"Benchmark complete run_id={report.run_id} pipeline={pipeline}")

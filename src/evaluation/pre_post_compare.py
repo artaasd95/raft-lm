@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -129,7 +130,11 @@ def _compute_lm_losses(
         return _stub_losses_from_dataset(test_ds, seed=seed, adapter_dir=adapter_dir)
 
     torch.manual_seed(seed)
-    tokenizer = AutoTokenizer.from_pretrained(adapter_dir or model_path, trust_remote_code=True)
+    trust_remote_code = bool(os.environ.get("RAFT_TRUST_REMOTE_CODE", "").lower() in {"1", "true", "yes"})
+    tokenizer = AutoTokenizer.from_pretrained(
+        adapter_dir or model_path,
+        trust_remote_code=trust_remote_code,
+    )
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -141,7 +146,7 @@ def _compute_lm_losses(
                 model_path,
                 load_in_4bit=load_in_4bit,
                 device_map="auto",
-                trust_remote_code=True,
+                trust_remote_code=trust_remote_code,
             )
             model = PeftModel.from_pretrained(base, adapter_dir)
         except ImportError:
@@ -149,14 +154,14 @@ def _compute_lm_losses(
                 adapter_dir,
                 load_in_4bit=load_in_4bit,
                 device_map="auto",
-                trust_remote_code=True,
+                trust_remote_code=trust_remote_code,
             )
     else:
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             load_in_4bit=load_in_4bit,
             device_map="auto",
-            trust_remote_code=True,
+            trust_remote_code=trust_remote_code,
         )
 
     model.eval()

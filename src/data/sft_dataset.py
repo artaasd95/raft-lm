@@ -10,13 +10,30 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DISTILLED_ROOT = REPO_ROOT / "data/distilled"
 
 
+def _safe_child_path(base: Path, name: str) -> Path:
+    """Resolve a child directory under base, rejecting path traversal."""
+    if not name or name in {".", ".."}:
+        raise ValueError(f"Invalid corpus name: {name!r}")
+    if Path(name).is_absolute() or ".." in Path(name).parts:
+        raise ValueError(f"Invalid corpus name: {name!r}")
+    base_resolved = base.resolve()
+    candidate = (base_resolved / name).resolve()
+    if not candidate.is_relative_to(base_resolved):
+        raise ValueError(f"Corpus path escapes base directory: {name!r}")
+    return candidate
+
+
 def load_sft_jsonl(path: Path) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
     with open(path, encoding="utf-8") as f:
-        for line in f:
+        for line_no, line in enumerate(f, start=1):
             line = line.strip()
-            if line:
+            if not line:
+                continue
+            try:
                 rows.append(json.loads(line))
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"Invalid JSON at {path}:{line_no}: {exc}") from exc
     return rows
 
 
@@ -42,7 +59,7 @@ def format_sft_text(row: Dict[str, Any]) -> str:
 
 def resolve_distilled_corpus_dir(corpus_name: str, root: Optional[Path] = None) -> Path:
     base = root or DEFAULT_DISTILLED_ROOT
-    corpus_dir = base / corpus_name
+    corpus_dir = _safe_child_path(base, corpus_name)
     if not corpus_dir.is_dir():
         raise FileNotFoundError(f"Distilled corpus not found: {corpus_dir}")
     return corpus_dir
@@ -53,15 +70,38 @@ def load_distilled_splits(
     root: Optional[Path] = None,
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]:
     corpus_dir = resolve_distilled_corpus_dir(corpus_name, root=root)
-    train = load_sft_jsonl(corpus_dir / "train.jsonl") if (corpus_dir / "train.jsonl").exists() else []
-    val = load_sft_jsonl(corpus_dir / "val.jsonl") if (corpus_dir / "val.jsonl").exists() else []
-    test = load_sft_jsonl(corpus_dir / "test.jsonl") if (corpus_dir / "test.jsonl").exists() else []
+    train = (
+        load_sft_jsonl(corpus_dir / "train.jsonl")
+        if (corpus_dir / "train.jsonl").exists()
+        else []
+    )
+    val = (
+        load_sft_jsonl(corpus_dir / "val.jsonl")
+        if (corpus_dir / "val.jsonl").exists()
+        else []
+    )
+    test = (
+        load_sft_jsonl(corpus_dir / "test.jsonl")
+        if (corpus_dir / "test.jsonl").exists()
+        else []
+    )
     if not train:
         raise ValueError(f"No train.jsonl in {corpus_dir}")
+
+    train = list(train)
     if not val:
-        val = train[: max(1, len(train) // 5)]
+        val_size = max(1, len(train) // 5)
+        val = train[:val_size]
+        train = train[val_size:]
     if not test:
-        test = val[:1] if val else train[:1]
+        if val:
+            test = val[:1]
+            val = val[1:] if len(val) > 1 else []
+        else:
+            test = train[:1]
+            train = train[1:] if len(train) > 1 else []
+    if not train:
+        raise ValueError(f"No training rows remain after synthesizing val/test in {corpus_dir}")
     return train, val, test
 
 

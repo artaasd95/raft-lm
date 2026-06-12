@@ -8,9 +8,9 @@ cd "${REPO_ROOT}"
 echo "[setup] installing raft-lm with optional extras"
 pip install -e ".[unsloth]" || pip install -e .
 
-mkdir -p experiments/results/runpod experiments/adapters data/distilled benchmarks/results
+mkdir -p experiments/results/runpod experiments/adapters data/distilled docs/benchmarks/results
 
-if [[ -f requirements-docs.txt ]]; then
+if [[ -f docs/requirements-docs.txt ]]; then
   pip install -r docs/requirements-docs.txt 2>/dev/null || true
 fi
 

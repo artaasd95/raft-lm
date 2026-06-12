@@ -252,7 +252,7 @@ def _evaluate_sft_model(
             losses.append(float(outputs.loss.item()))
 
     if not losses:
-        losses = [0.0]
+        raise ValueError("Cannot evaluate Unsloth model: test split is empty")
 
     losses_t = torch.tensor(losses)
     test_loss = float(losses_t.mean().item())

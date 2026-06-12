@@ -29,7 +29,11 @@ def load_pytorch_checkpoint(
     if not checkpoint_path.exists():
         raise FileNotFoundError(checkpoint_path)
 
-    checkpoint = torch.load(checkpoint_path, map_location=map_location or "cpu")
+    checkpoint = torch.load(
+        checkpoint_path,
+        map_location=map_location or "cpu",
+        weights_only=True,
+    )
     state_dict = checkpoint
     metadata: Dict[str, Any] = {"path": str(checkpoint_path)}
 
@@ -40,7 +44,7 @@ def load_pytorch_checkpoint(
             state_dict = checkpoint["state_dict"]
         metadata.update({k: v for k, v in checkpoint.items() if k != "model_state_dict" and k != "state_dict"})
 
-    model.load_state_dict(state_dict, strict=False)
+    model.load_state_dict(state_dict, strict=True)
     model.eval()
     return LoadedModel(module=model, source="pytorch_checkpoint", metadata=metadata)
 
@@ -69,7 +73,7 @@ def load_hf_safetensors(
     metadata = {"path": str(weights_path), "format": "safetensors"}
 
     if model is not None:
-        model.load_state_dict(state_dict, strict=False)
+        model.load_state_dict(state_dict, strict=True)
         model.eval()
         return LoadedModel(module=model, source="hf_safetensors", metadata=metadata)
 
@@ -84,7 +88,8 @@ def _looks_like_local_path(model_id_or_path: str) -> bool:
         return True
     if len(model_id_or_path) >= 2 and model_id_or_path[1] == ":":
         return True
-    return "/" in model_id_or_path or "\\" in model_id_or_path
+    candidate = Path(model_id_or_path)
+    return candidate.exists()
 
 
 def load_from_hub_or_local(
@@ -99,8 +104,6 @@ def load_from_hub_or_local(
     Hub: uses `huggingface_hub` snapshot when available.
     """
     local = Path(model_id_or_path)
-    if _looks_like_local_path(model_id_or_path) and not local.exists():
-        raise FileNotFoundError(f"Local path not found: {model_id_or_path}")
     if local.exists():
         if local.is_file() and local.suffix in {".pt", ".pth"}:
             if model is None:
@@ -143,7 +146,8 @@ class UnifiedModelLoader:
     ) -> LoadedModel:
         model_cfg = config.get("model", {})
         source = str(model_cfg.get("source", "pytorch")).lower()
-        resume = checkpoint_path or config.get("training", {}).get("resume_from")
+        training_cfg = config.get("training", {})
+        resume = checkpoint_path or training_cfg.get("resume_from_checkpoint")
 
         if resume:
             return load_pytorch_checkpoint(resume, model)

@@ -42,7 +42,7 @@ class TailAwareLoss(nn.Module):
 
     def __init__(
         self,
-        alpha: float = 0.9,
+        alpha: float = 0.95,
         tail_weight: float = 0.5,
         base_loss: Optional[nn.Module] = None,
     ):

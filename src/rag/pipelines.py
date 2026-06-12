@@ -14,6 +14,7 @@ Benchmark integration: StandardRAGPipeline.run / RaftLMPipeline.run -> benchmark
 
 from __future__ import annotations
 
+import asyncio
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -29,7 +30,7 @@ from src.rag.raft_policy import (
     EvidencePolicyFilter,
     RaftDataBuilder,
 )
-from src.llm_integration.context import ContextBudget, ContextSegment, PRIORITY_RETRIEVED, estimate_tokens
+from src.llm_integration.context import ContextBudget, ContextSegment, PRIORITY_RETRIEVED
 from src.rag.retrievers import (
     BenchmarkBudget,
     ChunkRetriever,
@@ -101,6 +102,28 @@ def _build_context_chars(chunks: List[RetrievedChunk], max_chars: int) -> str:
     return "\n\n".join(parts)
 
 
+_STUB_PROVIDERS = frozenset({"", "stub", "deterministic-stub", "mock"})
+
+
+async def _generate_answer(
+    query: str,
+    chunks: List[RetrievedChunk],
+    budget: BenchmarkBudget,
+) -> str:
+    provider_name = (budget.model_provider or "stub").lower()
+    if provider_name in _STUB_PROVIDERS:
+        return _stub_generate(query, chunks, budget)
+    from src.llm_integration.factory import create_llm_provider_for_name
+
+    model_id = budget.generation_model or "gpt-4"
+    max_tokens = effective_max_context_tokens(budget, model_id=model_id)
+    context = _build_context(chunks, max_tokens, model_id=model_id)
+    prompt = USER_PROMPT_TEMPLATE.format(query=query, context=context)
+    provider = create_llm_provider_for_name(provider_name)
+    completion = await provider.complete(prompt, model_id)
+    return completion.text
+
+
 def _stub_generate(
     query: str,
     chunks: List[RetrievedChunk],
@@ -142,8 +165,17 @@ def _node_retrieve(state: RAGGraphState, retriever: ChunkRetriever) -> RAGGraphS
 def _node_generate(state: RAGGraphState) -> RAGGraphState:
     budget = state["budget"]
     chunks = state.get("filtered") or state.get("retrieved") or []
-    answer = _stub_generate(state["query"], chunks, budget)
+    answer = asyncio.run(_generate_answer(state["query"], chunks, budget))
     citations = _chunks_to_citations(chunks)
+    rlog = state.get("retrieval_log")
+    if rlog is not None:
+        model_id = budget.generation_model or "gpt-4"
+        max_tokens = effective_max_context_tokens(budget, model_id=model_id)
+        context = _build_context(chunks, max_tokens, model_id=model_id)
+        from src.llm_integration.context import estimate_tokens
+
+        rlog.context_chars_used = len(context)
+        rlog.context_tokens_used = estimate_tokens(context, model_id=model_id)
     return {**state, "answer": answer, "citations": citations}
 
 

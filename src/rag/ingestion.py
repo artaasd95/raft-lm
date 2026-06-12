@@ -71,8 +71,29 @@ def load_manifest(corpus_dir: Path) -> CorpusManifest:
     )
 
 
+def _validate_chunk_params(chunk_size: int, chunk_overlap: int) -> None:
+    if chunk_size <= 0:
+        raise ValueError(f"chunk_size must be positive, got {chunk_size}")
+    if chunk_overlap < 0 or chunk_overlap >= chunk_size:
+        raise ValueError(
+            f"chunk_overlap must satisfy 0 <= chunk_overlap < chunk_size, "
+            f"got overlap={chunk_overlap}, size={chunk_size}"
+        )
+
+
+def _resolve_document_path(corpus_dir: Path, rel_path: str) -> Path:
+    if Path(rel_path).is_absolute() or ".." in Path(rel_path).parts:
+        raise ValueError(f"Invalid document path in manifest: {rel_path!r}")
+    corpus_resolved = corpus_dir.resolve()
+    doc_path = (corpus_dir / rel_path).resolve()
+    if not doc_path.is_relative_to(corpus_resolved):
+        raise ValueError(f"Document path escapes corpus directory: {rel_path!r}")
+    return doc_path
+
+
 def chunk_text(text: str, chunk_size: int, chunk_overlap: int) -> List[tuple[str, int, int]]:
     """Split text into (piece, char_start, char_end) tuples."""
+    _validate_chunk_params(chunk_size, chunk_overlap)
     if len(text) <= chunk_size:
         return [(text, 0, len(text))]
     pieces: List[tuple[str, int, int]] = []
@@ -82,7 +103,10 @@ def chunk_text(text: str, chunk_size: int, chunk_overlap: int) -> List[tuple[str
         pieces.append((text[start:end], start, end))
         if end >= len(text):
             break
-        start = max(0, end - chunk_overlap)
+        next_start = end - chunk_overlap
+        if next_start <= start:
+            next_start = start + 1
+        start = next_start
     return pieces
 
 
@@ -97,12 +121,13 @@ def ingest_corpus(
     manifest = load_manifest(corpus_dir)
     size = chunk_size if chunk_size is not None else manifest.chunk_size
     overlap = chunk_overlap if chunk_overlap is not None else manifest.chunk_overlap
+    _validate_chunk_params(size, overlap)
 
     records: List[ChunkRecord] = []
     for doc in manifest.documents:
         doc_id = doc["doc_id"]
         rel_path = doc["path"]
-        path = corpus_dir / rel_path
+        path = _resolve_document_path(corpus_dir, rel_path)
         text = path.read_text(encoding="utf-8")
         distractors = list(doc.get("distractor_keywords", []))
         for idx, (piece, char_start, char_end) in enumerate(

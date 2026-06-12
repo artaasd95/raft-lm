@@ -30,18 +30,17 @@ def test_stub_returns_scores():
     assert 0.0 <= scores.faithfulness <= 1.0
 
 
-def test_raft_stub_boost():
-    samples = [
-        {
-            "question": "q",
-            "answer": "a",
-            "context": "c",
-            "ground_truth": "gt",
-            "pipeline_name": "raft_lm",
-        }
-    ]
-    scores = run_ragas_eval(samples)
-    assert scores.context_precision >= 0.0
+def test_stub_scores_neutral_across_pipelines():
+    base = {
+        "question": "q",
+        "answer": "a",
+        "context": "c",
+        "ground_truth": "gt",
+    }
+    standard = run_ragas_eval([{**base, "pipeline_name": "standard_rag"}])
+    raft = run_ragas_eval([{**base, "pipeline_name": "raft_lm"}])
+    assert standard.context_precision == raft.context_precision == 0.6
+    assert standard.faithfulness == raft.faithfulness == 0.5
 
 
 def test_score_saved_artifacts(tmp_path, monkeypatch):

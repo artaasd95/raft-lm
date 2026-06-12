@@ -53,8 +53,13 @@ class PolicyRegistry:
         return merged
 
     def _load_from_disk(self, policy_id: str) -> Dict[str, Any]:
+        if Path(policy_id).is_absolute() or ".." in Path(policy_id).parts:
+            raise ValueError(f"Invalid policy_id: {policy_id!r}")
+        policies_resolved = self.policies_dir.resolve()
         for suffix in (".yaml", ".yml", ".json"):
-            path = self.policies_dir / f"{policy_id}{suffix}"
+            path = (self.policies_dir / f"{policy_id}{suffix}").resolve()
+            if not path.is_relative_to(policies_resolved):
+                raise ValueError(f"Policy path escapes policies directory: {policy_id!r}")
             if path.exists():
                 return self._read_policy_file(path)
         raise KeyError(f"Policy not found: {policy_id} (searched {self.policies_dir})")

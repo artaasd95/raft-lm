@@ -52,6 +52,7 @@ def evaluate_checkpoint(
         data_loader=test_loader,
         device=device,
         metric_names=config["evaluation"]["metrics"],
+        config=config,
     )
 
     task_metrics = {
@@ -64,10 +65,8 @@ def evaluate_checkpoint(
         for k in ("cvar", "constraint_violation_rate", "perplexity")
         if k in raw_metrics
     }
-    if "cvar" in risk_metrics and "test_loss" in task_metrics:
-        risk_metrics["tail_error_rate"] = float(
-            risk_metrics["cvar"] / max(task_metrics["test_loss"], 1e-9)
-        )
+    if "tail_error_rate" in raw_metrics:
+        risk_metrics["tail_error_rate"] = raw_metrics["tail_error_rate"]
 
     return {
         "task_metrics": task_metrics,

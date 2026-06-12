@@ -11,8 +11,8 @@ from typing import Any
 
 
 def adapter_store_root() -> Path:
-    """Canonical root: RAFT_ADAPTER_STORE_ROOT or experiments/adapters."""
-    env = os.environ.get("RAFT_ADAPTER_STORE_ROOT")
+    """Canonical root: RAFT_ADAPTERS_ROOT (or legacy RAFT_ADAPTER_STORE_ROOT)."""
+    env = os.environ.get("RAFT_ADAPTERS_ROOT") or os.environ.get("RAFT_ADAPTER_STORE_ROOT")
     if env:
         return Path(env).expanduser().resolve()
     return Path("experiments/adapters").resolve()

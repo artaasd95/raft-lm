@@ -4,12 +4,15 @@ Base trainer class for Raft-LM.
 All specialized trainers should inherit from this base class.
 """
 
+import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from typing import Any, Dict, List, Optional
-from pathlib import Path
-import json
+
+from src.training.per_sample_loss import per_sample_loss
 
 
 class BaseTrainer:
@@ -90,9 +93,7 @@ class BaseTrainer:
             loss = self.criterion(outputs, targets)
 
             if collect_per_sample_losses:
-                per_sample_chunks.append(
-                    torch.nn.functional.cross_entropy(outputs, targets, reduction="none").detach()
-                )
+                per_sample_chunks.append(per_sample_loss(outputs, targets).detach())
 
             # Backward pass
             loss.backward()
@@ -103,6 +104,8 @@ class BaseTrainer:
             num_batches += 1
             self.global_step += 1
 
+        if num_batches == 0:
+            return {"train_loss": 0.0}
         avg_loss = epoch_loss / num_batches
         metrics: Dict[str, Any] = {"train_loss": avg_loss}
         if per_sample_chunks:
@@ -134,6 +137,8 @@ class BaseTrainer:
                 val_loss += loss.item()
                 num_batches += 1
         
+        if num_batches == 0:
+            raise ValueError("Validation data loader is empty")
         avg_loss = val_loss / num_batches
         return {'val_loss': avg_loss}
     
@@ -217,12 +222,18 @@ class BaseTrainer:
         Args:
             checkpoint_path: Path to checkpoint file
         """
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(
+            checkpoint_path,
+            map_location=self.device,
+            weights_only=True,
+        )
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.current_epoch = checkpoint['epoch']
         self.global_step = checkpoint['global_step']
         self.best_val_loss = checkpoint['best_val_loss']
+        if 'config' in checkpoint:
+            self.config = checkpoint['config']
     
     def save_metrics(self, metrics_path: str) -> None:
         """

@@ -31,7 +31,7 @@ Locked hyperparameters: [configs/risk_training_v1_locked.yaml](configs/risk_trai
 Full command template: [docs/benchmarks/reproduce.md](docs/benchmarks/reproduce.md)
 
 ```bash
-pip install -e '.[dev]'
+pip install -e '.[dev,benchmark]'
 python scripts/build_dataset.py --config configs/data/risk_training_stub.yaml
 python scripts/train.py --config configs/risk_training.yaml
 python scripts/compare_experiments.py --runs-dir experiments/results
@@ -43,7 +43,7 @@ python scripts/compare_experiments.py --runs-dir experiments/results
 git clone https://github.com/artaasd95/raft-lm.git
 cd raft-lm
 python -m venv venv
-pip install -e '.[dev]'
+pip install -e '.[dev,benchmark]'
 pip install -e '.[hf]'   # optional: transformers, datasets, peft, huggingface_hub
 ```
 

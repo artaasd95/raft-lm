@@ -219,18 +219,33 @@ class ContextBudget:
             )
 
         order = {seg.name: idx for idx, seg in enumerate(segments)}
-        ranked = sorted(segments, key=lambda s: (s.priority, order[s.name]))
+        protected = sorted(
+            [s for s in segments if s.protected],
+            key=lambda s: (s.priority, order[s.name]),
+        )
+        ranked = sorted(
+            [s for s in segments if not s.protected],
+            key=lambda s: (s.priority, order[s.name]),
+        )
 
         kept: list[tuple[str, str]] = []
         dropped: list[str] = []
         truncated: list[str] = []
         budget = self.max_input_tokens
 
-        for seg in ranked:
+        for seg in protected + ranked:
             tokens = estimate_tokens(seg.content, model_id=self.model_id)
             if tokens <= budget:
                 kept.append((seg.name, seg.content))
                 budget -= tokens
+                continue
+
+            if seg.protected and budget > 0:
+                trimmed = _truncate_to_tokens(seg.content, budget, model_id=self.model_id)
+                if trimmed:
+                    kept.append((seg.name, trimmed))
+                    truncated.append(seg.name)
+                    budget -= estimate_tokens(trimmed, model_id=self.model_id)
                 continue
 
             if budget > 0:
@@ -241,7 +256,8 @@ class ContextBudget:
                     budget -= estimate_tokens(trimmed, model_id=self.model_id)
                     continue
 
-            dropped.append(seg.name)
+            if not seg.protected:
+                dropped.append(seg.name)
 
         kept.sort(key=lambda pair: order.get(pair[0], 999))
         text = "\n\n".join(content for _, content in kept if content)

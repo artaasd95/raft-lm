@@ -16,7 +16,7 @@ raft-lm/
 ├── PROJECT_STRUCTURE.md
 ├── LICENSE
 ├── Makefile                        # test, benchmark, demo targets
-├── requirements.txt                # Core dependencies (PyTorch, pytest, LangGraph)
+├── requirements.txt                # Editable install entrypoint (`-e .`); see pyproject.toml for extras
 ├── requirements-benchmark.txt      # Ragas, Streamlit, optional vector backends
 ├── .env.example                    # Benchmark/demo environment template
 ├── conftest.py                     # Pytest fixtures

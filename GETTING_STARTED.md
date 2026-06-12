@@ -6,7 +6,7 @@ For the full project overview, see [README.md](README.md). For contribution guid
 
 ## Prerequisites
 
-- **Python 3.9+** (3.11 recommended for CI parity)
+- **Python 3.10+** (3.11 recommended for CI parity)
 - **pip** and a virtual environment
 - **Git**
 
@@ -37,8 +37,7 @@ source venv/bin/activate
 Install dependencies:
 
 ```bash
-pip install -r requirements.txt
-pip install -r requirements-benchmark.txt
+pip install -e ".[dev,benchmark]"
 ```
 
 ## 2. Verify installation
@@ -63,10 +62,10 @@ python scripts/train.py --config experiments/configs/example_config.json
 
 Output is written to `experiments/results/<timestamp>_<experiment_name>_seed<seed>/`, including:
 
-- `config.json` — resolved experiment configuration
+- `resolved_config.json` — resolved experiment configuration
 - `metrics.json` — training and evaluation metrics
+- `run_info.json` — provenance (seed, git commit, timestamps)
 - `checkpoints/` — model checkpoints (when enabled)
-- `training_log.txt` — run log
 
 Override the seed:
 

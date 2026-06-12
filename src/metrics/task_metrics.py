@@ -52,20 +52,41 @@ def mae(predictions: Any, targets: Any) -> float:
     return float(np.abs(p - t).mean())
 
 
-def f1_score(predictions: Any, targets: Any) -> float:
-    """F1 score for binary classification."""
+def f1_score(predictions: Any, targets: Any, *, average: str = "macro") -> float:
+    """
+    F1 score for classification.
+
+    Uses macro-averaged F1 when more than two classes are present; binary F1 otherwise.
+    """
     p, t = _classification_pair(predictions, targets)
-    tp = int(((p == 1) & (t == 1)).sum())
-    fp = int(((p == 1) & (t == 0)).sum())
-    fn = int(((p == 0) & (t == 1)).sum())
+    classes = np.unique(np.concatenate([p, t]))
+    if len(classes) <= 2 and set(classes.tolist()).issubset({0, 1}):
+        tp = int(((p == 1) & (t == 1)).sum())
+        fp = int(((p == 1) & (t == 0)).sum())
+        fn = int(((p == 0) & (t == 1)).sum())
+        if tp + fp == 0 or tp + fn == 0:
+            return 0.0
+        precision = tp / (tp + fp)
+        recall = tp / (tp + fn)
+        if precision + recall == 0:
+            return 0.0
+        return float(2 * (precision * recall) / (precision + recall))
 
-    if tp + fp == 0 or tp + fn == 0:
-        return 0.0
+    if average != "macro":
+        raise ValueError(f"Unsupported F1 average: {average!r}")
 
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
-
-    if precision + recall == 0:
-        return 0.0
-
-    return float(2 * (precision * recall) / (precision + recall))
+    f1_values: list[float] = []
+    for cls in classes:
+        tp = int(((p == cls) & (t == cls)).sum())
+        fp = int(((p == cls) & (t != cls)).sum())
+        fn = int(((p != cls) & (t == cls)).sum())
+        if tp + fp == 0 or tp + fn == 0:
+            f1_values.append(0.0)
+            continue
+        precision = tp / (tp + fp)
+        recall = tp / (tp + fn)
+        if precision + recall == 0:
+            f1_values.append(0.0)
+        else:
+            f1_values.append(2 * (precision * recall) / (precision + recall))
+    return float(np.mean(f1_values)) if f1_values else 0.0

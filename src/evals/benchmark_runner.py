@@ -14,6 +14,7 @@ from src.evals.benchmark_schema import (
     RetrievalMetadata,
     RunConfig,
     RunEnvironment,
+    SeveritySummary,
     new_comparison_report,
 )
 from src.evals.hallucination_risk import aggregate_severity, score_hallucination_risk
@@ -79,12 +80,15 @@ def _populate_run_scores(
 def _finalize_pipeline_severity(
     runs: List[BenchmarkRun],
     pipeline_name: str,
+    samples: Optional[List[dict]] = None,
 ) -> SeveritySummary:
+    sample_by_question = {s["question"]: s for s in (samples or [])}
     return aggregate_severity(
         [
             score_hallucination_risk(
                 r.answer,
-                " ".join(c.excerpt for c in r.citations),
+                sample_by_question.get(r.question, {}).get("context")
+                or "\n".join(c.excerpt for c in r.citations),
                 {
                     "risk_domain": r.risk_domain,
                     "ground_truth": r.ground_truth,
@@ -174,9 +178,8 @@ def run_standard_rag_benchmark(
 
     report.runs = runs
     report.standard.ragas = run_ragas_eval(standard_samples)
-    report.standard.severity = aggregate_severity(standard_severities)
     _populate_run_scores(runs, standard_samples)
-    report.standard.severity = _finalize_pipeline_severity(runs, "standard_rag")
+    report.standard.severity = _finalize_pipeline_severity(runs, "standard_rag", standard_samples)
     report.chart_labels = ["context_precision", "faithfulness"]
     report.chart_standard_values = [
         report.standard.ragas.context_precision,
@@ -267,9 +270,8 @@ def run_raft_lm_benchmark(
 
     report.runs = runs
     report.raft_lm.ragas = run_ragas_eval(raft_samples)
-    report.raft_lm.severity = aggregate_severity(raft_severities)
     _populate_run_scores(runs, raft_samples)
-    report.raft_lm.severity = _finalize_pipeline_severity(runs, "raft_lm")
+    report.raft_lm.severity = _finalize_pipeline_severity(runs, "raft_lm", raft_samples)
     report.chart_labels = ["context_precision", "faithfulness"]
     report.chart_standard_values = [0.0, 0.0]
     report.chart_raft_lm_values = [
@@ -286,6 +288,8 @@ def run_benchmark_comparison(
     corpus_dir: Optional[Path] = None,
     out_dir: Optional[Path] = None,
     budget: Optional[BenchmarkBudget] = None,
+    *,
+    questions_limit: Optional[int] = None,
 ) -> ComparisonReport:
     corpus_dir = Path(corpus_dir or default_corpus_dir())
     base_out = Path(
@@ -298,6 +302,8 @@ def run_benchmark_comparison(
     budget = budget or budget_from_env()
     manifest = load_manifest(corpus_dir)
     questions = load_questions(corpus_dir)
+    if questions_limit is not None:
+        questions = questions[:questions_limit]
 
     standard = StandardRAGPipeline(corpus_dir, budget=budget)
     raft = RaftLMPipeline(corpus_dir, budget=budget)
@@ -390,15 +396,12 @@ def run_benchmark_comparison(
     report.runs = runs
     report.standard.ragas = run_ragas_eval(standard_samples)
     report.raft_lm.ragas = run_ragas_eval(raft_samples)
-    report.standard.severity = aggregate_severity(standard_severities)
-    report.raft_lm.severity = aggregate_severity(raft_severities)
-
     std_runs = [r for r in runs if r.pipeline_name == "standard_rag"]
     raft_runs = [r for r in runs if r.pipeline_name == "raft_lm"]
     _populate_run_scores(std_runs, standard_samples)
     _populate_run_scores(raft_runs, raft_samples)
-    report.standard.severity = _finalize_pipeline_severity(runs, "standard_rag")
-    report.raft_lm.severity = _finalize_pipeline_severity(runs, "raft_lm")
+    report.standard.severity = _finalize_pipeline_severity(runs, "standard_rag", standard_samples)
+    report.raft_lm.severity = _finalize_pipeline_severity(runs, "raft_lm", raft_samples)
 
     report.chart_labels = ["context_precision", "faithfulness"]
     report.chart_standard_values = [

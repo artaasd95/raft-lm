@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any
 
 from src.llm_integration.adapters._http_base import OpenAICompatibleAdapter
@@ -22,7 +23,9 @@ class RayServeLLMAdapter(OpenAICompatibleAdapter):
     async def complete(self, prompt: str, model_id: str, **kwargs: Any) -> Completion:
         if self._use_mock:
             completion = await self._mock.complete(prompt, model_id, **kwargs)
-            return completion.model_copy(
-                update={"backend_id": self.backend_id, "metadata": {"mock_without_cluster": "true"}}
+            return replace(
+                completion,
+                backend_id=self.backend_id,
+                metadata={"mock_without_cluster": "true"},
             )
         return await super().complete(prompt, model_id, **kwargs)

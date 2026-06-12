@@ -12,8 +12,8 @@ from src.data.datasets import SyntheticRiskDataset
 from src.data_platform.config import load_pipeline_config
 from src.data_platform.dataset import EngineLabelDataset
 from src.data_platform.pipeline import load_engine_label_splits, run_pipeline
-from src.losses.base_losses import CrossEntropyLoss, MSELoss
 from src.training.loss_factory import build_loss
+from src.training.per_sample_loss import per_sample_loss
 from src.metrics.risk_metrics import compute_cvar, constraint_violation_rate
 from src.metrics.task_metrics import accuracy, f1_score, mae, mse
 from src.models.base_models import SimpleMLP
@@ -35,8 +35,9 @@ class MLPBackend(TrainingBackend):
         data_config_path: Optional[str] = None,
         exp_logger: Optional[Any] = None,
     ) -> Dict[str, Any]:
-        from src.utils.reproducibility import get_device
+        from src.utils.reproducibility import get_device, set_seed
 
+        set_seed(config["training"]["seed"])
         device = get_device(
             None if config["training"]["device"] == "auto" else config["training"]["device"]
         )
@@ -71,6 +72,7 @@ class MLPBackend(TrainingBackend):
             data_loader=test_loader,
             device=device,
             metric_names=config["evaluation"]["metrics"],
+            config=config,
         )
 
 
@@ -148,9 +150,14 @@ def _build_dataloaders_from_platform(
     config["model"]["input_dim"] = feature_dim
     config["model"]["output_dim"] = num_classes
 
+    if not val_rows:
+        raise ValueError(f"No validation rows in {processed_dir}")
+    if not test_rows:
+        raise ValueError(f"No test rows in {processed_dir}")
+
     train_dataset = EngineLabelDataset(train_rows, metadata={"source": "data_platform"})
-    val_dataset = EngineLabelDataset(val_rows or train_rows[:1], metadata={"split": "val"})
-    test_dataset = EngineLabelDataset(test_rows or train_rows[:1], metadata={"split": "test"})
+    val_dataset = EngineLabelDataset(val_rows, metadata={"split": "val"})
+    test_dataset = EngineLabelDataset(test_rows, metadata={"split": "test"})
 
     data_config = config["data"]
     return create_train_val_test_loaders(
@@ -226,6 +233,7 @@ def _evaluate_model(
     data_loader: Any,
     device: torch.device,
     metric_names: List[str],
+    config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     model.eval()
     outputs_list = []
@@ -245,11 +253,18 @@ def _evaluate_model(
             num_batches += 1
             outputs_list.append(outputs.detach().cpu())
             targets_list.append(targets.detach().cpu())
-            losses.append(_per_sample_loss(outputs, targets, criterion).detach().cpu())
+            losses.append(per_sample_loss(outputs, targets).detach().cpu())
 
     outputs_all = torch.cat(outputs_list)
     targets_all = torch.cat(targets_list)
     losses_all = torch.cat(losses)
+
+    if num_batches == 0:
+        raise ValueError("Cannot evaluate model: data loader is empty")
+
+    loss_cfg = (config or {}).get("training", {}).get("loss", {})
+    eval_alpha = float(loss_cfg.get("alpha", 0.95))
+    violation_threshold = float(loss_cfg.get("violation_threshold", 1.0))
 
     metrics: Dict[str, Any] = {
         "test_loss": total_loss / num_batches,
@@ -265,29 +280,20 @@ def _evaluate_model(
         elif metric_name == "mae":
             metrics["mae"] = mae(outputs_all, targets_all)
         elif metric_name == "cvar":
-            metrics["cvar"] = compute_cvar(losses_all, alpha=0.95)
+            metrics["cvar"] = compute_cvar(losses_all, alpha=eval_alpha)
         elif metric_name == "constraint_violation_rate":
             metrics["constraint_violation_rate"] = constraint_violation_rate(
                 losses_all,
-                threshold=1.0,
+                threshold=violation_threshold,
             )
         elif metric_name == "perplexity":
             metrics["perplexity"] = float(torch.exp(torch.tensor(metrics["test_loss"])).item())
+        elif metric_name == "tail_error_rate":
+            threshold = (
+                float(torch.quantile(losses_all, 0.9).item())
+                if losses_all.numel() > 1
+                else float(metrics["test_loss"])
+            )
+            metrics["tail_error_rate"] = float((losses_all > threshold).float().mean().item())
 
     return metrics
-
-
-def _per_sample_loss(
-    outputs: torch.Tensor,
-    targets: torch.Tensor,
-    criterion: torch.nn.Module,
-) -> torch.Tensor:
-    if isinstance(criterion, CrossEntropyLoss):
-        return torch.nn.functional.cross_entropy(outputs, targets, reduction="none")
-    if isinstance(criterion, MSELoss):
-        losses = torch.nn.functional.mse_loss(outputs, targets, reduction="none")
-        return losses.reshape(losses.shape[0], -1).mean(dim=1)
-    loss = criterion(outputs, targets)
-    if loss.dim() == 0:
-        return loss.reshape(1)
-    return loss.reshape(-1)

@@ -37,14 +37,26 @@ class _Tee:
             stream.flush()
 
 
-def _find_latest_checkpoint(checkpoint_root: Path) -> Path | None:
-    patterns = [
-        str(checkpoint_root / "checkpoint-*"),
-        str(checkpoint_root / "**" / "checkpoint-*"),
-    ]
+def _checkpoint_search_roots(run_dir: Path) -> list[Path]:
+    roots = [run_dir]
+    if run_dir.is_dir():
+        roots.extend(p for p in run_dir.iterdir() if p.is_dir())
+    return roots
+
+
+def _find_latest_checkpoint(run_dir: Path) -> Path | None:
     candidates: list[Path] = []
-    for pattern in patterns:
-        candidates.extend(Path(p) for p in glob.glob(pattern, recursive=True))
+    for root in _checkpoint_search_roots(run_dir):
+        patterns = [
+            str(root / "checkpoints" / "checkpoint-*"),
+            str(root / "checkpoints" / "best_model.pt"),
+            str(root / "checkpoint-*"),
+        ]
+        for pattern in patterns:
+            for match in glob.glob(pattern, recursive=False):
+                path = Path(match)
+                if path.is_file() or path.is_dir():
+                    candidates.append(path)
     if not candidates:
         return None
     return max(candidates, key=lambda p: p.stat().st_mtime)
@@ -75,10 +87,9 @@ def main() -> int:
     run_dir.mkdir(parents=True, exist_ok=True)
     log_path = run_dir / "train.log"
 
-    checkpoint_root = run_dir / "checkpoints"
     resume_arg: list[str] = []
     if args.resume == "auto":
-        latest = _find_latest_checkpoint(checkpoint_root)
+        latest = _find_latest_checkpoint(run_dir)
         if latest is not None:
             resume_arg = ["--checkpoint", str(latest)]
             print(f"[runpod] auto-resume from {latest}")

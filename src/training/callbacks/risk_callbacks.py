@@ -59,9 +59,9 @@ def build_callbacks(
     config: Dict[str, Any],
     logger: BaseExperimentLogger,
 ) -> List[Any]:
-    """Build callbacks when logging.callbacks is enabled in config."""
+    """Build callbacks when an experiment logger is present (opt out via logging.callbacks: false)."""
     logging_cfg = config.get("logging", {})
-    if not logging_cfg.get("callbacks"):
+    if logging_cfg.get("callbacks") is False:
         return []
     alpha = float(config.get("training", {}).get("loss", {}).get("alpha", 0.95))
     return [

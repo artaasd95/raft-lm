@@ -21,7 +21,7 @@ Clone and set up your development environment:
 git clone https://github.com/artaasd95/raft-lm.git
 cd raft-lm
 
-# Create a virtual environment (Python 3.9+; 3.11 matches CI)
+# Create a virtual environment (Python 3.10+; 3.11 matches CI)
 python -m venv venv
 # macOS/Linux: source venv/bin/activate
 # Windows: venv\Scripts\Activate.ps1
@@ -30,7 +30,7 @@ python -m venv venv
 pip install -r requirements.txt
 pip install -r requirements-benchmark.txt  # For RAG evaluation
 
-# Development tools are included in requirements.txt (pytest, black, flake8)
+# Development tools: pip install -e ".[dev,benchmark]"
 # Optional: pip install mypy
 ```
 
@@ -110,16 +110,13 @@ Closes #123
 ### Style Guide
 
 - **Python**: Follow [PEP 8](https://www.python.org/dev/peps/pep-0008/)
-- **Formatting**: Use `black` with default settings
-- **Linting**: Pass `flake8`
+- **Formatting / linting**: Pass `ruff check` and `ruff format`
 - **Type hints**: Add for public APIs
 
 ```bash
-# Format code
-black src/ scripts/ tests/
-
-# Check linting
-flake8 src/ scripts/ tests/ --max-line-length=100
+# Lint and format
+ruff check src/ scripts/ tests/ storage/ runpod/
+ruff format src/ scripts/ tests/ storage/ runpod/
 
 # Type checking (optional but recommended)
 mypy src/ --ignore-missing-imports
@@ -369,7 +366,7 @@ python scripts/run_benchmark.py --mode stub --pipeline standard_rag
 python scripts/run_benchmark.py --mode smoke --pipeline standard_rag --questions-limit 1
 
 # Compare implementations (requires API keys)
-python scripts/run_benchmark.py --mode full --pipeline all
+python scripts/run_benchmark.py --mode stub --pipeline both --questions-limit 2
 ```
 
 ### Experiment Workflow

@@ -8,6 +8,7 @@ Usage:
 
 import argparse
 import json
+import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -54,8 +55,10 @@ def run_training(
         config = registry.apply_to_config(config, policy_id)
     if seed_override is not None:
         config["training"]["seed"] = seed_override
+    resolved_checkpoint: Optional[Path] = None
     if checkpoint_path is not None:
-        config["training"]["resume_from"] = str(_resolve_path(checkpoint_path))
+        resolved_checkpoint = _resolve_path(checkpoint_path)
+        config["training"]["resume_from_checkpoint"] = str(resolved_checkpoint)
     if loss_override is not None:
         config["training"].setdefault("loss", {})["type"] = loss_override
     validate_config(config)
@@ -64,7 +67,7 @@ def run_training(
     set_seed(seed)
     requested_device = config["training"]["device"]
     device = get_device(None if requested_device == "auto" else requested_device)
-    run_dir = _create_run_dir(config)
+    run_dir = _create_run_dir(config, checkpoint_path=resolved_checkpoint)
     started_at = datetime.now(timezone.utc)
 
     save_config(config, str(run_dir / "resolved_config.json"))
@@ -186,7 +189,40 @@ def _resolve_path(path: str) -> Path:
     return REPO_ROOT / candidate
 
 
-def _create_run_dir(config: Dict[str, Any]) -> Path:
+def _infer_run_dir_from_checkpoint(checkpoint_path: Path) -> Optional[Path]:
+    """Return the experiment run directory that owns a checkpoint path."""
+    resolved = checkpoint_path.resolve()
+    if resolved.name == "checkpoints" and resolved.is_dir():
+        return resolved.parent
+    if "checkpoints" in resolved.parts:
+        idx = resolved.parts.index("checkpoints")
+        return Path(*resolved.parts[:idx])
+    if resolved.is_file():
+        parent = resolved.parent
+        if parent.name == "checkpoints":
+            return parent.parent
+        return parent
+    return None
+
+
+def _create_run_dir(
+    config: Dict[str, Any],
+    checkpoint_path: Optional[Path] = None,
+) -> Path:
+    if checkpoint_path is not None:
+        inferred = _infer_run_dir_from_checkpoint(checkpoint_path)
+        if inferred is not None and inferred.exists():
+            inferred.mkdir(parents=True, exist_ok=True)
+            return inferred
+
+    runpod_run_dir = os.environ.get("RUNPOD_RUN_DIR")
+    if runpod_run_dir:
+        run_dir = Path(runpod_run_dir)
+        if not run_dir.is_absolute():
+            run_dir = REPO_ROOT / run_dir
+        run_dir.mkdir(parents=True, exist_ok=True)
+        return run_dir
+
     results_root = Path(config["output"]["results_dir"])
     if not results_root.is_absolute():
         results_root = REPO_ROOT / results_root

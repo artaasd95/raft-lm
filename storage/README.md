@@ -7,7 +7,7 @@ Mirror experiment artifacts to remote storage when local disk usage exceeds a th
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `FTP_HOST` | FTP/SFTP host | *(required)* |
-| `FTP_PORT` | Port | `21` (FTP) / `22` (SFTP) |
+| `FTP_PORT` | Port | `22` (SFTP default) / `21` (FTP with `--allow-insecure-ftp`) |
 | `FTP_USER` | Username | *(required)* |
 | `FTP_PASS` | Password | *(optional for key-based SFTP)* |
 | `FTP_ROOT_DIR` | Remote base directory | `/runpod-backups` |
@@ -19,7 +19,7 @@ Remote layout: `{FTP_ROOT_DIR}/{repo_name}/{YYYY-MM-DD}/...`
 - `experiments/results/`
 - `experiments/adapters/`
 - `data/distilled/`
-- `benchmarks/results/`
+- `docs/benchmarks/results/`
 
 Files already present on the remote with matching size are skipped.
 
