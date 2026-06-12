@@ -29,6 +29,7 @@ from src.rag.raft_policy import (
     EvidencePolicyFilter,
     RaftDataBuilder,
 )
+from src.llm_integration.context import ContextBudget, ContextSegment, PRIORITY_RETRIEVED, estimate_tokens
 from src.rag.retrievers import (
     BenchmarkBudget,
     ChunkRetriever,
@@ -36,6 +37,7 @@ from src.rag.retrievers import (
     RetrievedChunk,
     build_retriever,
     budget_from_env,
+    effective_max_context_tokens,
 )
 
 
@@ -72,7 +74,22 @@ USER_PROMPT_TEMPLATE = (
 )
 
 
-def _build_context(chunks: List[RetrievedChunk], max_chars: int) -> str:
+def _build_context(chunks: List[RetrievedChunk], max_tokens: int, *, model_id: str) -> str:
+    """Pack retrieved chunks by ranking order within a token budget."""
+    segments = [
+        ContextSegment(
+            name=ch.chunk_id,
+            content=f"[{ch.chunk_id}] {ch.text.strip()}",
+            priority=PRIORITY_RETRIEVED,
+        )
+        for ch in chunks
+    ]
+    assembled = ContextBudget(model_id, max_input_tokens=max_tokens).assemble(segments)
+    return assembled.text
+
+
+def _build_context_chars(chunks: List[RetrievedChunk], max_chars: int) -> str:
+    """Legacy char budget helper kept for report parity tests."""
     parts: List[str] = []
     total = 0
     for ch in chunks:
@@ -84,9 +101,15 @@ def _build_context(chunks: List[RetrievedChunk], max_chars: int) -> str:
     return "\n\n".join(parts)
 
 
-def _stub_generate(query: str, chunks: List[RetrievedChunk], max_chars: int) -> str:
+def _stub_generate(
+    query: str,
+    chunks: List[RetrievedChunk],
+    budget: BenchmarkBudget,
+) -> str:
     """Offline generator: extract best-matching sentence from context."""
-    context = _build_context(chunks, max_chars)
+    model_id = budget.generation_model or "gpt-4"
+    max_tokens = effective_max_context_tokens(budget, model_id=model_id)
+    context = _build_context(chunks, max_tokens, model_id=model_id)
     if not chunks:
         return "Insufficient evidence to answer. [none]"
     best = chunks[0]
@@ -119,7 +142,7 @@ def _node_retrieve(state: RAGGraphState, retriever: ChunkRetriever) -> RAGGraphS
 def _node_generate(state: RAGGraphState) -> RAGGraphState:
     budget = state["budget"]
     chunks = state.get("filtered") or state.get("retrieved") or []
-    answer = _stub_generate(state["query"], chunks, budget.max_context_chars)
+    answer = _stub_generate(state["query"], chunks, budget)
     citations = _chunks_to_citations(chunks)
     return {**state, "answer": answer, "citations": citations}
 

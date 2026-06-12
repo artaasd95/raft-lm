@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 class BenchmarkBudget:
     max_retrieval_depth: int = 4
     max_context_chars: int = 4096
+    max_context_tokens: int | None = None
     model_provider: str = "stub"
     run_count: int = 1
     min_evidence_count: int = 1
@@ -40,6 +41,7 @@ class RetrievalLog:
     embedding_model: str = ""
     vector_store: str = ""
     context_chars_used: int = 0
+    context_tokens_used: int = 0
 
 
 @dataclass
@@ -171,10 +173,24 @@ def retriever_from_env(corpus_dir) -> ChunkRetriever:
     return build_retriever(corpus_dir, embedding=embed, store=store)
 
 
+def effective_max_context_tokens(budget: BenchmarkBudget, *, model_id: str = "gpt-4") -> int:
+    """Resolve RAG input token budget; prefers MAX_CONTEXT_TOKENS over char fallback."""
+    from src.llm_integration.context import max_context_from_env, tokens_from_chars
+
+    if budget.max_context_tokens is not None:
+        return budget.max_context_tokens
+    env_tokens = max_context_from_env()
+    if env_tokens is not None:
+        return env_tokens
+    return tokens_from_chars(budget.max_context_chars)
+
+
 def budget_from_env() -> BenchmarkBudget:
+    tokens_env = os.getenv("MAX_CONTEXT_TOKENS")
     return BenchmarkBudget(
         max_retrieval_depth=int(os.getenv("MAX_RETRIEVAL_DEPTH", "4")),
         max_context_chars=int(os.getenv("MAX_CONTEXT_CHARS", "4096")),
+        max_context_tokens=int(tokens_env) if tokens_env else None,
         model_provider=os.getenv("MODEL_PROVIDER", "stub"),
         run_count=int(os.getenv("BENCHMARK_RUN_COUNT", "1")),
         embedding_model=os.getenv("EMBEDDING_MODEL", "deterministic-stub"),
