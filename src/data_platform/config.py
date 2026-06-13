@@ -43,6 +43,10 @@ class PipelineConfig:
     output_dir: Optional[str] = None
     enrich: Dict[str, Any] = field(default_factory=dict)
 
+    @classmethod
+    def from_yaml(cls, path: str | Path) -> "PipelineConfig":
+        return load_pipeline_config(path)
+
     def resolved_output_dir(self, repo_root: Path) -> Path:
         if self.output_dir:
             out = Path(self.output_dir)

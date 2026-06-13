@@ -1,0 +1,34 @@
+experiment_name: distributed_ddp_smoke
+config_version: 1
+model:
+  type: SimpleMLP
+  input_dim: 10
+  hidden_dim: 32
+  output_dim: 3
+  num_layers: 2
+  dropout: 0.1
+training:
+  seed: 42
+  device: auto
+  backend: ddp
+  num_epochs: 1
+  optimizer:
+    type: Adam
+    lr: 0.001
+    weight_decay: 0.0
+  loss:
+    type: CrossEntropyLoss
+    alpha: 0.95
+    tail_weight: 0.5
+data:
+  train_size: 32
+  val_size: 16
+  test_size: 16
+  batch_size: 4
+  num_workers: 0
+evaluation:
+  metrics: [accuracy, cvar]
+output:
+  results_dir: experiments/results
+logging:
+  experiment_backend: local

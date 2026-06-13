@@ -1,0 +1,32 @@
+experiment_name: specialized_tool_aware_base
+config_version: 1
+model:
+  type: SimpleMLP
+  input_dim: 10
+  hidden_dim: 64
+  output_dim: 5
+  num_layers: 2
+  dropout: 0.1
+training:
+  seed: 42
+  device: auto
+  backend: mlp
+  num_epochs: 1
+  optimizer:
+    type: Adam
+    lr: 0.001
+    weight_decay: 0.0
+  loss:
+    type: CrossEntropyLoss
+data:
+  train_size: 64
+  val_size: 32
+  test_size: 32
+  batch_size: 4
+  num_workers: 0
+evaluation:
+  metrics: [accuracy, tail_error_rate]
+output:
+  results_dir: experiments/results
+logging:
+  experiment_backend: local

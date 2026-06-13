@@ -22,6 +22,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.logging.experiment_logger import create_experiment_logger
+from src.llm_integration.checkpoint_export import CheckpointExporter
+from src.llm_integration.factory import create_llm_provider_for_name
 from src.training.backends.factory import get_training_backend
 from src.training.policies.registry import get_policy_registry
 from src.utils.config import load_config, resolve_config, save_config, validate_config
@@ -37,6 +39,11 @@ def run_training(
     policy_id: Optional[str] = None,
     checkpoint_path: Optional[str] = None,
     loss_override: Optional[str] = None,
+    backend_override: Optional[str] = None,
+    llm_provider: Optional[str] = None,
+    export_for_rada: bool = False,
+    epochs_override: Optional[int] = None,
+    batch_size_override: Optional[int] = None,
 ) -> Path:
     """
     Run a complete config-driven training workflow.
@@ -61,6 +68,16 @@ def run_training(
         config["training"]["resume_from_checkpoint"] = str(resolved_checkpoint)
     if loss_override is not None:
         config["training"].setdefault("loss", {})["type"] = loss_override
+    if backend_override is not None:
+        config["training"]["backend"] = backend_override
+    if llm_provider is not None:
+        # Validate provider alias/config early so runs fail fast.
+        create_llm_provider_for_name(llm_provider)
+        config["runtime_llm_provider"] = llm_provider
+    if epochs_override is not None:
+        config["training"]["num_epochs"] = epochs_override
+    if batch_size_override is not None:
+        config.setdefault("data", {})["batch_size"] = batch_size_override
     validate_config(config)
 
     seed = config["training"]["seed"]
@@ -122,6 +139,27 @@ def run_training(
         ),
     )
 
+    if export_for_rada:
+        best_checkpoint = run_dir / "checkpoints" / "best_model.pt"
+        if best_checkpoint.exists():
+            exporter = CheckpointExporter(run_dir / "exports" / "rada")
+            result = exporter.export_for_rada(
+                best_checkpoint,
+                adapter_config={
+                    "backend": config["training"].get("backend", "mlp"),
+                    "weights_key": "model_state_dict",
+                },
+                model_id=config.get("model", {}).get("type"),
+            )
+            _write_json(
+                run_dir / "export_for_rada.json",
+                {
+                    "export_dir": str(result.export_dir),
+                    "manifest_path": str(result.manifest_path),
+                    "checkpoint_path": str(result.checkpoint_path),
+                },
+            )
+
     return run_dir
 
 
@@ -165,6 +203,36 @@ def main():
         default=None,
         help="Override training loss (ce, cvar_penalized, tail_aware)",
     )
+    parser.add_argument(
+        "--backend",
+        type=str,
+        choices=["mlp", "unsloth", "ddp", "fsdp"],
+        default=None,
+        help="Override training backend (mlp, unsloth, ddp, fsdp)",
+    )
+    parser.add_argument(
+        "--llm-provider",
+        type=str,
+        default=None,
+        help="Optional provider alias or config path to validate runtime LLM wiring.",
+    )
+    parser.add_argument(
+        "--export-for-rada",
+        action="store_true",
+        help="Export best checkpoint into RADA-compatible handoff format.",
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=None,
+        help="Override number of epochs for quick smoke tests.",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=None,
+        help="Override data.batch_size for smoke tests.",
+    )
 
     args = parser.parse_args()
 
@@ -175,6 +243,11 @@ def main():
         policy_id=args.policy,
         checkpoint_path=args.checkpoint,
         loss_override=args.loss,
+        backend_override=args.backend,
+        llm_provider=args.llm_provider,
+        export_for_rada=args.export_for_rada,
+        epochs_override=args.epochs,
+        batch_size_override=args.batch_size,
     )
     print(f"Training complete. Results saved to: {run_dir}")
 

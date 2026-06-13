@@ -13,12 +13,14 @@ from src.llm_integration.context import (
     tokens_from_chars,
 )
 from src.llm_integration.factory import create_llm_provider
+from src.llm_integration.checkpoint_export import CheckpointExporter
 
 __all__ = [
     "AssembledContext",
     "Completion",
     "ContextBudget",
     "ContextSegment",
+    "CheckpointExporter",
     "LLMConfig",
     "LLMProvider",
     "assemble_context",
