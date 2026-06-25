@@ -205,6 +205,7 @@ id_ed25519*
 # API keys and tokens
 api_keys.txt
 tokens.txt
+freellmapi.txt
 credentials.json
 secrets.json
 

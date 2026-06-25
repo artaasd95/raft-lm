@@ -36,6 +36,7 @@ _PROVIDER_CONFIG_MAP = {
     "ray_serve": "configs/llm_distributed.yaml",
     "litellm": "configs/llm_cloud.yaml",
     "custom": "configs/llm_custom.yaml",
+    "freellm": "configs/llm_freellm.yaml",
 }
 
 
