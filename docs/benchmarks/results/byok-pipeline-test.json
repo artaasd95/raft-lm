@@ -1,0 +1,85 @@
+{
+  "endpoint": "http://127.0.0.1:3001",
+  "model": "gpt-oss-20b",
+  "passed": 8,
+  "failed": 0,
+  "steps": [
+    {
+      "name": "endpoint_health",
+      "passed": true,
+      "detail": "67 models listed; target='gpt-oss-20b' found",
+      "latency_ms": 187.6,
+      "extra": {
+        "models": [
+          "auto",
+          "fusion",
+          "qwen3-coder-480b",
+          "qwen3-next-80b",
+          "deepseek-v4-flash",
+          "owl-alpha",
+          "gpt-oss-120b",
+          "big-pickle",
+          "glm-4.7-flash",
+          "poolside-laguna-m.1"
+        ]
+      }
+    },
+    {
+      "name": "direct_byok_completion",
+      "passed": true,
+      "detail": "backend=custom tokens={'prompt_tokens': 94, 'completion_tokens': 123} chars=222",
+      "latency_ms": 5054.9,
+      "extra": {
+        "preview": "Because CVaR measures the average loss in the worst\u2011plus\u2011severe tail beyond a VaR threshold, it quantifies the magnitude of extreme outcomes that VaR alone ignores, making it essential for assessing a"
+      }
+    },
+    {
+      "name": "context_assembly",
+      "passed": true,
+      "detail": "tokens=43/7936 kept=['system', 'ctx1', 'ctx2']",
+      "latency_ms": 17.4
+    },
+    {
+      "name": "reasoning_prompts",
+      "passed": true,
+      "detail": "answered 2/2 reasoning prompts",
+      "latency_ms": 7585.4,
+      "extra": {
+        "probabilistic": "The +2\u202f% return is more likely, because it occurs 60\u202f% of the time versus the \u20135\u202f% outcome\u2019s 40\u202f% chance, so the probability of the positive outcome (",
+        "quantitative": "CVaR best captures tail loss because it averages the magnitude of losses beyond the VaR threshold, whereas VaR only identifies the cutoff point."
+      }
+    },
+    {
+      "name": "tool_registry",
+      "passed": true,
+      "detail": "tools=4 cvar=0.08 vol=0.035",
+      "latency_ms": 1.5
+    },
+    {
+      "name": "rag_standard_rag",
+      "passed": true,
+      "detail": "answer_chars=413 citations=2",
+      "latency_ms": 10793.2,
+      "extra": {
+        "answer_preview": "The provided policy excerpts do not specify a concrete minimum Common Equity Tier\u202f1 (CET1) ratio. However, under Basel\u202fIII regulations banks are required to maintain a CET1 ratio of at least\u202f4.5\u202f% of risk\u2011weighted assets, plus any additional supervis",
+        "pipeline": "standard_rag"
+      }
+    },
+    {
+      "name": "rag_raft_lm",
+      "passed": true,
+      "detail": "answer_chars=185 citations=2",
+      "latency_ms": 3441.3,
+      "extra": {
+        "answer_preview": "The provided policy chunks do not contain any information about a CET1 ratio, so the minimum CET1 ratio is not specified here.  \n\n- [policy_reporting::chunk_0]  \n- [policy_aml::chunk_0]",
+        "pipeline": "raft_lm"
+      }
+    },
+    {
+      "name": "benchmark_smoke",
+      "passed": true,
+      "detail": "run_id=89af48ba artifact=G:\\repositories\\raft-lm\\docs\\benchmarks\\results\\byok-smoke\\89af48ba\\report.json",
+      "latency_ms": 4545.8
+    }
+  ]
+}

@@ -105,6 +105,18 @@ def _build_context_chars(chunks: List[RetrievedChunk], max_chars: int) -> str:
 _STUB_PROVIDERS = frozenset({"", "stub", "deterministic-stub", "mock"})
 
 
+def _run_async(coro):
+    """Run an async coroutine from sync LangGraph nodes (safe inside asyncio.run)."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    import concurrent.futures
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        return executor.submit(asyncio.run, coro).result()
+
+
 async def _generate_answer(
     query: str,
     chunks: List[RetrievedChunk],
@@ -165,7 +177,7 @@ def _node_retrieve(state: RAGGraphState, retriever: ChunkRetriever) -> RAGGraphS
 def _node_generate(state: RAGGraphState) -> RAGGraphState:
     budget = state["budget"]
     chunks = state.get("filtered") or state.get("retrieved") or []
-    answer = asyncio.run(_generate_answer(state["query"], chunks, budget))
+    answer = _run_async(_generate_answer(state["query"], chunks, budget))
     citations = _chunks_to_citations(chunks)
     rlog = state.get("retrieval_log")
     if rlog is not None:

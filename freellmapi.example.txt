@@ -1,0 +1,6 @@
+# Copy to freellmapi.txt and fill in your OpenAI-compatible endpoint details.
+# This file is gitignored; never commit real keys.
+
+BASE_URL=https://your-endpoint.example.com
+API_KEY=your-api-key-here
+MODEL=gpt-oss-20b

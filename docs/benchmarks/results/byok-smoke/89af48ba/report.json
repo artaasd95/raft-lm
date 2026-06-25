@@ -1,0 +1,131 @@
+{
+  "schema_version": "1.0.0",
+  "corpus_id": "financial_policy_v1",
+  "created_at": "2026-06-25T14:31:22.978074+00:00",
+  "standard": {
+    "pipeline_name": "standard_rag",
+    "ragas": {
+      "context_precision": 0.6,
+      "faithfulness": 0.5,
+      "answer_correctness": 0.5,
+      "semantic_similarity": 0.55
+    },
+    "severity": {
+      "legal": 0,
+      "financial": 0,
+      "compliance": 0,
+      "operational": 0,
+      "total_events": 0,
+      "max_severity": "none"
+    },
+    "run_id": "standard-89af48ba",
+    "artifact_path": ""
+  },
+  "raft_lm": {
+    "pipeline_name": "raft_lm",
+    "ragas": {
+      "context_precision": 0.0,
+      "faithfulness": 0.0,
+      "answer_correctness": null,
+      "semantic_similarity": null
+    },
+    "severity": {
+      "legal": 0,
+      "financial": 0,
+      "compliance": 0,
+      "operational": 0,
+      "total_events": 0,
+      "max_severity": "none"
+    },
+    "run_id": "",
+    "artifact_path": ""
+  },
+  "runs": [
+    {
+      "question_id": "q1",
+      "question": "What is the minimum CET1 ratio under the capital policy?",
+      "answer": "The minimum CET1 ratio required by the capital policy is **8.5\u202f%**\u3010policy_capital::chunk_0\u3011.",
+      "ground_truth": "The minimum Common Equity Tier 1 (CET1) ratio is 8.5%.",
+      "citations": [
+        {
+          "chunk_id": "policy_liquidity::chunk_0",
+          "doc_id": "policy_liquidity",
+          "excerpt": "# Liquidity Risk Policy\n\n## Liquidity Coverage Ratio\n\nThe firm must maintain a Liquidity Coverage Ratio (LCR) of **at least 100%** under Basel III-aligned definitions.\n\n## Stress Testing\n\nLiquidity st",
+          "score": 0.8024211154661366
+        },
+        {
+          "chunk_id": "policy_aml::chunk_0",
+          "doc_id": "policy_aml",
+          "excerpt": "# Anti-Money Laundering (AML) Policy\n\n## Suspicious Activity Reporting\n\nEmployees must escalate suspicious transactions to the AML office **within 24 hours** of detection.\n\n## Customer Due Diligence\n\n",
+          "score": 0.7838523525317098
+        },
+        {
+          "chunk_id": "policy_capital::chunk_0",
+          "doc_id": "policy_capital",
+          "excerpt": "# Capital Adequacy Policy\n\n## CET1 Requirement\n\nThe institution shall maintain a minimum Common Equity Tier 1 (CET1) ratio of **8.5%** at all times, measured on a consolidated basis.\n\n## Internal Buff",
+          "score": 0.776042035880735
+        },
+        {
+          "chunk_id": "policy_reporting::chunk_0",
+          "doc_id": "policy_reporting",
+          "excerpt": "# Regulatory Reporting Policy\n\n## Quarterly Risk Reports\n\nThe Enterprise Risk function shall submit quarterly risk reports to the board **within 15 business days** after each fiscal quarter end.\n\n## M",
+          "score": 0.7053576813604939
+        }
+      ],
+      "pipeline_name": "standard_rag",
+      "risk_domain": "financial",
+      "retrieval": {
+        "top_k": 4,
+        "chunk_ids": [
+          "policy_liquidity::chunk_0",
+          "policy_aml::chunk_0",
+          "policy_capital::chunk_0",
+          "policy_reporting::chunk_0"
+        ],
+        "scores": [
+          0.8024211154661366,
+          0.7838523525317098,
+          0.776042035880735,
+          0.7053576813604939
+        ],
+        "embedding_model": "deterministic-stub",
+        "vector_store": "in_memory",
+        "context_chars_used": 1768
+      },
+      "severity": "none",
+      "severity_bucket": "financial",
+      "ragas_context_precision": 0.6,
+      "ragas_faithfulness": 0.5
+    }
+  ],
+  "chart_labels": [
+    "context_precision",
+    "faithfulness"
+  ],
+  "chart_standard_values": [
+    0.6,
+    0.5
+  ],
+  "chart_raft_lm_values": [
+    0.0,
+    0.0
+  ],
+  "run_id": "89af48ba",
+  "environment": {
+    "embedding_model": "deterministic-stub",
+    "generation_model": "gpt-oss-20b",
+    "model_provider": "G:\\repositories\\raft-lm\\configs\\llm_freellm.yaml",
+    "vector_store": "in_memory",
+    "benchmark_mode": "live",
+    "python_version": "3.9.12"
+  },
+  "config": {
+    "corpus_path": "G:\\repositories\\raft-lm\\data\\benchmark_corpus\\financial_policy",
+    "max_retrieval_depth": 4,
+    "max_context_chars": 4096,
+    "run_count": 1,
+    "seed": null,
+    "pipeline": "standard_rag",
+    "policy_version": ""
+  }
+}

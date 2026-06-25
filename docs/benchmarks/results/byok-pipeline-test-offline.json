@@ -1,0 +1,32 @@
+{
+  "mode": "offline",
+  "model": "gpt-oss-20b",
+  "passed": 2,
+  "failed": 2,
+  "steps": [
+    {
+      "name": "context_assembly",
+      "passed": true,
+      "detail": "tokens=43/7936 kept=['system', 'ctx1', 'ctx2']",
+      "latency_ms": 7.7
+    },
+    {
+      "name": "tool_registry",
+      "passed": true,
+      "detail": "tools=4 cvar=0.08 vol=0.035",
+      "latency_ms": 0.9
+    },
+    {
+      "name": "rag_standard_rag_mock",
+      "passed": false,
+      "detail": "asyncio.run() cannot be called from a running event loop",
+      "latency_ms": 8.3
+    },
+    {
+      "name": "rag_raft_lm_mock",
+      "passed": false,
+      "detail": "asyncio.run() cannot be called from a running event loop",
+      "latency_ms": 14.9
+    }
+  ]
+}
