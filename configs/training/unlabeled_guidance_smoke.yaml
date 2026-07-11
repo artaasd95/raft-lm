@@ -1,0 +1,49 @@
+config_version: 1
+experiment_name: unlabeled_guidance_smoke
+description: Smoke training on PGTS-guided unlabeled data platform splits
+
+model:
+  type: SimpleMLP
+  input_dim: 10
+  hidden_dim: 16
+  output_dim: 3
+  num_layers: 1
+  dropout: 0.0
+
+data:
+  dataset_type: SyntheticRiskDataset
+  train_size: 16
+  val_size: 8
+  test_size: 8
+  batch_size: 4
+  num_workers: 0
+
+training:
+  backend: mlp
+  num_epochs: 1
+  optimizer:
+    type: Adam
+    lr: 0.01
+    weight_decay: 0.0
+  loss:
+    type: ce
+  seed: 11
+  device: cpu
+  unlabeled_guidance:
+    enabled: true
+    max_depth: 3
+    seed: 7
+
+evaluation:
+  metrics:
+    - accuracy
+    - f1_score
+
+logging:
+  log_interval: 1
+  save_checkpoints: true
+  checkpoint_interval: 1
+  experiment_backend: local
+
+output:
+  results_dir: experiments/results

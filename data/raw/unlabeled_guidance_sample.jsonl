@@ -1,0 +1,8 @@
+{"record_id": "u001", "features": [0.2, -0.5, 0.8, 0.1, -0.3, 0.4, 0.0, 0.6, -0.2, 0.15], "risk_domain": "market", "query": "assess calm market exposure"}
+{"record_id": "u002", "features": [1.2, 0.5, -0.8, 0.9, 0.3, -0.4, 0.2, -0.6, 0.2, -0.55], "risk_domain": "tail", "query": "evaluate stress scenario tail risk"}
+{"record_id": "u003", "features": [-0.1, 0.25, 0.35, -0.05, 0.12, 0.08, -0.18, 0.22, 0.05, -0.09], "risk_domain": "liquidity", "query": "check liquidity buffer adequacy"}
+{"record_id": "u004", "features": [0.9, 0.85, 0.75, 0.65, 0.55, 0.45, 0.35, 0.25, 0.15, 0.05], "risk_domain": "liquidity", "query": "liquidity stress gradient review"}
+{"record_id": "u005", "features": [0.4, -0.1, 0.3, 0.2, -0.15, 0.25, 0.05, -0.05, 0.1, 0.12], "risk_domain": "market", "query": "routine market risk scan"}
+{"record_id": "u006", "features": [1.5, 1.1, 0.9, 0.7, 0.5, 0.3, 0.1, -0.1, -0.3, -0.5], "risk_domain": "tail", "query": "deep tail scenario probe"}
+{"record_id": "u007", "features": [0.33, 0.27, 0.21, 0.15, 0.09, 0.03, -0.03, -0.09, -0.15, -0.21], "risk_domain": "market", "query": "declining exposure pattern"}
+{"record_id": "u008", "features": [0.55, 0.45, 0.35, 0.25, 0.15, 0.05, -0.05, -0.15, -0.25, -0.35], "risk_domain": "operational", "query": "operational drift check"}
