@@ -9,3 +9,4 @@ API Reference
    training
    tools
    data_platform
+   unlabeled_guidance
