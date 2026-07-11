@@ -6,13 +6,15 @@ import json
 import math
 import random
 
-from src.metrics.label_enrichment import enrich_row_labels
+from src.metrics.label_enrichment import enrich_row_labels, has_explicit_label
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from src.data_platform.cards import EngineLabelRow
 from src.data_platform.config import PipelineConfig
 from src.data_platform.sources import build_source
+from src.unlabeled_guidance.config import merge_guidance_config
+from src.unlabeled_guidance.errors import MissingLabelError
 
 
 class DataPipeline:
@@ -85,17 +87,51 @@ class DataPipeline:
     def _stage_label(self, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         num_classes = self.config.label.num_classes
         engine_version = self.config.label.engine_version
-        alpha = float(getattr(self.config.label, "alpha", 0.95))
+        alpha = float(self.config.label.alpha)
+        policy = self.config.label.policy
+        guidance_block = dict(self.config.label.unlabeled_guidance)
+        guidance_config = merge_guidance_config(
+            guidance_block,
+            num_classes=num_classes,
+        )
+
+        if policy == "guidance":
+            guidance_config.enabled = True
+
+        missing_ids = [
+            str(row.get("record_id", f"row-{idx}"))
+            for idx, row in enumerate(rows)
+            if not has_explicit_label(row)
+        ]
+        if missing_ids and policy == "strict" and not guidance_config.enabled:
+            raise MissingLabelError(missing_ids, hint="label.unlabeled_guidance.enabled")
+
+        working_rows = list(rows)
+        if missing_ids and guidance_config.enabled:
+            from src.unlabeled_guidance.orchestrator import guide_rows
+
+            working_rows = guide_rows(working_rows, guidance_config)
+
         labeled: List[Dict[str, Any]] = []
-        for row in rows:
+        synthesize = policy == "engine"
+        for row in working_rows:
             labeled.append(
                 enrich_row_labels(
                     row,
                     num_classes=num_classes,
                     alpha=alpha,
                     engine_version=row.get("engine_version", engine_version),
+                    synthesize_missing=synthesize and not has_explicit_label(row),
                 )
             )
+
+        still_missing = [
+            str(row.get("record_id", "unknown"))
+            for row in labeled
+            if not has_explicit_label(row)
+        ]
+        if still_missing:
+            raise MissingLabelError(still_missing, hint="label.unlabeled_guidance.enabled")
         return labeled
 
     def _stage_filter(self, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

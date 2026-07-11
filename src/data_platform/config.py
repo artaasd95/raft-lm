@@ -20,11 +20,17 @@ class SplitConfig:
     seed: int = 42
 
 
+SUPPORTED_LABEL_POLICIES = ("strict", "engine", "guidance")
+
+
 @dataclass
 class LabelConfig:
     engine_version: str = "engine-stub-v1"
     num_classes: int = 3
     feature_dim: int = 10
+    policy: str = "strict"
+    alpha: float = 0.95
+    unlabeled_guidance: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -54,6 +60,25 @@ class PipelineConfig:
         return repo_root / "data" / "processed" / self.pipeline_id
 
 
+def _load_label_config(label_raw: Dict[str, Any]) -> LabelConfig:
+    policy = str(label_raw.get("policy", "strict"))
+    if policy not in SUPPORTED_LABEL_POLICIES:
+        raise ValueError(
+            f"Unknown label.policy {policy!r}; expected one of: {sorted(SUPPORTED_LABEL_POLICIES)}"
+        )
+    guidance_raw = label_raw.get("unlabeled_guidance") or {}
+    if policy == "guidance" and not guidance_raw.get("enabled", False):
+        raise ValueError("label.policy 'guidance' requires label.unlabeled_guidance.enabled=true")
+    return LabelConfig(
+        engine_version=str(label_raw.get("engine_version", "engine-stub-v1")),
+        num_classes=int(label_raw.get("num_classes", 3)),
+        feature_dim=int(label_raw.get("feature_dim", 10)),
+        policy=policy,
+        alpha=float(label_raw.get("alpha", 0.95)),
+        unlabeled_guidance=dict(guidance_raw),
+    )
+
+
 def load_pipeline_config(path: str | Path) -> PipelineConfig:
     config_path = Path(path)
     with open(config_path, "r", encoding="utf-8") as f:
@@ -78,11 +103,7 @@ def load_pipeline_config(path: str | Path) -> PipelineConfig:
             test_ratio=float(split_raw.get("test_ratio", 0.15)),
             seed=int(split_raw.get("seed", 42)),
         ),
-        label=LabelConfig(
-            engine_version=str(label_raw.get("engine_version", "engine-stub-v1")),
-            num_classes=int(label_raw.get("num_classes", 3)),
-            feature_dim=int(label_raw.get("feature_dim", 10)),
-        ),
+        label=_load_label_config(label_raw),
         filter=FilterConfig(
             min_feature_norm=float(filter_raw.get("min_feature_norm", 0.01)),
         ),

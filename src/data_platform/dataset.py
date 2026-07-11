@@ -26,6 +26,11 @@ class EngineLabelDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         row = self.rows[idx]
+        if row.label is None:
+            raise ValueError(
+                f"EngineLabelRow {row.record_id!r} has no label; "
+                "enable unlabeled_guidance before building the dataset."
+            )
         features = torch.tensor(row.features, dtype=torch.float32)
         label = torch.tensor(row.label, dtype=torch.long)
         return features, label
