@@ -10,8 +10,12 @@ import torch
 from src.data.dataloaders import create_train_val_test_loaders
 from src.data.datasets import SyntheticRiskDataset
 from src.data_platform.config import load_pipeline_config
+from src.data_platform.cards import EngineLabelRow
 from src.data_platform.dataset import EngineLabelDataset
 from src.data_platform.pipeline import load_engine_label_splits, run_pipeline
+from src.unlabeled_guidance.config import merge_guidance_config
+from src.unlabeled_guidance.errors import MissingLabelError
+from src.unlabeled_guidance.orchestrator import apply_guidance_to_engine_rows
 from src.training.loss_factory import build_loss
 from src.training.per_sample_loss import per_sample_loss
 from src.metrics.risk_metrics import compute_cvar, constraint_violation_rate
@@ -131,6 +135,30 @@ def _resolve_path(path: str) -> Path:
     return REPO_ROOT / candidate
 
 
+def _rows_missing_labels_from_engine(rows: Sequence[EngineLabelRow]) -> List[str]:
+    return [row.record_id for row in rows if row.label is None]
+
+
+def _ensure_row_labels(
+    rows: List[EngineLabelRow],
+    *,
+    guidance_block: Dict[str, Any],
+    num_classes: int,
+) -> List[EngineLabelRow]:
+    """Validate labels or apply guidance before dataset construction."""
+    missing = _rows_missing_labels_from_engine(rows)
+    if missing and not guidance_block.get("enabled", False):
+        raise MissingLabelError(missing, hint="training.unlabeled_guidance.enabled")
+
+    dict_rows = apply_guidance_to_engine_rows(
+        rows,
+        guidance_config=guidance_block,
+        num_classes=num_classes,
+        hint="training.unlabeled_guidance.enabled",
+    )
+    return [EngineLabelRow.from_dict(row) for row in dict_rows]
+
+
 def _build_dataloaders_from_platform(
     config: Dict[str, Any],
     data_config_path: str,
@@ -149,6 +177,32 @@ def _build_dataloaders_from_platform(
     num_classes = pipeline_config.label.num_classes
     config["model"]["input_dim"] = feature_dim
     config["model"]["output_dim"] = num_classes
+
+    guidance_block = dict(config.get("training", {}).get("unlabeled_guidance") or {})
+    guidance_block.setdefault("num_classes", num_classes)
+    if pipeline_config.label.unlabeled_guidance:
+        guidance_block = {
+            **pipeline_config.label.unlabeled_guidance,
+            **guidance_block,
+        }
+    if pipeline_config.label.policy == "guidance":
+        guidance_block["enabled"] = True
+
+    train_rows = _ensure_row_labels(
+        train_rows,
+        guidance_block=guidance_block,
+        num_classes=num_classes,
+    )
+    val_rows = _ensure_row_labels(
+        val_rows,
+        guidance_block=guidance_block,
+        num_classes=num_classes,
+    )
+    test_rows = _ensure_row_labels(
+        test_rows,
+        guidance_block=guidance_block,
+        num_classes=num_classes,
+    )
 
     if not val_rows:
         raise ValueError(f"No validation rows in {processed_dir}")
