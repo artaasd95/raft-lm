@@ -13,6 +13,7 @@ Core implementation for RAFT-LM (v0.1.0).
 | `data/` | `SyntheticRiskDataset`, dataloaders, feature adapters |
 | `rag/` | LangGraph RAG pipelines, retrievers, embeddings, vector stores, RAFT evidence policy |
 | `evals/` | Benchmark runner, Ragas integration, hallucination risk, report generation |
+| `unlabeled_guidance/` | PGTS tree search, consensus council, peer consistency for unlabeled targets |
 | `demo/` | Streamlit dashboard for benchmark artifacts |
 | `utils/` | Configuration load/validate/resolve, logging, seed and device management |
 

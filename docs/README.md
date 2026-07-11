@@ -32,6 +32,7 @@ Documentation for RAFT-LM. Start at the repository root for onboarding:
 |----------|-------------|
 | [RISK-METHODS-REQUIREMENTS.md](RISK-METHODS-REQUIREMENTS.md) | Risk metric and loss conventions |
 | [risk-metrics/README.md](risk-metrics/README.md) | Risk metrics module notes |
+| [unlabeled-guidance.md](unlabeled-guidance.md) | PGTS + label-free verification for unlabeled data |
 
 ## Internal / planning
 

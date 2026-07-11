@@ -1,0 +1,30 @@
+pipeline_id: unlabeled_guidance_v1
+stages:
+  - normalize
+  - enrich
+  - label
+  - split
+  - filter
+sources:
+  - type: file
+    path: data/raw/unlabeled_guidance_sample.jsonl
+split:
+  train_ratio: 0.625
+  val_ratio: 0.125
+  test_ratio: 0.25
+  seed: 42
+label:
+  policy: guidance
+  engine_version: engine-stub-v1
+  num_classes: 3
+  feature_dim: 10
+  unlabeled_guidance:
+    enabled: true
+    max_depth: 3
+    exploration_c: 1.0
+    doubt_echo_threshold: 0.3
+    seed: 7
+filter:
+  min_feature_norm: 0.01
+enrich:
+  source: unlabeled_guidance_stub

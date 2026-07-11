@@ -16,6 +16,7 @@ from src.data_platform.cards import (
 from src.data_platform.config import load_pipeline_config
 from src.data_platform.pipeline import run_pipeline
 from src.data_platform.sources.databricks import DatabricksSource
+from src.unlabeled_guidance.errors import MissingLabelError
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -98,6 +99,14 @@ class TestPipeline:
                 if line.strip():
                     ids.add(json.loads(line)["record_id"])
         assert "r005" not in ids
+
+
+    def test_strict_policy_requires_labels(self, tmp_path):
+        config = load_pipeline_config(REPO_ROOT / "configs/data/risk_training_stub.yaml")
+        config.label.policy = "strict"
+        config.output_dir = str(tmp_path / "strict_out")
+        with pytest.raises(MissingLabelError):
+            run_pipeline(config, REPO_ROOT)
 
 
 class TestSources:

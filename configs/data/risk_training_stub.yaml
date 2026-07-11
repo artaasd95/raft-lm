@@ -14,6 +14,7 @@ split:
   test_ratio: 0.15
   seed: 42
 label:
+  policy: engine
   engine_version: engine-stub-v1
   num_classes: 3
   feature_dim: 10

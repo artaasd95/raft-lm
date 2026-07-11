@@ -291,6 +291,8 @@ def _validate_training(training: Any) -> None:
             "optimizer",
             "loss",
             "resume_from_checkpoint",
+            "unlabeled_guidance",
+            "llm",
         },
     )
     backend = training.get("backend", "mlp")
@@ -328,6 +330,53 @@ def _validate_training(training: Any) -> None:
             raise ValueError(
                 "Invalid config field training.loss.alpha: must be in (0, 1) exclusive"
             )
+
+    guidance = training.get("unlabeled_guidance")
+    if guidance is not None:
+        _validate_unlabeled_guidance(guidance)
+
+    llm = training.get("llm")
+    if llm is not None:
+        _require_mapping(llm, "training.llm")
+        _validate_known_fields(llm, "training.llm", {"config_path"})
+
+
+def _validate_unlabeled_guidance(guidance: Any) -> None:
+    _require_mapping(guidance, "training.unlabeled_guidance")
+    _validate_known_fields(
+        guidance,
+        "training.unlabeled_guidance",
+        {
+            "enabled",
+            "max_depth",
+            "exploration_c",
+            "doubt_echo_threshold",
+            "outlier_mad_factor",
+            "mask_ratio",
+            "seed",
+            "num_classes",
+        },
+    )
+    if guidance.get("enabled") is not None:
+        _require_type(guidance.get("enabled"), bool, "training.unlabeled_guidance.enabled")
+    if guidance.get("max_depth") is not None:
+        _require_int(
+            guidance.get("max_depth"),
+            "training.unlabeled_guidance.max_depth",
+            minimum=1,
+        )
+    if guidance.get("exploration_c") is not None:
+        _require_number(
+            guidance.get("exploration_c"),
+            "training.unlabeled_guidance.exploration_c",
+            minimum=0.0,
+        )
+    if guidance.get("doubt_echo_threshold") is not None:
+        _require_number(
+            guidance.get("doubt_echo_threshold"),
+            "training.unlabeled_guidance.doubt_echo_threshold",
+            minimum=0.0,
+        )
 
 
 def _validate_evaluation(evaluation: Any) -> None:

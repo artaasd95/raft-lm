@@ -18,7 +18,7 @@ class EngineLabelRow:
 
     record_id: str
     features: List[float]
-    label: int
+    label: Optional[int] = None
     risk_domain: str = "market"
     engine_version: str = "engine-stub-v1"
     scenario_id: Optional[str] = None
@@ -33,7 +33,7 @@ class EngineLabelRow:
         return cls(
             record_id=str(data["record_id"]),
             features=_float_list(data.get("features")),
-            label=int(data["label"]),
+            label=int(data["label"]) if data.get("label") is not None else None,
             risk_domain=str(data.get("risk_domain", "market")),
             engine_version=str(data.get("engine_version", "engine-stub-v1")),
             scenario_id=data.get("scenario_id"),

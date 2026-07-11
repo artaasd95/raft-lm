@@ -55,6 +55,11 @@ raft-lm/
 │   │   ├── hallucination_risk.py   # Enterprise severity scoring
 │   │   ├── report_writer.py        # JSON, CSV, Markdown artifacts
 │   │   └── compare_runs.py         # Comparison deltas
+│   ├── unlabeled_guidance/
+│   │   ├── pgts.py                 # Policy-guided tree search
+│   │   ├── consensus.py            # Multi-evaluator council scoring
+│   │   ├── consistency.py          # Peer consistency verification
+│   │   └── orchestrator.py         # guide_item / guide_rows API
 │   ├── demo/
 │   │   └── streamlit_app.py        # Interactive benchmark dashboard
 │   └── utils/
@@ -123,6 +128,7 @@ raft-lm/
 | `src/data/` | Implemented | Synthetic dataset and loaders |
 | `src/rag/` | Implemented | LangGraph pipelines, pluggable stores |
 | `src/evals/` | Implemented | Benchmark harness, Ragas, reports |
+| `src/unlabeled_guidance/` | Implemented | PGTS + label-free verification for unlabeled data |
 | `src/demo/` | Implemented | Streamlit dashboard |
 | `src/utils/` | Implemented | Config validation and reproducibility |
 
