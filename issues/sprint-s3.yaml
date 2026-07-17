@@ -1,0 +1,143 @@
+# S3 — Standard RAG baseline implementation (ingestion through saved artifacts).
+# Completed 2026-05-19. GitHub issues #13–#18 close on next vault sync.
+# Active seeds: sprint-s4.yaml (S4-*).
+# Human narrative: ../Action-Queue.md, ../Roadmap.md, ../Sprint-Plan-30d.md
+---
+version: 2
+archived: true
+sprint: S3
+sprint_start: 2026-05-17
+sprint_target_end: 2026-05-31
+repo: artaasd95/raft-lm
+issues:
+  - id: S3-01
+    title: "Implement corpus ingestion and chunking for locked benchmark corpus"
+    status: completed
+    priority: p1
+    area: backend
+    milestone: "S3 - Standard RAG baseline implementation"
+    due: 2026-05-20
+    labels:
+      - "sprint/S3"
+      - "area/rag"
+      - "type/feature"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "Ingestion loads the S2-selected legal, financial, or policy corpus or bundled sample path"
+      - "Chunking parameters match docs/benchmarks/BENCHMARK.md (size, overlap, metadata fields)"
+      - "Chunk records include stable ids and source references for citation tracing"
+    artifacts:
+      - "src/rag/ingestion.py"
+      - "data/benchmark/"
+
+  - id: S3-02
+    title: "Wire embeddings and vector store per Standard RAG baseline contract"
+    status: completed
+    priority: p1
+    area: ai
+    milestone: "S3 - Standard RAG baseline implementation"
+    due: 2026-05-22
+    labels:
+      - "sprint/S3"
+      - "area/rag"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S3-01
+    acceptance:
+      - "Embedding model and vector store match BENCHMARK.md baseline contract"
+      - "Indexer builds from ingested chunks; top-k retrieval is configurable and logged per run"
+      - "Retrieval budget fields are recorded for report schema parity with RAFT-LM path"
+    artifacts:
+      - "src/rag/retrievers.py"
+      - "src/rag/embeddings.py"
+
+  - id: S3-03
+    title: "Runnable Standard RAG pipeline with prompt, generator, and citation rules"
+    status: completed
+    priority: p1
+    area: ai
+    milestone: "S3 - Standard RAG baseline implementation"
+    due: 2026-05-24
+    labels:
+      - "sprint/S3"
+      - "area/rag"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S3-02
+    acceptance:
+      - "Standard RAG path retrieves context, generates answers, and emits citations per S2 contract"
+      - "Prompt template, model/provider, context length, and run count match equal-budget controls"
+      - "Pipeline does not alter src/metrics, src/losses, or src/training experiment backbone"
+    artifacts:
+      - "src/rag/pipelines.py"
+
+  - id: S3-04
+    title: "Add benchmark runner entrypoint for Standard RAG-only runs"
+    status: completed
+    priority: p1
+    area: backend
+    milestone: "S3 - Standard RAG baseline implementation"
+    due: 2026-05-26
+    labels:
+      - "sprint/S3"
+      - "area/benchmark"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S3-03
+    acceptance:
+      - "CLI or make benchmark target runs the Standard RAG path over the benchmark question set"
+      - "Run config captures corpus path, models, top-k, seeds, and budget fields in run metadata"
+      - "README documents the verified command after the entrypoint exists"
+      - "Benchmark runs are covered by unit tests with mock embeddings; no live API calls until keys are available"
+    artifacts:
+      - "scripts/run_benchmark.py"
+      - "Makefile"
+
+  - id: S3-05
+    title: "Persist Standard RAG outputs via report_writer schema (pre-Ragas)"
+    status: completed
+    priority: p2
+    area: backend
+    milestone: "S3 - Standard RAG baseline implementation"
+    due: 2026-05-28
+    labels:
+      - "sprint/S3"
+      - "area/eval"
+      - "type/feature"
+      - "priority/p2"
+    depends_on:
+      - S3-04
+    acceptance:
+      - "Each run writes JSON, CSV, and markdown summary under docs/benchmarks/results/<run_id>/"
+      - "Answers, citations, retrieval metadata, and environment fields populate benchmark_schema"
+      - "Ragas score slots may be empty or null until S4; no headline Ragas claims in README yet"
+    artifacts:
+      - "src/evals/report_writer.py"
+      - "src/evals/benchmark_schema.py"
+      - "docs/benchmarks/results/"
+
+  - id: S3-06
+    title: "CI-friendly smoke test for bundled sample Standard RAG baseline"
+    status: completed
+    priority: p2
+    area: backend
+    milestone: "S3 - Standard RAG baseline implementation"
+    due: 2026-05-31
+    labels:
+      - "sprint/S3"
+      - "area/tests"
+      - "type/task"
+      - "priority/p2"
+    depends_on:
+      - S3-05
+    acceptance:
+      - "Integration or smoke test exercises ingestion → retrieve → generate → save artifacts on bundled sample"
+      - "Test runs without paid API keys when benchmark mode is smoke or mock"
+      - "Fails if report artifacts are missing required schema fields"
+      - "Uses mock or faker providers for embeddings and generation where live models are unavailable"
+    artifacts:
+      - "tests/integration/test_standard_rag_benchmark_smoke.py"

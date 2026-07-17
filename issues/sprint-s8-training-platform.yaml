@@ -1,0 +1,174 @@
+# S8 — Training platform: policies, feedback, distributed, model loaders, tracking, LLM risk tools.
+# Extends src/metrics, src/losses, src/training, experiments — does not replace backbone.
+# Depends on S7 risk-training benchmark v1.
+---
+version: 2
+archived: true
+sprint: S8
+sprint_start: 2026-06-15
+sprint_target_end: 2026-08-15
+repo: artaasd95/raft-lm
+issues:
+  - id: S8-01
+    title: "PolicyRegistry and policy-driven train/eval configs"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "S8 - Training platform"
+    due: 2026-06-30
+    labels:
+      - "sprint/S8"
+      - "area/training"
+      - "type/feature"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "src/training/policies/ defines loadable policy YAML/JSON (loss weights, optimizer, curriculum)"
+      - "scripts/train.py accepts --policy-id and logs resolved policy to experiment backend"
+      - "Unit tests: two policies produce different resolved configs without code changes"
+    artifacts:
+      - "src/training/policies/"
+      - "experiments/configs/policies/"
+      - "tests/unit/test_policy_registry.py"
+
+  - id: S8-02
+    title: "BaseExperimentLogger with local, W&B, Comet ML, and optional DB backends"
+    status: completed
+    priority: p1
+    area: observability
+    milestone: "S8 - Training platform"
+    due: 2026-07-07
+    labels:
+      - "sprint/S8"
+      - "area/observability"
+      - "type/feature"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "src/logging/experiment_logger.py defines BaseExperimentLogger interface"
+      - "Backends: local SQLite or JSONL, wandb, comet_ml; config via logging.backend"
+      - "train/eval/compare emit all headline metrics through logger; local artifact contract unchanged"
+      - "Optional log shipper adapter documented for air-gapped"
+    artifacts:
+      - "src/logging/"
+      - "tests/unit/test_experiment_logger.py"
+
+  - id: S8-03
+    title: "Unified model loaders (PyTorch checkpoint, Hugging Face safetensors, hub/local source)"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "S8 - Training platform"
+    due: 2026-07-14
+    labels:
+      - "sprint/S8"
+      - "area/training"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S8-01
+    acceptance:
+      - "ModelLoadConfig schema in config; loaders under src/models/loaders/"
+      - "Supports .pt state dict, HF from_pretrained + safetensors, local path and hub model id"
+      - "Same loader used in standalone and distributed entrypoints"
+    artifacts:
+      - "src/models/loaders/"
+      - "tests/unit/test_model_loaders.py"
+
+  - id: S8-04
+    title: "Distributed training backend (DDP/FSDP; Ray Train optional) behind config"
+    status: completed
+    priority: p2
+    area: training
+    milestone: "S8 - Training platform"
+    due: 2026-07-28
+    labels:
+      - "sprint/S8"
+      - "area/training"
+      - "type/feature"
+      - "priority/p2"
+    depends_on:
+      - S8-03
+    note: "Completed 2026-06-13 on develop (commit 2d998bd). DDP and FSDP backends working; checkpoint export for RADA integration ready."
+    acceptance:
+      - "training.distributed.backend in config; default remains single-process"
+      - "DDP or FSDP path documented in docs/runbook.md"
+      - "CI remains single-GPU/CPU smoke; multi-node steps in runbook only"
+      - "✓ DistributedDDPBackend and DistributedFSDPBackend wrapping MLPBackend"
+      - "✓ CheckpointExporter for RADA-compatible manifest format"
+      - "✓ CLI flags: --backend (mlp/unsloth/ddp/fsdp) functional"
+      - "✓ Smoke test passed"
+    artifacts:
+      - "src/training/distributed/"
+      - "src/training/backends/distributed_backend.py"
+      - "src/llm_integration/checkpoint_export.py"
+      - "docs/runbook.md"
+
+  - id: S8-05
+    title: "Feedback ingestion for retrain (engine/human scores to weights or preferences)"
+    status: completed
+    priority: p2
+    area: training
+    milestone: "S8 - Training platform"
+    due: 2026-08-04
+    labels:
+      - "sprint/S8"
+      - "area/training"
+      - "type/feature"
+      - "priority/p2"
+    depends_on:
+      - S7-DP-07
+      - S8-01
+    acceptance:
+      - "scripts/apply_feedback.py reads feedback JSON/DB rows and updates policy or preference dataset"
+      - "FeedbackRecord validated per portfolio contract (Knowledge/Data-Platform-Design.md)"
+      - "Documented contract for RADA RaftAuditor / TailWarp stress score ingestion"
+      - "Integration test on synthetic feedback fixture"
+    artifacts:
+      - "scripts/apply_feedback.py"
+      - "tests/integration/test_feedback_loop.py"
+
+  - id: S8-06
+    title: "Training callbacks — loss decomposition, engine-label error, early stop, batch errors"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "S8 - Training platform"
+    due: 2026-08-11
+    labels:
+      - "sprint/S8"
+      - "area/training"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S8-02
+    acceptance:
+      - "src/training/callbacks/ hooks step/epoch metrics into BaseExperimentLogger"
+      - "Reports per-loss-component and engine-label alignment error"
+      - "Configurable early stopping on validation risk metric; batch failures logged with count"
+    artifacts:
+      - "src/training/callbacks/"
+      - "tests/unit/test_training_callbacks.py"
+
+  - id: S8-07
+    title: "LLM-callable risk tools wrapping src/metrics with JSON schemas and registry"
+    status: completed
+    priority: p1
+    area: api
+    milestone: "S8 - Training platform"
+    due: 2026-08-15
+    labels:
+      - "sprint/S8"
+      - "area/api"
+      - "type/feature"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "src/tools/ exposes typed risk metric tools (inputs, units, assumptions, structured output)"
+      - "Tool registry loadable from config; at least CVaR and one vol/tail helper wired"
+      - "OpenAI-function or JSON-schema export documented for LLM tool-use eval"
+      - "Unit tests on tool I/O contracts"
+    artifacts:
+      - "src/tools/"
+      - "docs/llm-risk-tools.md"
+      - "tests/unit/test_risk_tools.py"

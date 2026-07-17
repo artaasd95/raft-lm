@@ -1,0 +1,137 @@
+# SP-HF — HuggingFace artifact publish (standalone; not runtime coupling to other repos).
+# Code repo: g:\repositories\raft-lm
+# Local staging templates: projects-management/hf-local/
+---
+version: 2
+archived: true
+sprint: SP-HF
+sprint_start: 2026-07-01
+sprint_target_end: 2026-08-14
+repo: artaasd95/raft-lm
+issues:
+  - id: SP-HF-01
+    title: "Scaffold artifacts/huggingface/staging/ layout + link to portfolio hf-local templates"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "SP-HF — Staging"
+    due: 2026-07-04
+    labels:
+      - "sprint/SP-HF"
+      - "area/training"
+      - "type/infra"
+      - "priority/p1"
+    depends_on:
+      - SP-BENCH-03
+    note: "See Knowledge/HuggingFace-Showroom.md for org naming and model card template."
+    acceptance:
+      - "artifacts/huggingface/staging/{run_id}/adapter/, model_card.md, eval_results.json, manifest.json"
+      - "manifest.json includes commit_sha, config_path, seed, policy_id"
+    artifacts:
+      - "artifacts/huggingface/README.md"
+      - "artifacts/huggingface/staging/.gitkeep"
+
+  - id: SP-HF-02
+    title: "scripts/build_model_card.py — fill HF README from run_info.json and BENCHMARK.md row"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "SP-HF — Model card"
+    due: 2026-07-11
+    labels:
+      - "sprint/SP-HF"
+      - "area/training"
+      - "type/tool"
+      - "priority/p1"
+    depends_on:
+      - SP-HF-01
+    acceptance:
+      - "Generates model card with YAML frontmatter (license, base_model, tags, library_name: peft)"
+      - "Links to raft-lm commit and configs/risk_training.yaml"
+      - "Includes eval table from BENCHMARK.md"
+    artifacts:
+      - "scripts/build_model_card.py"
+
+  - id: SP-HF-03
+    title: "scripts/push_to_hub.py — upload adapter folder to Risk-Aware-AI org"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "SP-HF — Publish"
+    due: 2026-07-18
+    labels:
+      - "sprint/SP-HF"
+      - "area/training"
+      - "type/tool"
+      - "priority/p1"
+    depends_on:
+      - SP-HF-02
+    acceptance:
+      - "HfApi.create_repo + upload_folder from staging dir"
+      - "configs/hf_publish.yaml for repo_id, org, private flag"
+      - "Dry-run mode without token"
+    artifacts:
+      - "scripts/push_to_hub.py"
+      - "configs/hf_publish.yaml"
+
+  - id: SP-HF-04
+    title: "scripts/build_hf_dataset.py — export pipeline JSONL to dataset card format"
+    status: completed
+    priority: p2
+    area: data
+    milestone: "SP-HF — Dataset"
+    due: 2026-07-25
+    labels:
+      - "sprint/SP-HF"
+      - "area/data"
+      - "type/tool"
+      - "priority/p2"
+    depends_on:
+      - SP-HF-01
+    acceptance:
+      - "Produces train.jsonl, test.jsonl, dataset_infos.json, README dataset card"
+      - "Target repo Risk-Aware-AI/raft-risk-training-v1 or configurable"
+    artifacts:
+      - "scripts/build_hf_dataset.py"
+
+  - id: SP-HF-05
+    title: "CI workflow_dispatch publish gate — push only after benchmark pass"
+    status: completed
+    priority: p2
+    area: infra
+    milestone: "SP-HF — CI"
+    due: 2026-08-01
+    labels:
+      - "sprint/SP-HF"
+      - "area/infra"
+      - "type/ci"
+      - "priority/p2"
+    depends_on:
+      - SP-HF-03
+    acceptance:
+      - ".github/workflows/publish_hf.yml manual trigger only"
+      - "Requires HF_TOKEN secret; documents in deployment.md"
+    artifacts:
+      - ".github/workflows/publish_hf.yml"
+
+  - id: SP-HF-06
+    title: "First publish — Qwen2.5-1.5B-RAFT-Finance-LoRA from SP-BENCH-03 winning run"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "SP-HF — First release"
+    due: 2026-08-14
+    labels:
+      - "sprint/SP-HF"
+      - "area/training"
+      - "type/release"
+      - "priority/p1"
+    depends_on:
+      - SP-HF-05
+      - SP-TRAIN-04
+    note: "Naming: Risk-Aware-AI/Qwen2.5-1.5B-RAFT-Finance-LoRA per HuggingFace-Showroom.md"
+    acceptance:
+      - "Adapter on Hub with complete model card and limitations section"
+      - "peft load snippet verified in card"
+    artifacts:
+      - "hf-local/org-risk-aware-ai/models/Qwen2.5-1.5B-RAFT-Finance-LoRA/README.md"

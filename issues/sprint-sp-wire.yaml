@@ -1,0 +1,116 @@
+version: 2
+archived: true
+sprint: SP-WIRE
+sprint_start: 2026-06-06
+sprint_target_end: 2026-06-27
+repo: artaasd95/raft-lm
+issues:
+- id: SP-WIRE-01
+  title: Mark and harden SP-TRAIN-01 partial path — artifact schema + run_info completeness
+  status: completed
+  priority: p0
+  area: training
+  milestone: SP-WIRE — Train loop
+  due: 2026-06-10
+  labels:
+  - sprint/SP-WIRE
+  - area/training
+  - type/feature
+  - priority/p0
+  depends_on:
+  - S0-03
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+  acceptance:
+  - 'All four artifacts: resolved_config.json, metrics.json, best_model.pt, run_info.json
+    with git hash and seed'
+  - Documented as MLP baseline path in README
+  artifacts:
+  - scripts/train.py
+  - configs/risk_training.yaml
+- id: SP-WIRE-02
+  title: Wire CVaRLoss and TailAwareLoss into train.py _build_loss via policy config
+  status: completed
+  priority: p0
+  area: training
+  milestone: SP-WIRE — Risk losses
+  due: 2026-06-12
+  labels:
+  - sprint/SP-WIRE
+  - area/training
+  - type/feature
+  - priority/p0
+  depends_on:
+  - SP-WIRE-01
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+  acceptance:
+  - policy YAML loss field selects ce, cvar_penalized, tail_aware
+  - risk_cvar_v1.yaml policy produces CVaRLoss in train loop
+  - Unit test asserts loss class selection
+  artifacts:
+  - scripts/train.py
+  - experiments/configs/policies/risk_cvar_v1.yaml
+  - tests/unit/test_build_loss.py
+- id: SP-WIRE-03
+  title: Replace engine label stub with src/metrics enrichment in pipeline _stage_label
+  status: completed
+  priority: p1
+  area: data
+  milestone: SP-WIRE — Data platform
+  due: 2026-06-17
+  labels:
+  - sprint/SP-WIRE
+  - area/data
+  - type/feature
+  - priority/p1
+  depends_on:
+  - S7-DP-03
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+  acceptance:
+  - Label stage calls src/metrics/ enrichment per data-platform.md
+  - Removes L2-norm hack; unit test on sample JSONL
+  artifacts:
+  - src/data_platform/pipeline.py
+  - src/metrics/
+- id: SP-WIRE-04
+  title: Wire UnifiedModelLoader into scripts/train.py and scripts/evaluate.py
+  status: completed
+  priority: p1
+  area: training
+  milestone: SP-WIRE — Model loaders
+  due: 2026-06-19
+  labels:
+  - sprint/SP-WIRE
+  - area/training
+  - type/feature
+  - priority/p1
+  depends_on:
+  - S8-03
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+  acceptance:
+  - Resume from checkpoint via loader
+  - model.source=hf path uses same loader as local
+  - Integration test load → eval roundtrip
+  artifacts:
+  - scripts/train.py
+  - scripts/evaluate.py
+  - src/models/loaders/unified.py
+- id: SP-WIRE-05
+  title: Add [hf] optional extra in pyproject.toml for datasets, transformers, peft,
+    huggingface_hub
+  status: completed
+  priority: p1
+  area: tooling
+  milestone: SP-WIRE — Dependencies
+  due: 2026-06-14
+  labels:
+  - sprint/SP-WIRE
+  - area/tooling
+  - type/tooling
+  - priority/p1
+  depends_on: []
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+  acceptance:
+  - pip install -e '.[hf]' installs all HF stack
+  - Documented in README and deployment.md
+  artifacts:
+  - pyproject.toml

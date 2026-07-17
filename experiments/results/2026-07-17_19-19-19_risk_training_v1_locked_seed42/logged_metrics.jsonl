@@ -1,0 +1,2 @@
+{"metrics": {"loss_cvar": 1.4836323261260986, "loss_mean": 1.100367784500122, "loss_tail_fraction": 1.3483058546648445}, "step": 0}
+{"metrics": {"accuracy": 0.6875, "constraint_violation_rate": 0.4375, "cvar": 1.4997564554214478, "f1_score": 0.5949055775142732, "num_samples": 32.0, "test_loss": 0.9712919592857361}, "step": null}

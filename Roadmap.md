@@ -2,11 +2,18 @@
 
 **Identity:** Risk Aware Framework for Training LMs ([RF-2026-28](docs/vault/Decision-Log.md))
 
-## Now (S9 — TBD)
+## Now (S9 — Benchmark Publication)
 
 | ID | Deliverable | Status |
 |----|-------------|--------|
-| — | Next vertical slice (see vault hub) | Planning |
+| S9-01 | Lightest multi-seed smoke (seeds 42, 123, 456) | Queued |
+| S9-02 | Execution report + QA | Queued |
+| S9-03 | SP-TRAIN: CE vs CVaR vs tail-aware × 3 seeds | Queued |
+| S9-04 | Fill README + BENCHMARK.md results table | Queued |
+| S9-05 | Engine-label dataset end-to-end train | Queued |
+| S9-06 | Refresh stale planning docs | Queued |
+
+Seeds: [issues/sprint-s9-benchmark-publication.yaml](issues/sprint-s9-benchmark-publication.yaml)
 
 ## Shipped (S7 — data platform)
 

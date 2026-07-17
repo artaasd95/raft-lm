@@ -1,0 +1,77 @@
+# Experiments & Technical Debt - raft-lm
+# Core execution and research tasks for model improvements and infrastructure
+---
+version: 2
+archived: true
+sprint: experiments
+sprint_start: 2026-06-13
+sprint_target_end: 2026-12-31
+repo: artaasd95/raft-lm
+issues:
+  - id: EXP-01
+    title: "Risk-aware tool calling with function composition"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "Research - Tool integration"
+    due: 2026-09-30
+    labels:
+      - "sprint/experiments"
+      - "area/training"
+      - "type/experiment"
+      - "priority/p1"
+    depends_on: []
+    note: "Technical debt: Implement tool-calling with risk-aware decision making for chained tool invocations"
+    acceptance:
+      - "Tool schema with risk annotations"
+      - "Function composition for multi-step operations"
+      - "Integration with RADA risk gate"
+    artifacts:
+      - "src/training/risk_aware_tools.py"
+      - "tests/integration/test_risk_tools.py"
+
+  - id: EXP-02
+    title: "Multi-stage reasoning with intermediate verification"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "Research - Reasoning depth"
+    due: 2026-10-15
+    labels:
+      - "sprint/experiments"
+      - "area/training"
+      - "type/experiment"
+      - "priority/p1"
+    depends_on: []
+    note: "Technical debt: Develop multi-stage reasoning with intermediate verification steps for complex accuracy demands"
+    acceptance:
+      - "Multi-stage reasoning framework functional"
+      - "Intermediate verification gates working"
+      - "Performance benchmarks vs single-stage baseline"
+    artifacts:
+      - "src/training/multi_stage_reasoning.py"
+      - "scripts/train_multi_stage.py"
+      - "tests/integration/test_multi_stage.py"
+
+  - id: EXP-03
+    title: "Calibration and uncertainty quantification"
+    status: completed
+    priority: p1
+    area: eval
+    milestone: "Research - Model confidence"
+    due: 2026-11-15
+    labels:
+      - "sprint/experiments"
+      - "area/eval"
+      - "type/experiment"
+      - "priority/p1"
+    depends_on: []
+    note: "Technical debt: Implement confidence calibration and uncertainty quantification for production risk bounds"
+    acceptance:
+      - "Calibration curves for key decision classes"
+      - "Uncertainty estimates aligned with actual error rates"
+      - "Production decision thresholds based on uncertainty"
+    artifacts:
+      - "src/evaluation/calibration.py"
+      - "scripts/evaluate_calibration.py"
+      - "docs/calibration-guide.md"

@@ -1,0 +1,130 @@
+# SP-DOCS — Documentation, MkDocs, CONTRIBUTING, weights/HF cards (standalone v1.0).
+---
+version: 2
+archived: true
+sprint: SP-DOCS
+sprint_start: 2026-07-01
+sprint_target_end: 2026-08-14
+repo: artaasd95/raft-lm
+issues:
+  - id: SP-DOCS-01
+    title: "README v1.0 — risk-training identity, BENCHMARK table, HF LoRA load section"
+    status: completed
+    priority: p0
+    area: docs
+    milestone: "SP-DOCS — Public docs"
+    due: 2026-07-11
+    labels:
+      - "sprint/SP-DOCS"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p0"
+    depends_on:
+      - SP-BENCH-04
+    artifacts:
+      - "README.md"
+
+  - id: SP-DOCS-02
+    title: "CONTRIBUTING.md — dev install, pytest, loss sweep, artifact layout"
+    status: completed
+    priority: p1
+    area: docs
+    milestone: "SP-DOCS — Public docs"
+    due: 2026-07-04
+    labels:
+      - "sprint/SP-DOCS"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p1"
+    artifacts:
+      - "CONTRIBUTING.md"
+
+  - id: SP-DOCS-03
+    title: "MkDocs — mkdocs.yml + nav (data-platform, benchmarks, tools, deployment)"
+    status: completed
+    priority: p2
+    area: docs
+    milestone: "SP-DOCS — MkDocs"
+    due: 2026-07-25
+    labels:
+      - "sprint/SP-DOCS"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p2"
+    depends_on:
+      - SP-DEPLOY-06
+    artifacts:
+      - "mkdocs.yml"
+      - "docs/index.md"
+
+  - id: SP-DOCS-04
+    title: "docs/weights.md — HF staging, model cards, publish gate"
+    status: completed
+    priority: p1
+    area: docs
+    milestone: "SP-DOCS — Weights"
+    due: 2026-08-01
+    labels:
+      - "sprint/SP-DOCS"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p1"
+    depends_on:
+      - SP-HF-03
+    artifacts:
+      - "docs/weights.md"
+
+  - id: SP-DOCS-05
+    title: "docs/conf.py — Sphinx + Furo + autodoc + mathjax + myst-parser setup"
+    status: completed
+    priority: p1
+    area: docs
+    milestone: "SP-DOCS — Sphinx API"
+    due: 2026-06-15
+    labels:
+      - "sprint/SP-DOCS"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p1"
+    artifacts:
+      - "docs/conf.py"
+
+  - id: SP-DOCS-06
+    title: "docs/api/*.rst — per-module automodule stubs"
+    status: completed
+    priority: p1
+    area: docs
+    milestone: "SP-DOCS — Sphinx API"
+    due: 2026-06-15
+    labels:
+      - "sprint/SP-DOCS"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p1"
+    depends_on:
+      - SP-DOCS-05
+    artifacts:
+      - "docs/api/index.rst"
+      - "docs/api/losses.rst"
+      - "docs/api/metrics.rst"
+      - "docs/api/training.rst"
+      - "docs/api/tools.rst"
+      - "docs/api/data_platform.rst"
+
+  - id: SP-DOCS-07
+    title: "docs/requirements-docs.txt + make html passes CI"
+    status: completed
+    priority: p2
+    area: docs
+    milestone: "SP-DOCS — Sphinx API"
+    due: 2026-06-18
+    labels:
+      - "sprint/SP-DOCS"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p2"
+    depends_on:
+      - SP-DOCS-06
+    artifacts:
+      - "docs/requirements-docs.txt"
+      - "docs/Makefile"

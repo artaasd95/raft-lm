@@ -1,0 +1,149 @@
+# S4 — Ragas scoring, adapter hardening, and real-model readiness (post Standard RAG baseline).
+# Completed 2026-05-20. GitHub issues #19–#24 close on next vault sync.
+# Active seeds: sprint-s5.yaml (S5-*).
+# Human narrative: ../Action-Queue.md, ../Roadmap.md, ../Sprint-Plan-30d.md
+---
+version: 2
+archived: true
+sprint: S4
+sprint_start: 2026-05-19
+sprint_target_end: 2026-06-18
+repo: artaasd95/raft-lm
+issues:
+  - id: S4-01
+    title: "Evaluate Haystack vs LangGraph for RAG orchestration and document ADR"
+    status: completed
+    priority: p1
+    area: ai
+    milestone: "S4 - Ragas scoring and RAG adapter hardening"
+    due: 2026-05-25
+    labels:
+      - "sprint/S4"
+      - "area/rag"
+      - "type/docs"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "Comparison covers Standard RAG pipeline needs: ingestion hooks, retriever wiring, citation emission, and benchmark runner integration"
+      - "Decision records FAISS and Qdrant compatibility requirements and whether Haystack, LangGraph, or lightweight custom orchestration is chosen"
+      - "ADR or Decision-Log entry states non-goals (no platform sprawl) and rollback path if the chosen framework is deferred"
+    artifacts:
+      - "docs/adr/0002-rag-orchestration-framework.md"
+      - "src/rag/pipelines.py"
+
+  - id: S4-02
+    title: "Extend embedding and vector-store adapters for enterprise and self-hosted backends"
+    status: completed
+    priority: p1
+    area: ai
+    milestone: "S4 - Ragas scoring and RAG adapter hardening"
+    due: 2026-05-29
+    labels:
+      - "sprint/S4"
+      - "area/rag"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S4-01
+    acceptance:
+      - "Embedding adapters cover at least one enterprise provider, one self-hosted/OpenAI-compatible path, and the existing mock adapter"
+      - "Vector-store adapters cover in-memory FAISS, dockerized or remote Qdrant, and the existing mock/in-memory baseline"
+      - "Config or env selects backend without changing pipeline or benchmark runner contracts"
+      - "Unit tests exercise adapter selection with mocks/fakers only; no paid API keys required in CI"
+    artifacts:
+      - "src/rag/embeddings.py"
+      - "src/rag/retrievers.py"
+      - "tests/unit/test_rag_adapters.py"
+
+  - id: S4-03
+    title: "Integrate Ragas runner on saved Standard RAG benchmark artifacts"
+    status: completed
+    priority: p1
+    area: scientific-math
+    milestone: "S4 - Ragas scoring and RAG adapter hardening"
+    due: 2026-06-05
+    labels:
+      - "sprint/S4"
+      - "area/eval"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S4-02
+    acceptance:
+      - "ragas_runner scores Context Precision and Faithfulness on artifacts from docs/benchmarks/results/<run_id>/"
+      - "Ragas score fields populate benchmark_schema; empty/null slots from S3 runs are backfilled when scores exist"
+      - "Runner accepts mock mode for CI; no headline Ragas claims in README until a verified non-mock run is documented"
+    artifacts:
+      - "src/evals/ragas_runner.py"
+      - "src/evals/benchmark_schema.py"
+      - "scripts/run_ragas_eval.py"
+
+  - id: S4-04
+    title: "Apply hallucination severity scoring to benchmark failures"
+    status: completed
+    priority: p1
+    area: scientific-math
+    milestone: "S4 - Ragas scoring and RAG adapter hardening"
+    due: 2026-06-08
+    labels:
+      - "sprint/S4"
+      - "area/eval"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S4-03
+    acceptance:
+      - "hallucination_risk maps failed or low-faithfulness answers to legal, financial, compliance, or operational severity buckets per S2 contract"
+      - "Severity fields are written into benchmark report JSON/CSV alongside Ragas scores"
+      - "Unit tests cover bucket assignment with fixture answers; no live model calls required"
+    artifacts:
+      - "src/evals/hallucination_risk.py"
+      - "src/evals/report_writer.py"
+      - "tests/unit/test_hallucination_risk.py"
+
+  - id: S4-05
+    title: "Enable real embedding model path (text-embedding-3-small preferred) behind config flag"
+    status: completed
+    priority: p2
+    area: ai
+    milestone: "S4 - Ragas scoring and RAG adapter hardening"
+    due: 2026-06-12
+    labels:
+      - "sprint/S4"
+      - "area/rag"
+      - "type/feature"
+      - "priority/p2"
+    depends_on:
+      - S4-02
+    acceptance:
+      - "Config or env selects mock (default) vs live embedding provider; mock remains CI default"
+      - "Preferred production embedding model is text-embedding-3-small when OPENAI_API_KEY or equivalent is set"
+      - "README and .env.example document the flag, required keys, and that benchmark CI stays mock-only until keys are provisioned"
+      - "Optional manual smoke command documented but not required in CI"
+    artifacts:
+      - "src/rag/embeddings.py"
+      - ".env.example"
+      - "docs/benchmarks/BENCHMARK.md"
+
+  - id: S4-06
+    title: "Add CI Ragas regression smoke test with mock providers only"
+    status: completed
+    priority: p2
+    area: backend
+    milestone: "S4 - Ragas scoring and RAG adapter hardening"
+    due: 2026-06-18
+    labels:
+      - "sprint/S4"
+      - "area/tests"
+      - "type/task"
+      - "priority/p2"
+    depends_on:
+      - S4-04
+    acceptance:
+      - "Integration test runs ingestion → retrieve → generate → Ragas score → save on bundled sample with mock/faker providers"
+      - "Test fails when required benchmark_schema or Ragas fields are missing after scoring"
+      - "Workflow passes without paid API keys; live embedding/generation paths are excluded from CI"
+      - "benchmark_smoke workflow is workflow_dispatch only (no on: push); default pytest CI runs unit tests only"
+    artifacts:
+      - "tests/integration/test_ragas_benchmark_smoke.py"
+      - ".github/workflows/benchmark_smoke.yml"

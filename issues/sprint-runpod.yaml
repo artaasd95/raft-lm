@@ -1,0 +1,58 @@
+# SP-RUNPOD — RunPod execution layer for GPU training.
+---
+version: 2
+archived: true
+sprint: SP-RUNPOD
+sprint_start: 2026-06-08
+sprint_target_end: 2026-06-22
+repo: artaasd95/raft-lm
+issues:
+  - id: RUNPOD-01
+    title: "runpod/train.py — tmux-safe, signal-safe wrapper with auto-resume"
+    status: completed
+    priority: p0
+    area: infra
+    milestone: "SP-RUNPOD — RunPod execution"
+    due: 2026-06-12
+    labels: ["sprint/SP-RUNPOD", "area/infra", "priority/p0"]
+    artifacts: ["runpod/train.py"]
+  - id: RUNPOD-02
+    title: "runpod/setup.sh — one-shot env bootstrap"
+    status: completed
+    priority: p0
+    area: infra
+    due: 2026-06-12
+    labels: ["sprint/SP-RUNPOD", "area/infra", "priority/p0"]
+    artifacts: ["runpod/setup.sh"]
+  - id: RUNPOD-03
+    title: "runpod/resume.sh — detect latest checkpoint and resume"
+    status: completed
+    priority: p0
+    area: infra
+    due: 2026-06-12
+    labels: ["sprint/SP-RUNPOD", "area/infra", "priority/p0"]
+    artifacts: ["runpod/resume.sh"]
+  - id: RUNPOD-04
+    title: "runpod/config.yaml — RunPod-specific training overrides"
+    status: completed
+    priority: p1
+    area: infra
+    due: 2026-06-14
+    labels: ["sprint/SP-RUNPOD", "area/infra", "priority/p1"]
+    artifacts: ["runpod/config.yaml"]
+  - id: RUNPOD-05
+    title: "runpod/notebook_runpod.ipynb — interactive Jupyter variant"
+    status: completed
+    priority: p2
+    area: infra
+    due: 2026-06-18
+    labels: ["sprint/SP-RUNPOD", "area/infra", "priority/p2"]
+    artifacts: ["runpod/notebook_runpod.ipynb"]
+  - id: RUNPOD-06
+    title: "runpod/README.md — tmux workflow documentation"
+    status: completed
+    priority: p1
+    area: docs
+    due: 2026-06-14
+    labels: ["sprint/SP-RUNPOD", "area/docs", "priority/p1"]
+    artifacts: ["runpod/README.md"]

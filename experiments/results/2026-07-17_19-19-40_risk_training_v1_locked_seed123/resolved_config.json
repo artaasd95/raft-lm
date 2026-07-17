@@ -1,0 +1,54 @@
+{
+  "config_version": 1,
+  "data": {
+    "batch_size": 16,
+    "dataset_type": "SyntheticRiskDataset",
+    "num_workers": 0,
+    "scenario_params": {},
+    "tail_index": null,
+    "test_size": 32,
+    "train_size": 128,
+    "val_size": 32
+  },
+  "description": "Frozen v1 benchmark hyperparameters for RAFT-LM risk training",
+  "evaluation": {
+    "metrics": [
+      "accuracy",
+      "f1_score",
+      "cvar",
+      "constraint_violation_rate"
+    ]
+  },
+  "experiment_name": "risk_training_v1_locked",
+  "logging": {
+    "checkpoint_interval": 1,
+    "experiment_backend": "local",
+    "log_interval": 1,
+    "save_checkpoints": true
+  },
+  "model": {
+    "dropout": 0.0,
+    "hidden_dim": 32,
+    "input_dim": 10,
+    "num_layers": 1,
+    "output_dim": 3,
+    "type": "SimpleMLP"
+  },
+  "output": {
+    "results_dir": "experiments/results"
+  },
+  "training": {
+    "backend": "mlp",
+    "device": "cpu",
+    "loss": {
+      "type": "ce"
+    },
+    "num_epochs": 1,
+    "optimizer": {
+      "lr": 0.01,
+      "type": "Adam",
+      "weight_decay": 0.0
+    },
+    "seed": 123
+  }
+}
