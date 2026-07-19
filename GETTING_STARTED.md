@@ -38,6 +38,7 @@ Install dependencies:
 
 ```bash
 pip install -e ".[dev,benchmark]"
+pip install -e ".[hf]"    # optional: LoRA / DPO / PEFT alignment
 ```
 
 ## 2. Verify installation
@@ -72,6 +73,21 @@ Override the seed:
 ```bash
 python scripts/train.py --config experiments/configs/example_config.json --seed 123
 ```
+
+### Hybrid RL methods (smoke)
+
+```bash
+# Classical env PPO
+python scripts/train.py --config configs/methods/ppo_env.yaml
+
+# DPO preference (stub path without HF hub)
+python scripts/train.py --config configs/methods/dpo_risk.yaml
+
+# Inference (RAG + BYOK mock)
+python scripts/infer.py --query "What is CVaR?"
+```
+
+See [docs/getting-started.md](docs/getting-started.md) and [docs/training/](docs/training/) for method details.
 
 ## 4. Run the RAG benchmark
 

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "raft-lm"
-version = "0.1.0"
-description = "Risk-Aware Fine-Tuning for Language Models"
+version = "0.2.1"
+description = "Risk-Aware Fine-Tuning for training LLMs on financial risk-aware decision making"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -19,6 +19,7 @@ dependencies = [
     "seaborn>=0.12.0",
     "pydantic>=2.7.0",
     "httpx>=0.27.0",
+    "gymnasium>=0.29.0",
 ]
 
 [project.optional-dependencies]
@@ -31,11 +32,11 @@ dev = [
     "mypy>=1.8.0",
     "types-PyYAML",
 ]
-benchmark = [
-    "langgraph>=0.2.0",
-    "langchain-core>=0.3.0",
-    "ragas>=0.1.0",
-    "streamlit>=1.28.0",
+docs = [
+    "sphinx>=7.0",
+    "furo>=2024.1.29",
+    "myst-parser>=2.0",
+    "sphinx-autodoc-typehints>=2.0",
 ]
 storage = [
     "boto3>=1.28.0",
@@ -47,6 +48,15 @@ hf = [
     "peft",
     "huggingface_hub",
     "safetensors",
+    "trl",
+]
+qlora = [
+    "transformers>=4.41",
+    "peft",
+    "bitsandbytes",
+    "accelerate",
+    "safetensors",
+    "huggingface_hub",
 ]
 unsloth = [
     "unsloth",
@@ -59,6 +69,21 @@ unsloth = [
     "safetensors",
     "huggingface_hub",
 ]
+ray = [
+    "ray[train]>=2.9.0",
+]
+wandb = [
+    "wandb>=0.16.0",
+]
+comet = [
+    "comet_ml>=3.35.0",
+]
+
+[project.scripts]
+raft-train = "application.entrypoints:train_main"
+raft-eval = "application.entrypoints:eval_main"
+raft-search = "application.entrypoints:search_main"
+raft-build-dataset = "application.entrypoints:build_dataset_main"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -68,18 +93,26 @@ include = ["src*"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [
-    "gpu: requires CUDA GPU (Unsloth LoRA smoke)",
+    "gpu: requires CUDA GPU",
+    "hf: requires transformers+peft installed",
+    "slow: multi-second learning smoke",
+    "ray: requires ray installed",
 ]
-addopts = "-m 'not gpu'"
+addopts = "-m 'not gpu and not ray'"
 
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-exclude = ["notebooks", "data", "experiments/results"]
+exclude = ["notebooks", "data", "experiments/results", "docs/_build"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*.py" = ["E402"]
+"tests/**/*.py" = ["E402"]
+"src/**/__init__.py" = ["F403"]
 
 [tool.mypy]
 python_version = "3.10"

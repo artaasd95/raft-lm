@@ -108,7 +108,7 @@ def load_distilled_splits(
 def rows_to_hf_dataset(rows: List[Dict[str, Any]]) -> Any:
     """Convert JSONL rows to a HuggingFace Dataset with a ``text`` column."""
     try:
-        from datasets import Dataset  # type: ignore
+        from datasets import Dataset
     except ImportError as exc:
         raise ImportError("rows_to_hf_dataset requires `pip install datasets`") from exc
     texts = [format_sft_text(row) for row in rows]

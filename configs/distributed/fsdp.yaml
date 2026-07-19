@@ -1,0 +1,2 @@
+strategy: fsdp
+inner_backend: mlp

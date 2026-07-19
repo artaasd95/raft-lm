@@ -1,0 +1,21 @@
+method: dqn_env
+experiment_name: dqn_risk_allocation_smoke
+description: DQN on RiskAllocationEnv (smoke)
+algorithm:
+  gamma: 0.99
+training:
+  backend: dqn_env
+  num_epochs: 20
+  seed: 42
+  device: cpu
+  optimizer:
+    type: Adam
+    lr: 0.001
+    weight_decay: 0.0
+  loss:
+    type: CrossEntropyLoss
+evaluation:
+  metrics:
+    - mean_reward
+output:
+  results_dir: experiments/results

@@ -11,7 +11,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 project = "raft-lm"
 author = "Risk-Aware AI"
-release = "0.1.0"
+release = "0.2.0"
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -19,10 +19,11 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
     "myst_parser",
+    "sphinx_autodoc_typehints",
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "vault", "project-plan-docs"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "vault", "project-plan-docs", "archive"]
 
 html_theme = "furo"
 html_logo = "../assets/logo.png"

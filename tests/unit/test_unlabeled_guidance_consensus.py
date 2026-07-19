@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.unlabeled_guidance.consensus import aggregate_consensus, score_hypothesis_offline
+from src.search.pgts.consensus import aggregate_consensus, score_hypothesis_offline
 
 
 def test_aggregate_consensus_median():
@@ -19,7 +19,7 @@ def test_echo_score_high_on_disagreement():
 
 def test_outlier_downweighted():
     with_outlier = aggregate_consensus([0.7, 0.72, 0.05], outlier_mad_factor=1.0)
-    without = aggregate_consensus([0.7, 0.72, 0.71])
+    aggregate_consensus([0.7, 0.72, 0.71])
     assert with_outlier.weighted_score >= 0.0
 
 

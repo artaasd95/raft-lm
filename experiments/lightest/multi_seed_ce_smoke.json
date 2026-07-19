@@ -1,0 +1,29 @@
+{
+  "sprint": "S9",
+  "task": "S9-01",
+  "date": "2026-07-17",
+  "config": "configs/risk_training_v1_locked.yaml",
+  "loss": "ce",
+  "seeds": [
+    {
+      "seed": 42,
+      "run_dir": "experiments/results/2026-07-17_19-19-19_risk_training_v1_locked_seed42",
+      "train_loss": 1.1004,
+      "val_loss": 0.9828,
+      "test_accuracy": 0.6875
+    },
+    {
+      "seed": 123,
+      "run_dir": "experiments/results/2026-07-17_19-19-40_risk_training_v1_locked_seed123",
+      "train_loss": 1.1141,
+      "val_loss": 0.9648
+    },
+    {
+      "seed": 456,
+      "run_dir": "experiments/results/2026-07-17_19-19-46_risk_training_v1_locked_seed456",
+      "train_loss": 1.0901,
+      "val_loss": 1.0097
+    }
+  ],
+  "note": "Lightest CE smoke on SyntheticRiskDataset, 1 epoch, CPU. CVaR/tail-aware runs pending S9-03."
+}

@@ -7,9 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from src.data_platform.config import load_pipeline_config
-from src.data_platform.pipeline import run_pipeline
-
+from src.data.pipeline.config import load_pipeline_config
+from src.data.pipeline.pipeline import run_pipeline
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

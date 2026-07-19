@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Any, FrozenSet
 
 from .conventions import ReturnKind, annualize_volatility, to_numpy
-from .task_metrics import accuracy, mae, mse, f1_score
+from .task_metrics import accuracy, f1_score, mae, mse
 from .vol_surface import (
     atm_strike_index,
     black_scholes_call_price,

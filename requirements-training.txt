@@ -1,12 +1,2 @@
-# LLM / Unsloth training extras (install: pip install -r requirements-training.txt)
-# Or: pip install -e ".[unsloth]"
-
-unsloth
-transformers>=4.41
-peft
-trl
-datasets
-accelerate
-bitsandbytes
-safetensors
-huggingface_hub
+# GPU / full training stack
+-e ".[hf,qlora,unsloth,wandb,comet]"

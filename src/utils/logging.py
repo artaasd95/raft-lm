@@ -17,18 +17,18 @@ def setup_logger(
 ) -> logging.Logger:
     """
     Set up a logger with console and optional file output.
-    
+
     Args:
         name: Logger name
         log_file: Optional path to log file
         level: Logging level
-        
+
     Returns:
         Configured logger
     """
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    
+
     # Console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(level)
@@ -37,7 +37,7 @@ def setup_logger(
     )
     console_handler.setFormatter(console_format)
     logger.addHandler(console_handler)
-    
+
     # File handler
     if log_file:
         Path(log_file).parent.mkdir(parents=True, exist_ok=True)
@@ -45,7 +45,7 @@ def setup_logger(
         file_handler.setLevel(level)
         file_handler.setFormatter(console_format)
         logger.addHandler(file_handler)
-    
+
     return logger
 
 

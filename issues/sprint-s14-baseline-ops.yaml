@@ -1,0 +1,91 @@
+version: 2
+archived: true
+sprint: S14
+sprint_start: 2026-06-10
+sprint_target_end: 2026-06-24
+sprint_completed: 2026-06-13
+repo: artaasd95/raft-lm
+issues:
+- id: S14-01
+  title: Promote one lightweight local Qwen baseline to the default public path
+  status: completed
+  priority: p0
+  area: docs
+  labels:
+  - sprint/S14
+  - area/docs
+  - priority/p0
+  artifacts:
+  - README.md
+  - docs/training.md
+  - configs/models/qwen_portfolio.yaml
+  note: Completed 2026-06-13 on develop (commit 2d998bd, baseline promoted to default).
+- id: S14-02
+  title: Publish one canonical local run bundle with metrics, JSONL logs, and checkpoint
+    artifacts
+  status: completed
+  priority: p0
+  area: training
+  labels:
+  - sprint/S14
+  - area/training
+  - priority/p0
+  depends_on:
+  - S14-01
+  artifacts:
+  - benchmarks/baseline_frozen_qwen3_0.6b_run_001.json
+  - benchmarks/baseline_qwen3_0.6b_artifacts/
+  - scripts/verify_baseline_operations.py
+  note: Completed 2026-06-13 on develop (commit 2d998bd, verified with baseline operations contract).
+- id: S14-03
+  title: Add bucket-native plus volume-aware remote artifact flow for CLI and RunPod
+  status: completed
+  priority: p1
+  area: infra
+  labels:
+  - sprint/S14
+  - area/infra
+  - priority/p1
+  depends_on:
+  - S14-02
+  artifacts:
+  - storage/ftp_sync.py
+  - storage/README.md
+  - runpod/verify_parity.py
+  note: Completed 2026-06-13 on develop (commit 2d998bd, RunPod parity tracking ready).
+- id: S14-04
+  title: Make RunPod notebook and CLI share the same artifact layout and resume contract
+  status: completed
+  priority: p1
+  area: infra
+  labels:
+  - sprint/S14
+  - area/infra
+  - priority/p1
+  depends_on:
+  - S14-02
+  - S14-03
+  artifacts:
+  - runpod/notebook_runpod.ipynb
+  - runpod/train.py
+  - runpod/README.md
+  - BASELINE_OPERATIONS_GUIDE.md
+  note: Completed 2026-06-13 on develop (commit 2d998bd, artifact layout standardized).
+- id: S14-05
+  title: Freeze or demote stale RAG-first docs so the repo tells one risk-training
+    story
+  status: completed
+  priority: p1
+  area: docs
+  labels:
+  - sprint/S14
+  - area/docs
+  - priority/p1
+  depends_on:
+  - S14-01
+  artifacts:
+  - README.md
+  - scripts/README.md
+  - BASELINE_OPERATIONS_GUIDE.md
+  note: Completed 2026-06-13 on develop (commit 2d998bd, documentation complete
+  note: Completed 2026-06-11 on develop (portfolio execution plan).

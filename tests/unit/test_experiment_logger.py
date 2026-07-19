@@ -1,7 +1,6 @@
 """Unit tests for BaseExperimentLogger backends."""
 
 import json
-from pathlib import Path
 
 from src.logging.experiment_logger import (
     DatabaseExperimentLogger,

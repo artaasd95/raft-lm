@@ -1,0 +1,85 @@
+# S0 — URGENT identity pivot: restore Risk Aware Framework for Training Language Models.
+# Supersedes RF-2026-16 (Enterprise RAG Accuracy Engine as primary identity).
+# RAG sprint work (S2–S6) remains in repo history but is non-primary / deferred showcase.
+---
+version: 2
+archived: true
+sprint: S0
+sprint_start: 2026-05-30
+sprint_target_end: 2026-06-06
+repo: artaasd95/raft-lm
+issues:
+  - id: S0-01
+    title: "Reconcile vault identity to risk-engine + LLM training framework (supersede RAG-primary docs)"
+    status: completed
+    priority: p0
+    area: docs
+    milestone: "S0 - Identity pivot"
+    due: 2026-06-01
+    labels:
+      - "sprint/S0"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p0"
+      - "urgent"
+    depends_on: []
+    acceptance:
+      - "Project-Hub, Roadmap, OKRs, Sprint-Plan-30d, Architecture, and Decision-Log state RAFT = Risk Aware Framework for Training Language Models"
+      - "Decision RF-2026-28 added; RF-2026-16 marked Superseded"
+      - "Portfolio/Agent-Stack-Definitions.md linked from root Project-Hub and HOME"
+      - "Vault S5/S6 RAG tasks marked superseded or cancelled in Kanban and Vault-Tasks"
+    artifacts:
+      - "Projects/raft-lm/Project-Hub.md"
+      - "Projects/raft-lm/Decision-Log.md"
+      - "Portfolio/Agent-Stack-Definitions.md"
+
+  - id: S0-02
+    title: "Realign code repo narrative and cross-project adapter docs (not a RAG engine)"
+    status: completed
+    priority: p0
+    area: docs
+    milestone: "S0 - Identity pivot"
+    due: 2026-06-03
+    labels:
+      - "sprint/S0"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p0"
+      - "urgent"
+    depends_on:
+      - S0-01
+    acceptance:
+      - "README leads with risk engine + optimizer/training framework; RAG benchmark demoted to deferred auxiliary appendix"
+      - "BENCHMARK.md or successor doc banner states RAG comparison is not the product definition"
+      - "Meridian and RADA vault Architecture/roadmap rows correct raft-lm role (audit/training substrate, not GATHER retrieval)"
+      - "Meridian adapter table removes raft-lm from document retrieval row"
+    artifacts:
+      - "README.md"
+      - "docs/benchmarks/BENCHMARK.md"
+      - "Projects/Meridian/Architecture.md"
+      - "Projects/RADA/Architecture.md"
+
+  - id: S0-03
+    title: "Seed risk-training framework sprint plan (engine labels → optimizers → risk-aware loss benchmark)"
+    status: completed
+    priority: p0
+    area: training
+    milestone: "S0 - Identity pivot"
+    due: 2026-06-06
+    labels:
+      - "sprint/S0"
+      - "area/training"
+      - "type/planning"
+      - "priority/p0"
+      - "urgent"
+    depends_on:
+      - S0-01
+    acceptance:
+      - "docs/benchmarks/BENCHMARK.md replaced or supplemented by risk-training benchmark contract (task, engine labels, baselines, seeds)"
+      - "S7 YAML seeds drafted for vertical slice train → eval → compare with ≥2 optimizers/losses and engine-computed labels"
+      - "Roadmap Now section lists risk-training S7 as active horizon; RAG dashboard/Docker explicitly deferred"
+      - "Integration note documents RADA RaftAuditorAdapter and TailWarp as consumers of engine outputs, not RAG paths"
+    artifacts:
+      - "docs/benchmarks/BENCHMARK.md"
+      - "Projects/raft-lm/issues/sprint-s7.yaml"
+      - "Projects/raft-lm/Roadmap.md"

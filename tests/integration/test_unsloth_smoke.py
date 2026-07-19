@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from src.training.backends.factory import SUPPORTED_BACKENDS, get_training_backend
+from src.trainers.factory import SUPPORTED_BACKENDS, get_training_backend
 from src.utils.config import load_config, resolve_config, validate_config
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

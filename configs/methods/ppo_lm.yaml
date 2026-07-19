@@ -1,0 +1,35 @@
+method: ppo_lm
+experiment_name: ppo_lm_smoke
+description: On-policy LM RL with mock rollouts
+model:
+  type: hf_lora
+  model_id: stub
+  lora:
+    enabled: true
+data:
+  dataset_type: PreferenceJsonl
+  prompts:
+    - Assess tail risk for a long call spread.
+algorithm:
+  clip_eps: 0.2
+  kl_coef: 0.05
+training:
+  backend: ppo_lm
+  num_epochs: 1
+  seed: 42
+  device: cpu
+  optimizer:
+    type: Adam
+    lr: 0.0002
+    weight_decay: 0.0
+  loss:
+    type: CrossEntropyLoss
+reward:
+  name: composite
+  components:
+    - name: format_compliance
+      weight: 1.0
+    - name: kl_penalty
+      weight: 0.05
+output:
+  results_dir: experiments/results

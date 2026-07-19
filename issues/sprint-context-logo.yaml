@@ -1,0 +1,51 @@
+# Context management and logo placeholder (2026-06-12).
+---
+version: 2
+archived: true
+sprint: CTX-LOGO
+sprint_start: 2026-06-12
+sprint_target_end: 2026-06-12
+repo: artaasd95/raft-lm
+issues:
+  - id: CL-01
+    title: "Token-budget context manager and RAG MAX_CONTEXT_TOKENS packing"
+    status: completed
+    priority: p1
+    area: backend
+    milestone: "Context management"
+    due: 2026-06-12
+    labels:
+      - "sprint/CTX-LOGO"
+      - "area/llm"
+      - "type/feature"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "src/llm_integration/context.py with model registry"
+      - "RAG _build_context uses token budget with MAX_CONTEXT_TOKENS env"
+      - "Backward-compatible fallback from MAX_CONTEXT_CHARS"
+      - "Unit tests in tests/unit/test_context_management.py pass"
+    artifacts:
+      - "src/llm_integration/context.py"
+      - "src/rag/pipelines.py"
+      - "docs/context-management.md"
+
+  - id: CL-02
+    title: "Placeholder logo PNG for README and Sphinx"
+    status: completed
+    priority: p2
+    area: docs
+    milestone: "Branding"
+    due: 2026-06-12
+    labels:
+      - "sprint/CTX-LOGO"
+      - "area/docs"
+      - "type/chore"
+      - "priority/p2"
+    depends_on: []
+    acceptance:
+      - "assets/logo.png is a real 512x512 PNG placeholder"
+      - "docs/conf.py sets html_logo"
+    artifacts:
+      - "assets/logo.png"
+      - "docs/conf.py"

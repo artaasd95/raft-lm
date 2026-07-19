@@ -1,6 +1,5 @@
 """Tests for volatility surface helpers."""
 
-import math
 
 import numpy as np
 import pytest

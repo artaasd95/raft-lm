@@ -69,7 +69,7 @@ class WandbExperimentLogger(BaseExperimentLogger):
 
     def __init__(self, project: str, run_name: Optional[str] = None) -> None:
         try:
-            import wandb  # type: ignore
+            import wandb
         except ImportError as exc:
             raise ImportError("WandbExperimentLogger requires `pip install wandb`") from exc
 
@@ -97,7 +97,7 @@ class CometExperimentLogger(BaseExperimentLogger):
 
     def __init__(self, project_name: str, workspace: Optional[str] = None) -> None:
         try:
-            from comet_ml import Experiment  # type: ignore
+            from comet_ml import Experiment
         except ImportError as exc:
             raise ImportError(
                 "CometExperimentLogger requires `pip install comet_ml`"

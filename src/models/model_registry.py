@@ -113,7 +113,7 @@ class ModelRegistry:
             return str(local)
         entry = self.get(model_id)
         try:
-            from huggingface_hub import snapshot_download  # type: ignore
+            from huggingface_hub import snapshot_download
         except ImportError as exc:
             raise ImportError(
                 f"Model {model_id!r} not found locally and huggingface_hub is not installed. "

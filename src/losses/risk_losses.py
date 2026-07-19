@@ -7,9 +7,10 @@ match evaluation CVaR (see docs/RISK-METHODS-REQUIREMENTS.md).
 
 from __future__ import annotations
 
+from typing import Optional
+
 import torch
 import torch.nn as nn
-from typing import Optional
 
 from ..metrics.risk_metrics import batch_cvar_from_losses
 

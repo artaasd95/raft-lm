@@ -1,45 +1,115 @@
+# S13 — Unsloth LoRA/PEFT acceleration, portfolio Qwen model lineup, pre/post-train comparison.
+# Depends on S8 unified loaders and SP-TRAIN pipeline wiring (SP-WIRE).
+---
+version: 2
+archived: true
 sprint: S13
-title: Unsloth LoRA/PEFT acceleration, portfolio Qwen model lineup, pre/post-train comparison
-window: 2026-06-07 → 2026-09-30
-
+sprint_start: 2026-06-07
+sprint_target_end: 2026-09-30
+repo: artaasd95/raft-lm
 issues:
   - id: S13-01
-    title: Introduce Unsloth for LoRA/PEFT training
+    title: "Introduce Unsloth for LoRA/PEFT training — faster risk-aware fine-tuning path"
+    status: completed
     priority: p0
-    status: done
+    area: training
+    milestone: "S13 - Unsloth & Qwen lineup"
+    due: 2026-07-15
+    labels:
+      - "sprint/S13"
+      - "area/training"
+      - "type/feature"
+      - "priority/p0"
+    depends_on:
+      - S8-03
+      - SP-WIRE-04
+    note: "Important: replace or augment raw transformers+PEFT path with Unsloth for 2–5× training speed and lower VRAM on LoRA runs."
+    acceptance:
+      - "unsloth listed in pyproject optional extra (e.g. [unsloth] or [hf-unsloth]); install docs in docs/training.md"
+      - "src/training/backends/unsloth_trainer.py (or equivalent) wraps Unsloth FastLanguageModel + get_peft_model for LoRA/QLoRA"
+      - "scripts/train.py accepts training.backend=unsloth in config; default remains existing path until operator opts in"
+      - "Smoke test: 1-epoch LoRA mini-run on CPU or documented GPU gate produces adapter artifacts compatible with UnifiedModelLoader"
+      - "Document memory/throughput delta vs vanilla PEFT on at least one Qwen base from S13-02"
     artifacts:
-      - src/training/backends/unsloth_trainer.py
-      - configs/training/unsloth_lora_example.yaml
-      - docs/training.md
-      - tests/integration/test_unsloth_smoke.py
-      - pyproject.toml
+      - "src/training/backends/unsloth_trainer.py"
+      - "configs/training/unsloth_lora_example.yaml"
+      - "docs/training.md"
+      - "tests/integration/test_unsloth_smoke.py"
 
   - id: S13-02
-    title: Lock portfolio Qwen model registry
+    title: "Lock portfolio Qwen model registry — main and major models for tests"
+    status: completed
     priority: p1
-    status: done
+    area: training
+    milestone: "S13 - Unsloth & Qwen lineup"
+    due: 2026-07-22
+    labels:
+      - "sprint/S13"
+      - "area/training"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S13-01
+    acceptance:
+      - "configs/models/qwen_portfolio.yaml (or experiments/configs/models/) lists canonical test bases with id, hub path, size tier, instruct flag"
+      - "Registry includes: Qwen/Qwen3-4B-Instruct-2507, Qwen/Qwen3-4B, Qwen/Qwen3-0.6B, Qwen/Qwen2.5-Coder-3B, Qwen/Qwen2.5-0.5B, Qwen/Qwen2.5-3B, Qwen/Qwen2.5-7B"
+      - "Default smoke tier documented (e.g. Qwen2.5-0.5B); mid tier for benchmark (e.g. Qwen2.5-3B); large tier gated behind resource flag"
+      - "scripts/download_models.py or notebook caches all registry entries idempotently"
+      - "train/eval configs reference registry by model_id not raw hub string"
     artifacts:
-      - configs/models/qwen_portfolio.yaml
-      - src/models/model_registry.py
-      - scripts/download_models.py
-      - docs/models.md
+      - "configs/models/qwen_portfolio.yaml"
+      - "src/models/model_registry.py"
+      - "scripts/download_models.py"
+      - "docs/models.md"
 
   - id: S13-03
-    title: Pre-train vs post-train comparison harness
+    title: "Pre-train vs post-train comparison harness — baseline methods before and after LoRA"
+    status: completed
     priority: p1
-    status: done
+    area: eval
+    milestone: "S13 - Unsloth & Qwen lineup"
+    due: 2026-08-15
+    labels:
+      - "sprint/S13"
+      - "area/eval"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S13-02
+      - SP-TRAIN-02
+    acceptance:
+      - "scripts/compare_pre_post_train.py runs eval on base model (pre-train) then on LoRA adapter (post-train) with identical eval config and seeds"
+      - "Report schema: method_name, model_id, phase (pre|post), task metrics, risk metrics (CVaR on errors, tail error rate), delta columns"
+      - "Supports ≥ 1 registry model × ≥ 2 loss/method variants (e.g. CE vs cvar_penalized) with before/after table for BENCHMARK.md"
+      - "Integration test on toy data: pre scores recorded, mini LoRA train, post scores recorded, delta non-empty"
+      - "Documented workflow: evaluate base → train with Unsloth → evaluate adapter → emit comparison Markdown"
     artifacts:
-      - scripts/compare_pre_post_train.py
-      - src/evaluation/pre_post_compare.py
-      - docs/benchmarks/pre-post-comparison.md
-      - tests/integration/test_pre_post_compare.py
+      - "scripts/compare_pre_post_train.py"
+      - "src/evaluation/pre_post_compare.py"
+      - "docs/benchmarks/pre-post-comparison.md"
+      - "tests/integration/test_pre_post_compare.py"
 
   - id: S13-04
-    title: Teacher distillation dataset
+    title: "Teacher distillation dataset — Colab teacher model → risk-aware training corpus (if required)"
+    status: completed
     priority: p1
-    status: done
-    note: Required for LLM SFT; risk_training_engine_v1 tabular corpus insufficient
+    area: training
+    milestone: "S13 - Unsloth & Qwen lineup"
+    due: 2026-08-22
+    labels:
+      - "sprint/S13"
+      - "area/training"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S13-02
+    note: "Gate first: if S7 risk-training benchmark v1 corpora suffice without teacher distillation, record N/A and pass. If required, use stronger teacher in Colab to distill labeled completions, store under data/distilled/, wire into train.py / UnifiedModelLoader path."
+    acceptance:
+      - "docs/training.md § Distillation states yes/no with rationale tied to risk_training.yaml and engine-label pipeline"
+      - "If required: notebooks/distill_teacher_colab.ipynb produces JSONL with risk labels / engine annotations from teacher model on benchmark prompts"
+      - "If required: data/distilled/<name>/manifest.json; configs reference distilled corpus via training.data_source=distilled"
+      - "If not required: pass decision in docs/training.md only"
     artifacts:
-      - notebooks/distill_teacher_colab.ipynb
-      - data/distilled/README.md
-      - docs/training.md
+      - "notebooks/distill_teacher_colab.ipynb"
+      - "docs/training.md"
+      - "data/distilled/README.md"

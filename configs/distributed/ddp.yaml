@@ -1,0 +1,3 @@
+strategy: ddp
+world_size: 2
+inner_backend: mlp

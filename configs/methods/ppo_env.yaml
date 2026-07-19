@@ -1,0 +1,23 @@
+method: ppo_env
+experiment_name: ppo_risk_allocation_smoke
+description: PPO on RiskAllocationEnv (smoke)
+algorithm:
+  clip_eps: 0.2
+  gae_lambda: 0.95
+  gamma: 0.99
+training:
+  backend: ppo_env
+  num_epochs: 8
+  seed: 42
+  device: cpu
+  optimizer:
+    type: Adam
+    lr: 0.001
+    weight_decay: 0.0
+  loss:
+    type: CrossEntropyLoss
+evaluation:
+  metrics:
+    - mean_reward
+output:
+  results_dir: experiments/results

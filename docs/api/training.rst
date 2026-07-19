@@ -1,17 +1,14 @@
 Training
 ========
 
-.. automodule:: src.training
+.. automodule:: src.training.loss_factory
    :members:
 
-.. automodule:: src.training.backends.factory
+.. automodule:: src.training.callbacks
    :members:
 
-.. automodule:: src.training.backends.unsloth_trainer
+.. automodule:: src.training.callbacks.risk_callbacks
    :members:
 
 .. automodule:: src.training.policies.registry
-   :members:
-
-.. automodule:: src.training.loss_factory
    :members:

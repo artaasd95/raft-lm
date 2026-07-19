@@ -7,6 +7,10 @@ API Reference
    losses
    metrics
    training
+   rewards
+   models
    tools
-   data_platform
-   unlabeled_guidance
+   data_pipeline
+   search
+   trainers
+   algorithms

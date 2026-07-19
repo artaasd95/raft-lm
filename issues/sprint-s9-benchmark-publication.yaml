@@ -1,0 +1,125 @@
+---
+version: 2
+sprint: S9
+name: Benchmark Publication
+sprint_start: 2026-07-17
+sprint_target_end: 2026-07-31
+repo: artaasd95/raft-lm
+archived: false
+issues:
+  - id: S9-01
+    title: "Run lightest multi-seed smoke (seeds 42, 123, 456)"
+    status: completed
+    priority: p0
+    area: research
+    milestone: "S9 - Benchmark Publication"
+    due: 2026-07-20
+    labels: ["sprint/S9", "phase/execution", "type/experiment", "priority/p0"]
+    depends_on: []
+    note: "Supersedes EXEC-01. Uses locked risk_training config on CPU/toy data."
+    acceptance:
+      - "Three seed runs complete with artifacts in experiments/results/"
+      - "Environment notes captured in logs/exec-baseline.md"
+    artifacts:
+      - "experiments/lightest/"
+      - "logs/exec-baseline.md"
+
+  - id: S9-02
+    title: "Execution report + QA verification"
+    status: completed
+    priority: p0
+    area: analysis
+    milestone: "S9 - Benchmark Publication"
+    due: 2026-07-22
+    labels: ["sprint/S9", "phase/execution", "type/analysis", "priority/p0"]
+    depends_on: [S9-01]
+    note: "Supersedes EXEC-02 and EXEC-03."
+    acceptance:
+      - "reports/execution-summary.md summarizes smoke outcomes"
+      - "qa/checklist.md and qa/verification.md complete"
+    artifacts:
+      - "reports/execution-summary.md"
+      - "qa/checklist.md"
+      - "qa/verification.md"
+
+  - id: S9-03
+    title: "Full SP-TRAIN runs CE vs CVaR vs tail-aware x 3 seeds"
+    status: queued
+    priority: p0
+    area: research
+    milestone: "S9 - Benchmark Publication"
+    due: 2026-07-27
+    labels: ["sprint/S9", "type/experiment", "priority/p0"]
+    depends_on: [S9-01]
+    acceptance:
+      - "Nine runs (3 losses x 3 seeds) on locked protocol"
+      - "compare_experiments.py produces summary table"
+    artifacts:
+      - "experiments/results/"
+      - "reports/benchmark-comparison.md"
+
+  - id: S9-04
+    title: "Fill benchmark results table in README and BENCHMARK.md"
+    status: queued
+    priority: p0
+    area: docs
+    milestone: "S9 - Benchmark Publication"
+    due: 2026-07-29
+    labels: ["sprint/S9", "area/docs", "type/docs", "priority/p0"]
+    depends_on: [S9-03]
+    acceptance:
+      - "README benchmark table has mean +/- std (not TBD)"
+      - "docs/benchmarks/BENCHMARK.md results section updated"
+    artifacts:
+      - "README.md"
+      - "docs/benchmarks/BENCHMARK.md"
+
+  - id: S9-05
+    title: "End-to-end engine-label dataset train (not synthetic-only)"
+    status: queued
+    priority: p1
+    area: data
+    milestone: "S9 - Benchmark Publication"
+    due: 2026-07-30
+    labels: ["sprint/S9", "area/data", "type/feature", "priority/p1"]
+    depends_on: []
+    acceptance:
+      - "build_dataset.py produces processed splits from engine labels"
+      - "train.py --data-config runs on processed splits"
+    artifacts:
+      - "data/processed/"
+      - "experiments/results/engine_label_run/"
+
+  - id: S9-06
+    title: "Refresh stale planning docs"
+    status: queued
+    priority: p2
+    area: docs
+    milestone: "S9 - Benchmark Publication"
+    due: 2026-07-31
+    labels: ["sprint/S9", "area/docs", "type/docs", "priority/p2"]
+    depends_on: [S9-04]
+    acceptance:
+      - "Roadmap.md Now section reflects S9"
+      - "IDEA-AND-ACTION-PLAN.md Phase 0 marked complete"
+      - "DETAILED-IMPROVEMENT-ROADMAP.md train.py status corrected"
+    artifacts:
+      - "Roadmap.md"
+      - "docs/IDEA-AND-ACTION-PLAN.md"
+      - "docs/DETAILED-IMPROVEMENT-ROADMAP.md"
+
+  - id: S9-07
+    title: "Migrate issues/ to vault v2 format + full sprint mirror"
+    status: completed
+    priority: p0
+    area: docs
+    milestone: "S9 - Benchmark Publication"
+    due: 2026-07-17
+    labels: ["sprint/S9", "area/docs", "type/chore", "priority/p0"]
+    depends_on: []
+    acceptance:
+      - "issues/ mirrors projects-management vault sprint seeds"
+      - "issues/README.md indexes all sprints"
+    artifacts:
+      - "issues/README.md"
+      - "issues/sprint-s9-benchmark-publication.yaml"

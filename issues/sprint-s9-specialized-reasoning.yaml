@@ -1,0 +1,281 @@
+# S9 — Specialized Reasoning Training: Probabilistic, quantitative, and tool-based reasoning.
+# Trains models to reason *about* tools, uncertainty, and risk metrics — separate from base risk training.
+# Depends on S7 data platform, S8 training platform, S13 Unsloth.
+# Feeds into RADA S15 agentic reasoning integration.
+# STATUS: COMPLETED 2026-06-13 (commit 2d998bd) — All specialized trainers, datasets, losses implemented and tested.
+---
+version: 2
+archived: true
+sprint: S9
+sprint_start: 2026-07-08
+sprint_target_end: 2026-08-26
+sprint_completed: 2026-06-13
+repo: artaasd95/raft-lm
+issues:
+  - id: S9-01
+    title: "Design probabilistic reasoning task and training signal"
+    status: completed
+    priority: p0
+    area: training
+    milestone: "S9 - Specialized Reasoning Training"
+    due: 2026-07-15
+    note: "COMPLETED 2026-06-13 (commit 2d998bd). Probabilistic dataset and loss implemented; training configs ready."
+      - "sprint/S9"
+      - "area/training"
+      - "type/design"
+      - "priority/p0"
+    depends_on:
+      - S8-03
+      - S7-DP-07
+    note: "Separate from base risk-training benchmark (S7). Trains model to output confidence bounds and uncertainty estimates alongside predictions."
+    acceptance:
+      - "docs/specialized-reasoning/PROBABILISTIC-TASK.md defines task: input context → output {prediction, confidence_interval, uncertainty_type}"
+      - "Training signal: compare predicted vs actual outcome, label with {correct, confident, calibrated, over_confident, under_confident}"
+      - "Loss terms designed: CE + calibration loss (e.g. ECE or NLL penalty for under/over-confidence)"
+      - "Benchmark config ready in experiments/configs/probabilistic/"
+    artifacts:
+      - "docs/specialized-reasoning/PROBABILISTIC-TASK.md"
+      - "src/losses/probabilistic_losses.py"
+      - "experiments/configs/probabilistic/config_base.yaml"
+
+  - id: S9-02
+    title: "Design quantitative reasoning task — model reasons about numerical relationships and constraints"
+    status: completed
+    priority: p0
+    area: training
+    milestone: "S9 - Specialized Reasoning Training"
+    due: 2026-07-22
+    note: "COMPLETED 2026-06-13 (commit 2d998bd). Quantitative dataset and loss implemented; constraint schema ready."
+      - "sprint/S9"
+      - "area/training"
+      - "type/design"
+      - "priority/p0"
+    depends_on:
+      - S8-03
+      - S7-DP-02
+    note: "Input: numerical features + constraints (CVaR ≤ 2%, size ≤ 100k). Output: reasoning steps + action that respects constraints."
+    acceptance:
+      - "docs/specialized-reasoning/QUANTITATIVE-TASK.md defines task, reasoning format, and constraint schema"
+      - "EngineLabelRow extends to include {constraint_set, feasible_actions, constraint_violations}"
+      - "Training signal: label reasoning steps {correct_constraint_check, correct_action_choice, invalid_output}"
+      - "Loss: CE on action + penalty for constraint violations + reward for valid multi-step reasoning"
+    artifacts:
+      - "docs/specialized-reasoning/QUANTITATIVE-TASK.md"
+      - "src/losses/quantitative_losses.py"
+      - "experiments/configs/quantitative/config_base.yaml"
+      - "src/data/quantitative_dataset.py"
+
+  - id: S9-03
+    title: "Design tool-aware reasoning task — model learns when and how to call tools"
+    status: completed
+    priority: p0
+    area: training
+    milestone: "S9 - Specialized Reasoning Training"
+    due: 2026-07-29
+    note: "COMPLETED 2026-06-13 (commit 2d998bd). Tool-aware dataset and loss implemented; coordinates with RADA S15."
+      - "sprint/S9"
+      - "area/training"
+      - "type/design"
+      - "priority/p0"
+    depends_on:
+      - S8-03
+      - S7-DP-02
+      - S15-01
+    note: "Coordinates with RADA S15 tool schema. Trains model to select tools, pass correct inputs, and use outputs."
+    acceptance:
+      - "docs/specialized-reasoning/TOOL-AWARE-TASK.md defines ToolCallExample record: {context, available_tools[], tool_calls_made[], outcomes[], label}"
+      - "Training signal: label each tool call {correct, incorrect, unnecessary, missing, wrong_input}"
+      - "Loss terms: tool selection loss (penalize wrong tool choice), tool usage loss (reward if output is used), input validity loss"
+      - "Benchmark ready in experiments/configs/tool_aware/"
+    artifacts:
+      - "docs/specialized-reasoning/TOOL-AWARE-TASK.md"
+      - "src/losses/tool_aware_losses.py"
+      - "experiments/configs/tool_aware/config_base.yaml"
+      - "src/data/tool_call_dataset.py"
+
+  - id: S9-04
+    title: "Implement specialized dataset loaders and augmentation for probabilistic/quantitative/tool-based tasks"
+    status: completed
+    priority: p1
+    area: data
+    milestone: "S9 - Specialized Reasoning Training"
+    due: 2026-08-05
+    note: "COMPLETED 2026-06-13 (commit 2d998bd). ProbabilisticDataset, QuantitativeDataset, ToolAwareDataset classes implemented."
+      - "sprint/S9"
+      - "area/data"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S9-01
+      - S9-02
+      - S9-03
+      - S7-DP-03
+    acceptance:
+      - "src/data/specialized_datasets.py implements ProbabilisticReasoningDataset, QuantitativeReasoningDataset, ToolAwareReasoningDataset"
+      - "Each loader handles record cards from S7 data platform (EngineLabelRow, ToolCallExample, etc.)"
+      - "Data augmentation: synthetic scenarios for probabilistic calibration, constraint variations for quantitative, tool combination permutations for tool-aware"
+      - "Integration test: load, augment, batch on toy fixture; verify label distributions"
+    artifacts:
+      - "src/data/specialized_datasets.py"
+      - "tests/integration/test_specialized_datasets.py"
+
+  - id: S9-05
+    title: "Implement probabilistic training pass with calibration loss and confidence scoring"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "S9 - Specialized Reasoning Training"
+    due: 2026-08-12
+    note: "COMPLETED 2026-06-13 (commit 2d998bd). ProbabilisticReasoningTrainer with CalibrationLoss implemented and tested."
+      - "sprint/S9"
+      - "area/training"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S9-01
+      - S9-04
+    note: "Extends src/training/base_trainer.py; does not replace it. Uses BaseTrainer's hook system."
+    acceptance:
+      - "scripts/train.py --task probabilistic loads ProbabilisticReasoningDataset and applies probabilistic loss"
+      - "Output: model weights, confidence calibration curve (reliability diagram), ECE/MCE metrics"
+      - "Artifact bundle includes: resolved_config.json, metrics.json (with calibration metrics), checkpoint, calibration_curve.png"
+      - "Multi-seed benchmark: ≥3 seeds, mean ± std on test ECE and main task accuracy"
+    artifacts:
+      - "src/training/probabilistic_trainer.py"
+      - "scripts/train.py (updated)"
+      - "tests/integration/test_probabilistic_training.py"
+
+  - id: S9-06
+    title: "Implement quantitative reasoning training with constraint validation and multi-step penalties"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "S9 - Specialized Reasoning Training"
+    due: 2026-08-19
+    note: "COMPLETED 2026-06-13 (commit 2d998bd). QuantitativeReasoningTrainer with ConstraintViolationLoss implemented and tested."
+      - "sprint/S9"
+      - "area/training"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S9-02
+      - S9-04
+    acceptance:
+      - "scripts/train.py --task quantitative loads QuantitativeReasoningDataset with constraint set"
+      - "During training: each prediction checked against constraints; violations incur penalty"
+      - "Loss: CE (main task) + constraint_violation_penalty + step_accuracy_reward for correct reasoning steps"
+      - "Metrics: task accuracy, constraint satisfaction rate, reasoning step F1"
+      - "Multi-seed benchmark: ≥3 seeds, constraint satisfaction rate, step F1 vs baseline"
+    artifacts:
+      - "src/training/quantitative_trainer.py"
+      - "scripts/train.py (updated)"
+      - "tests/integration/test_quantitative_training.py"
+
+  - id: S9-07
+    title: "Implement tool-aware training with tool selection and usage losses"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "S9 - Specialized Reasoning Training"
+    due: 2026-08-26
+    note: "COMPLETED 2026-06-13 (commit 2d998bd). ToolAwareReasoningTrainer with ToolSelectionLoss implemented and tested."
+      - "sprint/S9"
+      - "area/training"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S9-03
+      - S9-04
+      - S15-01
+    note: "Aligns with RADA S15 tool schema. Model learns to call correct tools and use outputs correctly."
+    acceptance:
+      - "scripts/train.py --task tool_aware loads ToolAwareReasoningDataset and applies tool-aware losses"
+      - "Tool selection loss: penalize if model doesn't call available high-value tool or calls wrong tool"
+      - "Tool usage loss: reward if model output correlates with tool output; penalize if ignored"
+      - "Output metrics: tool selection accuracy, tool usage correctness, end-task accuracy"
+      - "Ablation study: baseline (no tools) vs tool selection loss enabled vs full tool-aware training"
+      - "Multi-seed benchmark: ≥3 seeds, tool accuracy, task accuracy, tool-aware delta vs baseline"
+    artifacts:
+      - "src/training/tool_aware_trainer.py"
+      - "src/losses/tool_aware_losses.py (updated from S9-03)"
+      - "scripts/train.py (updated)"
+      - "tests/integration/test_tool_aware_training.py"
+
+  - id: S9-08
+    title: "Create unified benchmark doc and comparison script for specialized reasoning tasks"
+    status: completed
+    priority: p1
+    area: docs
+    milestone: "S9 - Specialized Reasoning Training"
+    due: 2026-08-26
+    note: "COMPLETED 2026-06-13 (commit 2d998bd). Specialized reasoning benchmark documented and examples created."
+      - "sprint/S9"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p1"
+    depends_on:
+      - S9-05
+      - S9-06
+      - S9-07
+    acceptance:
+      - "docs/benchmarks/SPECIALIZED-REASONING.md documents all three tasks (probabilistic, quantitative, tool-aware)"
+      - "For each task: protocol, dataset, metrics, baseline results, multi-seed table with mean ± std"
+      - "scripts/compare_specialized_experiments.py aggregates results from all three tasks into unified report"
+      - "README links to new benchmark; notes distinction from base S7 risk-training benchmark"
+      - "Example: run all three tasks in sequence with `scripts/run_specialized_benchmark.py`"
+    artifacts:
+      - "docs/benchmarks/SPECIALIZED-REASONING.md"
+      - "scripts/compare_specialized_experiments.py"
+      - "scripts/run_specialized_benchmark.py"
+      - "examples/specialized_reasoning_demo.py"
+
+  - id: S9-09
+    title: "Add feedback loop for specialized reasoning — outcomes to reweighting and retraining"
+    status: completed
+    priority: p2
+    area: training
+    milestone: "S9 - Specialized Reasoning Training"
+    due: 2026-08-26
+    note: "COMPLETED 2026-06-13 (commit 2d998bd). Framework ready for feedback loop integration with RADA outcomes."
+      - "sprint/S9"
+      - "area/training"
+      - "type/feature"
+      - "priority/p2"
+    depends_on:
+      - S9-05
+      - S9-06
+      - S9-07
+      - S8-05
+    note: "Coordinates with RADA feedback export (S15-05). Ingests RADA ActionDB outcomes for specialized tasks."
+    acceptance:
+      - "apply_feedback.py --task probabilistic / quantitative / tool_aware ingests FeedbackRecord from RADA"
+      - "Labels: {task, outcome_type (correct/incorrect), reasoning_quality (good/poor), tool_usage (correct/incorrect)}"
+      - "Reweighting: samples from correct predictions ↑, from incorrect ↓; specializes per task type"
+      - "Retrain: scripts/train.py --task probabilistic --feedback-dataset exports/feedback/ reruns with updated weights"
+      - "Benchmark new row: checkpoint outperforms previous baseline on test set for at least one metric"
+    artifacts:
+      - "src/training/apply_specialized_feedback.py"
+      - "tests/integration/test_specialized_feedback.py"
+
+  - id: S9-10
+    title: "Document specialized reasoning training guide and RADA integration notes"
+    status: completed
+    priority: p2
+    area: docs
+    milestone: "S9 - Specialized Reasoning Training"
+    due: 2026-08-26
+    note: "COMPLETED 2026-06-13 (commit 2d998bd). Integration guide for RADA S15 documented."
+      - "sprint/S9"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p2"
+    depends_on:
+      - S9-08
+    acceptance:
+      - "docs/SPECIALIZED-REASONING-GUIDE.md: when to use each task type, how they compose, when to use with base risk training"
+      - "docs/RADA-INTEGRATION.md: how RADA S15 uses models from S9; feedback loop contract; example end-to-end flow"
+      - "Examples/ contains recipes for each task; links to S7 base risk training docs for comparison"
+    artifacts:
+      - "docs/SPECIALIZED-REASONING-GUIDE.md"
+      - "docs/RADA-INTEGRATION.md"
+      - "examples/specialized_reasoning_with_rada.py"

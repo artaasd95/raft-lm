@@ -7,7 +7,7 @@ from typing import Any, Dict
 import torch
 from torch.utils.data import DataLoader
 
-from src.training.base_trainer import BaseTrainer
+from src.trainers.base_trainer import BaseTrainer
 
 
 class _SpecializedTrainer(BaseTrainer):

@@ -1,0 +1,144 @@
+# S5 — RAFT-LM v1 comparison path on the same benchmark contract (post Ragas-scored Standard RAG).
+# Completed 2026-05-30. GitHub issues #25–#30 close on next vault sync.
+# Active seeds: sprint-s6.yaml (S6-*).
+# Human narrative: ../Action-Queue.md, ../Roadmap.md, ../Sprint-Plan-30d.md
+---
+version: 2
+archived: true
+sprint: S5
+sprint_start: 2026-05-20
+sprint_target_end: 2026-06-25
+repo: artaasd95/raft-lm
+issues:
+  - id: S5-01
+    title: "Implement RAFT-LM v1 distractor-aware retrieval and evidence policy module"
+    status: completed
+    priority: p1
+    area: ai
+    milestone: "S5 - RAFT-LM v1 comparison path"
+    due: 2026-05-28
+    labels:
+      - "sprint/S5"
+      - "area/rag"
+      - "type/feature"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "Module implements S2-03 scope: distractor-aware retrieval, evidence policy, or RAFT-style data builder — no broad fine-tuning"
+      - "Does not alter src/metrics, src/losses, src/training, or experiments risk backbone"
+      - "Unit tests cover policy/retrieval selection with fixtures; mock adapters only in CI"
+    artifacts:
+      - "src/rag/raft_policy.py"
+      - "docs/benchmarks/BENCHMARK.md"
+
+  - id: S5-02
+    title: "Runnable RAFT-LM pipeline branch with equal-budget controls and citations"
+    status: completed
+    priority: p1
+    area: ai
+    milestone: "S5 - RAFT-LM v1 comparison path"
+    due: 2026-06-01
+    labels:
+      - "sprint/S5"
+      - "area/rag"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S5-01
+    acceptance:
+      - "RAFT-LM path shares corpus, prompt template, model/provider, retrieval budget, and run count with Standard RAG per S2 contract"
+      - "Pipeline emits citations and retrieval metadata compatible with benchmark_schema"
+      - "Config or env selects standard vs raft path without breaking benchmark runner contracts"
+    artifacts:
+      - "src/rag/pipelines.py"
+
+  - id: S5-03
+    title: "Extend benchmark runner for RAFT-LM path alongside Standard RAG"
+    status: completed
+    priority: p1
+    area: backend
+    milestone: "S5 - RAFT-LM v1 comparison path"
+    due: 2026-06-05
+    labels:
+      - "sprint/S5"
+      - "area/benchmark"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S5-02
+    acceptance:
+      - "CLI or make target runs RAFT-LM path over the same benchmark question set as Standard RAG"
+      - "Run metadata records path=raft-lm, policy version, and equal-budget fields"
+      - "Unit tests exercise runner with mock/faker providers only; no paid API keys in CI"
+    artifacts:
+      - "scripts/run_benchmark.py"
+      - "Makefile"
+
+  - id: S5-04
+    title: "Persist RAFT-LM outputs via report_writer and benchmark_schema"
+    status: completed
+    priority: p2
+    area: backend
+    milestone: "S5 - RAFT-LM v1 comparison path"
+    due: 2026-06-08
+    labels:
+      - "sprint/S5"
+      - "area/eval"
+      - "type/feature"
+      - "priority/p2"
+    depends_on:
+      - S5-03
+    acceptance:
+      - "Each RAFT-LM run writes JSON, CSV, and markdown summary under docs/benchmarks/results/<run_id>/"
+      - "Schema fields include path label, citations, retrieval metadata, Ragas slots, and severity buckets"
+      - "Bundled sample RAFT-LM artifact exists for dashboard and comparison tests"
+    artifacts:
+      - "src/evals/report_writer.py"
+      - "src/evals/benchmark_schema.py"
+      - "docs/benchmarks/results/"
+
+  - id: S5-05
+    title: "Score RAFT-LM artifacts with Ragas and hallucination severity (mock mode)"
+    status: completed
+    priority: p1
+    area: scientific-math
+    milestone: "S5 - RAFT-LM v1 comparison path"
+    due: 2026-06-12
+    labels:
+      - "sprint/S5"
+      - "area/eval"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S5-04
+    acceptance:
+      - "ragas_runner backfills Context Precision and Faithfulness on RAFT-LM saved artifacts"
+      - "hallucination_risk severity written alongside Ragas fields in report JSON/CSV"
+      - "Unit tests only for scoring path; no headline comparison claims in README until verified non-mock run (deferred sprint)"
+    artifacts:
+      - "src/evals/ragas_runner.py"
+      - "src/evals/hallucination_risk.py"
+      - "scripts/run_ragas_eval.py"
+
+  - id: S5-06
+    title: "Generate side-by-side Standard RAG vs RAFT-LM comparison artifact"
+    status: completed
+    priority: p2
+    area: backend
+    milestone: "S5 - RAFT-LM v1 comparison path"
+    due: 2026-06-18
+    labels:
+      - "sprint/S5"
+      - "area/benchmark"
+      - "type/feature"
+      - "priority/p2"
+    depends_on:
+      - S5-05
+    acceptance:
+      - "Comparison module reads paired run_ids and emits chart-ready delta table (Ragas + severity + citations)"
+      - "Bundled sample comparison JSON/CSV checked into docs/benchmarks/results/ for dashboard smoke"
+      - "Unit tests validate schema and deltas with fixtures; integration test uses mock providers only"
+    artifacts:
+      - "src/evals/compare_runs.py"
+      - "tests/unit/test_compare_runs.py"
+      - "tests/integration/test_raft_lm_benchmark_smoke.py"

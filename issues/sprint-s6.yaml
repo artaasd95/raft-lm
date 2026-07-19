@@ -1,0 +1,117 @@
+# S6 — Dashboard, Docker/Compose demo boundary, and manual CI smoke (post comparison artifacts).
+# Active 2026-05-30 after S5 exit. Benchmark/live workflows: workflow_dispatch only, not on push.
+# Set `status: completed` to close seeded GitHub issues during sync.
+# Human narrative: ../Action-Queue.md, ../Roadmap.md, ../Sprint-Plan-30d.md
+---
+version: 2
+archived: true
+sprint: S6
+sprint_start: 2026-06-20
+sprint_target_end: 2026-07-18
+repo: artaasd95/raft-lm
+issues:
+  - id: S6-01
+    title: "Streamlit dashboard loads saved benchmark and comparison artifacts"
+    priority: p1
+    area: frontend
+    milestone: "S6 - Dashboard and demo boundary"
+    due: 2026-06-28
+    labels:
+      - "sprint/S6"
+      - "area/demo"
+      - "type/feature"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "Dashboard discovers runs under docs/benchmarks/results/<run_id>/ and comparison bundles"
+      - "Panels show Standard RAG vs RAFT-LM, citations, Ragas scores, and severity buckets per S2 schema"
+      - "Every displayed number traces to a saved artifact; no hard-coded headline metrics"
+    artifacts:
+      - "dashboard/app.py"
+      - "docs/benchmarks/results/"
+
+  - id: S6-02
+    title: "Makefile targets for demo and benchmark with documented mock default"
+    priority: p2
+    area: tooling
+    milestone: "S6 - Dashboard and demo boundary"
+    due: 2026-07-02
+    labels:
+      - "sprint/S6"
+      - "area/tooling"
+      - "type/task"
+      - "priority/p2"
+    depends_on:
+      - S6-01
+    acceptance:
+      - "make demo launches dashboard against bundled sample artifacts"
+      - "make benchmark documents mock vs live flags; mock remains default"
+      - "README states demo is local research boundary, not production SaaS"
+    artifacts:
+      - "Makefile"
+      - "README.md"
+
+  - id: S6-03
+    title: "Docker Compose for local benchmark and dashboard (env from .env.example)"
+    priority: p2
+    area: backend
+    milestone: "S6 - Dashboard and demo boundary"
+    due: 2026-07-08
+    labels:
+      - "sprint/S6"
+      - "area/demo"
+      - "type/feature"
+      - "priority/p2"
+    depends_on:
+      - S6-02
+    acceptance:
+      - "compose.yml brings up Qdrant (optional), app, and documented ports"
+      - ".env.example lists mock default and optional live embedding/generation keys"
+      - "No push-triggered workflow runs compose in CI; validation is unit-tested config parse only"
+    artifacts:
+      - "compose.yml"
+      - ".env.example"
+      - "docs/benchmarks/BENCHMARK.md"
+
+  - id: S6-04
+    title: "Manual workflow_dispatch CI smoke for full benchmark schema (mock only)"
+    priority: p2
+    area: backend
+    milestone: "S6 - Dashboard and demo boundary"
+    due: 2026-07-15
+    labels:
+      - "sprint/S6"
+      - "area/tests"
+      - "type/task"
+      - "priority/p2"
+    depends_on:
+      - S6-01
+    acceptance:
+      - "Workflow runs pytest unit + integration suites with mock/faker providers"
+      - "Workflow has workflow_dispatch only; no on: push or on: pull_request for benchmark/live paths"
+      - "Fails if comparison or Ragas fields missing from bundled sample artifacts"
+    artifacts:
+      - ".github/workflows/benchmark_smoke.yml"
+      - "tests/integration/test_ragas_benchmark_smoke.py"
+      - "tests/integration/test_raft_lm_benchmark_smoke.py"
+
+  - id: S6-05
+    title: "Plan verified non-mock benchmark run sprint (keys, corpus, limitations)"
+    priority: p3
+    area: docs
+    milestone: "S6 - Dashboard and demo boundary"
+    due: 2026-07-18
+    labels:
+      - "sprint/S6"
+      - "area/benchmark"
+      - "type/docs"
+      - "priority/p3"
+    depends_on:
+      - S6-04
+    acceptance:
+      - "docs/benchmarks/BENCHMARK.md adds a Runbook section for first live embedding + generation run"
+      - "Lists required env vars, expected cost guardrails, and what README may claim after verification"
+      - "Explicitly defers execution to a follow-on sprint; no live calls in default CI"
+    artifacts:
+      - "docs/benchmarks/BENCHMARK.md"
+      - "docs/adr/0003-live-benchmark-runbook.md"

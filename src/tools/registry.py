@@ -7,7 +7,6 @@ from typing import Any, Callable, Dict, List
 from src.tools import risk_tools
 from src.tools.schemas import json_schema
 
-
 ToolFn = Callable[..., Dict[str, Any]]
 
 TOOLS: Dict[str, ToolFn] = {

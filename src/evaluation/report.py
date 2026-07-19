@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import torch
 
+from src.evaluation.checkpoint_eval import build_dataloaders, evaluate_model
 from src.models.base_models import SimpleMLP
 from src.models.loaders.unified import UnifiedModelLoader
-from src.training.backends.mlp_backend import _build_dataloaders, _evaluate_model
 from src.training.loss_factory import build_loss
 from src.utils.config import load_config, resolve_config
 from src.utils.reproducibility import get_device
@@ -44,9 +44,9 @@ def evaluate_checkpoint(
     loaded = loader.load(config, model, checkpoint_path=str(checkpoint_path))
     model = loaded.module.to(device)
 
-    _, _, test_loader = _build_dataloaders(config, data_config_path=data_config_path)
+    _, _, test_loader = build_dataloaders(config, data_config_path=data_config_path)
     criterion = build_loss(config)
-    raw_metrics = _evaluate_model(
+    raw_metrics = evaluate_model(
         model=model,
         criterion=criterion,
         data_loader=test_loader,
@@ -60,13 +60,11 @@ def evaluate_checkpoint(
         for k in ("accuracy", "f1_score", "mse", "mae", "test_loss", "num_samples")
         if k in raw_metrics
     }
-    risk_metrics = {
+    risk_metrics: Dict[str, Any] = {
         k: raw_metrics[k]
-        for k in ("cvar", "constraint_violation_rate", "perplexity")
+        for k in ("cvar", "constraint_violation_rate", "perplexity", "tail_error_rate")
         if k in raw_metrics
     }
-    if "tail_error_rate" in raw_metrics:
-        risk_metrics["tail_error_rate"] = raw_metrics["tail_error_rate"]
 
     return {
         "task_metrics": task_metrics,

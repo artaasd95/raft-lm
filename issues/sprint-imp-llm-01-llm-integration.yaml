@@ -1,0 +1,247 @@
+version: 2
+archived: true
+sprint: IMP-LLM-01
+sprint_start: 2026-06-17
+sprint_target_end: 2026-07-29
+repo: artaasd95/raft-lm
+issues:
+- id: IMP-LLM-01-01
+  title: Define LLMProvider interface and config schema
+  status: completed
+  priority: p0
+  area: architecture
+  milestone: IMP-LLM-01 - LLM Integration
+  due: 2026-06-24
+  labels:
+  - sprint/IMP-LLM-01
+  - area/architecture
+  - type/feature
+  - priority/p0
+  depends_on: []
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+  acceptance:
+  - src/raft_lm/llm_integration/base.py defines LLMProvider ABC with complete(prompt,
+    model_id, **kwargs) -> Completion
+  - Completion includes text, token_usage, latency_ms, backend_id, tool_calls (optional)
+  - src/raft_lm/llm_integration/config.py defines LLMConfig matching RADA's schema
+  - Interface documented for cross-project adoption
+  artifacts:
+  - src/raft_lm/llm_integration/__init__.py
+  - src/raft_lm/llm_integration/base.py
+  - src/raft_lm/llm_integration/config.py
+- id: IMP-LLM-01-02
+  title: Implement VLLMAdapter (single GPU inference)
+  status: completed
+  priority: p0
+  area: backend
+  milestone: IMP-LLM-01 - LLM Integration
+  due: 2026-07-01
+  labels:
+  - sprint/IMP-LLM-01
+  - area/backend
+  - type/feature
+  - priority/p0
+  depends_on:
+  - IMP-LLM-01-01
+  acceptance:
+  - src/raft_lm/llm_integration/adapters/vllm_adapter.py wraps vLLM API
+  - Used by RiskLabelGenerator and TrainingSignalGenerator
+  - 'Config: configs/llm_single_gpu.yaml'
+  - 'Integration test: generate labels via vLLM'
+  artifacts:
+  - src/raft_lm/llm_integration/adapters/vllm_adapter.py
+  - configs/llm_single_gpu.yaml
+  - tests/integration/test_vllm_label_generation.py
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: IMP-LLM-01-03
+  title: Implement RayServeLLMAdapter (distributed training labels)
+  status: completed
+  priority: p1
+  area: backend
+  milestone: IMP-LLM-01 - LLM Integration
+  due: 2026-07-08
+  labels:
+  - sprint/IMP-LLM-01
+  - area/backend
+  - type/feature
+  - priority/p1
+  depends_on:
+  - IMP-LLM-01-01
+  acceptance:
+  - src/raft_lm/llm_integration/adapters/ray_serve_adapter.py
+  - Supports parallel label generation via Ray workers
+  - 'Config: configs/llm_distributed.yaml'
+  - 'Unit tests: deployment config, mock Ray API'
+  artifacts:
+  - src/raft_lm/llm_integration/adapters/ray_serve_adapter.py
+  - configs/llm_distributed.yaml
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: IMP-LLM-01-04
+  title: Implement LiteLLMAdapter (cloud LLMs for training signal)
+  status: completed
+  priority: p1
+  area: backend
+  milestone: IMP-LLM-01 - LLM Integration
+  due: 2026-07-08
+  labels:
+  - sprint/IMP-LLM-01
+  - area/backend
+  - type/feature
+  - priority/p1
+  depends_on:
+  - IMP-LLM-01-01
+  acceptance:
+  - src/raft_lm/llm_integration/adapters/litellm_adapter.py
+  - Supports OpenAI, Claude, Gemini for label generation
+  - 'Config: configs/llm_cloud.yaml'
+  - 'Fallback routing: primary → secondary provider'
+  artifacts:
+  - src/raft_lm/llm_integration/adapters/litellm_adapter.py
+  - configs/llm_cloud.yaml
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: IMP-LLM-01-05
+  title: Implement OllamaAdapter (local, lightweight)
+  status: completed
+  priority: p1
+  area: backend
+  milestone: IMP-LLM-01 - LLM Integration
+  due: 2026-07-08
+  labels:
+  - sprint/IMP-LLM-01
+  - area/backend
+  - type/feature
+  - priority/p1
+  depends_on:
+  - IMP-LLM-01-01
+  acceptance:
+  - src/raft_lm/llm_integration/adapters/ollama_adapter.py
+  - 'Config: configs/llm_ollama.yaml'
+  - 'Integration test: run training with Ollama backend'
+  artifacts:
+  - src/raft_lm/llm_integration/adapters/ollama_adapter.py
+  - configs/llm_ollama.yaml
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: IMP-LLM-01-06
+  title: Implement CustomAdapter template (BYOK)
+  status: completed
+  priority: p2
+  area: backend
+  milestone: IMP-LLM-01 - LLM Integration
+  due: 2026-07-15
+  labels:
+  - sprint/IMP-LLM-01
+  - area/backend
+  - type/feature
+  - priority/p2
+  depends_on:
+  - IMP-LLM-01-01
+  acceptance:
+  - src/raft_lm/llm_integration/adapters/custom_adapter.py template
+  - 'Example: internal risk-model API with OpenAI fallback'
+  - 'Config: configs/llm_custom.yaml'
+  artifacts:
+  - src/raft_lm/llm_integration/adapters/custom_adapter.py
+  - configs/llm_custom.yaml
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: IMP-LLM-01-07
+  title: Create factory function and integrate into training loop
+  status: completed
+  priority: p0
+  area: backend
+  milestone: IMP-LLM-01 - LLM Integration
+  due: 2026-07-15
+  labels:
+  - sprint/IMP-LLM-01
+  - area/backend
+  - type/feature
+  - priority/p0
+  depends_on:
+  - IMP-LLM-01-02
+  - IMP-LLM-01-03
+  - IMP-LLM-01-04
+  - IMP-LLM-01-05
+  - IMP-LLM-01-06
+  acceptance:
+  - src/raft_lm/llm_integration/factory.py implements create_llm_provider(config_path)
+  - src/raft_lm/training/label_generator.py uses injected LLMProvider
+  - src/raft_lm/training/train.py accepts --llm-config argument
+  - 'Integration test: train.py runs with different LLM backends'
+  artifacts:
+  - src/raft_lm/llm_integration/factory.py
+  - src/raft_lm/training/label_generator.py (modified)
+  - src/raft_lm/training/train.py (modified)
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: IMP-LLM-01-08
+  title: Add CheckpointExport interface for RADA integration (optional)
+  status: completed
+  priority: p2
+  area: integrations
+  milestone: IMP-LLM-01 - LLM Integration
+  due: 2026-07-22
+  labels:
+  - sprint/IMP-LLM-01
+  - area/integrations
+  - type/feature
+  - priority/p2
+  depends_on: []
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+  acceptance:
+  - src/raft_lm/export.py exports CheckpointExport class with export_for_inference()
+    method
+  - Returns checkpoint metadata, config, loader interface (model_path, config_path,
+    loader_class)
+  - 'Documentation: [[Portfolio/Adapter-Architecture-Analysis]] §7'
+  artifacts:
+  - src/raft_lm/export.py
+  - docs/checkpoint-export.md
+- id: IMP-LLM-01-09
+  title: Documentation and deployment guide
+  status: completed
+  priority: p1
+  area: docs
+  milestone: IMP-LLM-01 - LLM Integration
+  due: 2026-07-29
+  labels:
+  - sprint/IMP-LLM-01
+  - area/docs
+  - type/feature
+  - priority/p1
+  depends_on:
+  - IMP-LLM-01-07
+  acceptance:
+  - docs/llm-integration.md explains adapters, config selection, deployment scenarios
+  - 'README updated: LLM options, setup instructions for each backend'
+  - 'Getting-started: train with vLLM, Ollama, cloud LLM'
+  - 'FAQ: Which backend for my setup?, Can I use custom inference?'
+  artifacts:
+  - docs/llm-integration.md
+  - README.md (updated)
+  - docs/deployment-scenarios.md
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: IMP-LLM-01-10
+  title: Unit and integration tests
+  status: completed
+  priority: p1
+  area: testing
+  milestone: IMP-LLM-01 - LLM Integration
+  due: 2026-07-29
+  labels:
+  - sprint/IMP-LLM-01
+  - area/testing
+  - type/test
+  - priority/p1
+  depends_on:
+  - IMP-LLM-01-02
+  - IMP-LLM-01-03
+  - IMP-LLM-01-04
+  - IMP-LLM-01-05
+  - IMP-LLM-01-06
+  acceptance:
+  - Unit tests for each adapter (mock/stub, no external services)
+  - 'Integration tests: label generation with different backends'
+  - Config loading tests
+  - 'Test coverage: ≥80% for llm_integration module'
+  artifacts:
+  - tests/unit/test_llm_*.py
+  - tests/integration/test_training_with_llm_*.py
+  note: Completed 2026-06-11 on develop (portfolio execution plan).

@@ -1,0 +1,10 @@
+name: composite
+components:
+  - name: task_accuracy
+    weight: 1.0
+  - name: risk_cvar
+    weight: 0.3
+    params:
+      alpha: 0.05
+  - name: kl_penalty
+    weight: 0.05

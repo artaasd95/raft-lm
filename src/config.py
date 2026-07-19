@@ -1,5 +1,5 @@
 """Compatibility layer exposing PipelineConfig at src.config."""
 
-from src.data_platform.config import PipelineConfig
+from src.data.pipeline.config import PipelineConfig
 
 __all__ = ["PipelineConfig"]

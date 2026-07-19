@@ -1,0 +1,644 @@
+version: 2
+archived: true
+sprint: Product-MVP
+sprint_start: 2026-06-06
+sprint_target_end: 2026-08-14
+repo: artaasd95/raft-lm
+issues:
+- id: SP-TRAIN-01
+  title: 'scripts/train.py end-to-end: config → data → train → artifact (resolved_config.json,
+    metrics.json, best_model.pt, run_info.json)'
+  status: completed
+  priority: p0
+  area: training
+  milestone: v1.0 Product-MVP — Training Pipeline
+  due: 2026-06-13
+  labels:
+  - sprint/Product-MVP
+  - area/training
+  - type/feature
+  - priority/p0
+  depends_on:
+  - S0-03
+  - SP-WIRE-01
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+  acceptance:
+  - python scripts/train.py --config configs/risk_training.yaml completes without
+    error
+  - All four artifacts written with correct schema (git hash, seed, etc. in run_info)
+  - Works for SimpleMLP path (HF path may be partial)
+  artifacts:
+  - scripts/train.py
+  - configs/risk_training.yaml
+  - src/training/base_trainer.py (hardened)
+- id: SP-TRAIN-02
+  title: 'scripts/evaluate.py: load checkpoint → task metrics (accuracy, F1) + risk
+    metrics (CVaR on errors, tail error rate, alignment score) → JSON'
+  status: completed
+  priority: p0
+  area: training
+  milestone: v1.0 Product-MVP — Training Pipeline
+  due: 2026-06-20
+  labels:
+  - sprint/Product-MVP
+  - area/training
+  - type/feature
+  - priority/p0
+  depends_on:
+  - SP-TRAIN-01
+  acceptance:
+  - evaluate --checkpoint best_model.pt --config ... produces unified report
+  - Report contains both task metrics and engine-computed risk metrics
+  - Checkpoint loading is the primary path (no more 'analytics only' confusion)
+  artifacts:
+  - scripts/evaluate.py
+  - src/evaluation/
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-TRAIN-03
+  title: 'scripts/compare_experiments.py: aggregate ≥ 3 seeds → mean ± std → Markdown
+    report'
+  status: completed
+  priority: p1
+  area: training
+  milestone: v1.0 Product-MVP — Training Pipeline
+  due: 2026-06-27
+  labels:
+  - sprint/Product-MVP
+  - area/training
+  - type/tool
+  - priority/p1
+  depends_on:
+  - SP-TRAIN-02
+  acceptance:
+  - compare --runs run1,run2,run3 (or dir of runs) emits table with mean/std
+  - Handles different loss variants (ce vs cvar_penalized)
+  - Output can be pasted into BENCHMARK.md
+  artifacts:
+  - scripts/compare_experiments.py
+  - docs/benchmarks/results_latest.md (example)
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-TRAIN-04
+  title: 'HuggingFace model loader: one small HF model via model.source=hf config
+    flag (distilbert or similar)'
+  status: completed
+  priority: p1
+  area: training
+  milestone: v1.0 Product-MVP — Training Pipeline
+  due: 2026-07-04
+  labels:
+  - sprint/Product-MVP
+  - area/training
+  - type/feature
+  - priority/p1
+  depends_on:
+  - SP-TRAIN-01
+  acceptance:
+  - 'config supports model: {source: hf, name: distilbert-base-uncased, ...}'
+  - Same trainer loop works for MLP and HF (adapter head or full fine-tune small)
+  - Documented memory/throughput notes for the HF path
+  artifacts:
+  - src/models/hf_adapter.py
+  - configs/risk_training.yaml (HF example)
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-TRAIN-05
+  title: 'Risk-aware loss CLI flags: --loss=ce, --loss=cvar_penalized, --loss=tail_aware
+    — same config schema'
+  status: completed
+  priority: p1
+  area: training
+  milestone: v1.0 Product-MVP — Training Pipeline
+  due: 2026-06-20
+  labels:
+  - sprint/Product-MVP
+  - area/training
+  - type/feature
+  - priority/p1
+  depends_on:
+  - SP-TRAIN-01
+  - SP-WIRE-02
+  acceptance:
+  - Loss selection is a first-class config or CLI override
+  - All losses produce comparable metrics.json (so compare works across them)
+  - Loss implementations live in src/losses/ with unit tests
+  artifacts:
+  - src/losses/
+  - scripts/train.py (flag wiring)
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-TRAIN-06
+  title: Frozen configs/risk_training.yaml — benchmark-locked, version-controlled
+  status: completed
+  priority: p1
+  area: training
+  milestone: v1.0 Product-MVP — Training Pipeline
+  due: 2026-06-27
+  labels:
+  - sprint/Product-MVP
+  - area/training
+  - type/config
+  - priority/p1
+  depends_on:
+  - SP-TRAIN-03
+  acceptance:
+  - The exact config used for the first published BENCHMARK.md row is committed
+  - Any change requires a new config file + new benchmark row
+  - Referenced from reproduce.md and BENCHMARK.md
+  artifacts:
+  - configs/risk_training.yaml
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-TRAIN-07
+  title: 'Integration test: train.py mini-run (2 epochs, toy data) → assert artifacts
+    exist with correct schema'
+  status: completed
+  priority: p1
+  area: tests
+  milestone: v1.0 Product-MVP — Training Pipeline
+  due: 2026-06-20
+  labels:
+  - sprint/Product-MVP
+  - area/tests
+  - type/test
+  - priority/p1
+  depends_on:
+  - SP-TRAIN-01
+  acceptance:
+  - pytest integration test runs a tiny train in < 30s on CPU
+  - Asserts presence and basic shape of the four artifacts
+  - Runs in CI
+  artifacts:
+  - tests/integration/test_train_mini.py
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-NB-01
+  title: 'Notebook: download and cache models (HF hub / local weights) for experiments'
+    status: completed
+  priority: p1
+  area: notebooks
+  milestone: v1.0 Product-MVP — Experiment Notebooks
+  due: 2026-07-04
+  labels:
+  - sprint/Product-MVP
+  - area/notebooks
+  - area/training
+  - type/task
+  - priority/p1
+  depends_on:
+  - SP-TRAIN-01
+  acceptance:
+  - notebooks/00_download_models.ipynb downloads default experiment model(s) via unified
+    loader or huggingface_hub
+  - Cache directory configurable (env var + cell default); re-run is idempotent (skip
+    if present)
+  - Documents disk/GPU expectations and prints resolved cache paths for train/eval
+    notebooks
+  - Runs on CPU without training; linked from README experiments section
+  artifacts:
+  - notebooks/00_download_models.ipynb
+  - notebooks/README.md
+- id: SP-NB-02
+  title: 'Notebook: training and evaluation experiments (config-driven, artifact export)'
+    status: completed
+  priority: p1
+  area: notebooks
+  milestone: v1.0 Product-MVP — Experiment Notebooks
+  due: 2026-07-11
+  labels:
+  - sprint/Product-MVP
+  - area/notebooks
+  - area/training
+  - type/task
+  - priority/p1
+  depends_on:
+  - SP-NB-01
+  - SP-TRAIN-02
+  acceptance:
+  - notebooks/01_train_and_evaluate.ipynb drives scripts/train.py + scripts/evaluate.py
+    (or equivalent in-process calls) from configs/risk_training.yaml and toy override
+  - Cells for loss variant sweep (ce / cvar_penalized / tail_aware), seed, and multi-run
+    compare hook
+  - Writes run artifacts under experiments/notebooks/ with manifest (config hash,
+    seed, metrics path)
+  - CPU smoke path documented; GPU path optional with same cells
+  artifacts:
+  - notebooks/01_train_and_evaluate.ipynb
+  - notebooks/utility/experiment_helpers.py
+- id: SP-NB-03
+  title: 'Notebook: training and evaluation — Colab-ready variant (Drive mount, pip
+    install, cache sync)'
+    status: completed
+  priority: p2
+  area: notebooks
+  milestone: v1.0 Product-MVP — Experiment Notebooks
+  due: 2026-07-18
+  labels:
+  - sprint/Product-MVP
+  - area/notebooks
+  - area/training
+  - type/task
+  - priority/p2
+  depends_on:
+  - SP-NB-02
+  acceptance:
+  - notebooks/01_train_and_evaluate_colab.ipynb mirrors 01_train_and_evaluate flow
+    with Colab preamble (GPU check, repo clone/install, optional Drive cache)
+  - Uses same config schema and artifact layout as local notebook; cache dir can point
+    to Drive
+  - Secrets via Colab userdata / env only — no keys in notebook body
+  - README documents Open in Colab badge and known limitations vs local
+  artifacts:
+  - notebooks/01_train_and_evaluate_colab.ipynb
+  - notebooks/README.md (Colab section)
+- id: SP-BENCH-01
+  title: 'Draft docs/benchmarks/BENCHMARK.md — protocol skeleton: task, baselines,
+    metrics, protocol, results table (TBD values), WHY, limitations'
+  status: completed
+  priority: p1
+  area: docs
+  milestone: v1.0 Product-MVP — Frozen Benchmark
+  due: 2026-06-13
+  labels:
+  - sprint/Product-MVP
+  - area/docs
+  - type/docs
+  - priority/p1
+  depends_on:
+  - S0-02
+  acceptance:
+  - All sections present even if some numbers are TBD or 'run in progress'
+  - Primary metric + secondary risk metrics defined
+  - ≥2 baselines declared (standard CE, MSE)
+  artifacts:
+  - docs/benchmarks/BENCHMARK.md
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-BENCH-02
+  title: Run CE and MSE baselines with ≥ 3 seeds; record mean ± std in BENCHMARK.md
+  status: completed
+  priority: p1
+  area: training
+  milestone: v1.0 Product-MVP — Frozen Benchmark
+  due: 2026-06-27
+  labels:
+  - sprint/Product-MVP
+  - area/training
+  - type/experiment
+  - priority/p1
+  depends_on:
+  - SP-TRAIN-03
+  - SP-BENCH-01
+  acceptance:
+  - ≥3 independent seeds per baseline under the frozen config
+  - Numbers + variance written into the results table in BENCHMARK.md
+  - Reproduce instructions point to exact commit + config
+  artifacts:
+  - docs/benchmarks/BENCHMARK.md
+  - experiments/runs/ (or artifacts dir with run_info)
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-BENCH-03
+  title: 'Run CVaR-penalized loss with ≥ 3 seeds; record Δ vs baseline (primary: accuracy;
+    secondary: CVaR on errors, tail error rate)'
+  status: completed
+  priority: p1
+  area: training
+  milestone: v1.0 Product-MVP — Frozen Benchmark
+  due: 2026-07-04
+  labels:
+  - sprint/Product-MVP
+  - area/training
+  - type/experiment
+  - priority/p1
+  depends_on:
+  - SP-BENCH-02
+  - SP-TRAIN-05
+  acceptance:
+  - Same frozen config + seeds as baselines
+  - Clear Δ (positive or negative) shown for risk metrics
+  - WHY paragraph draft updated with observed mechanism
+  artifacts:
+  - docs/benchmarks/BENCHMARK.md
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-BENCH-04
+  title: 'Finalize BENCHMARK.md: fill results, WHY mechanism paragraph, limitations'
+  status: completed
+  priority: p1
+  area: docs
+  milestone: v1.0 Product-MVP — Frozen Benchmark
+  due: 2026-07-11
+  labels:
+  - sprint/Product-MVP
+  - area/docs
+  - type/docs
+  - priority/p1
+  depends_on:
+  - SP-BENCH-03
+  acceptance:
+  - All TBDs replaced with real numbers from the runs
+  - Honest limitations section (what the benchmark does not prove)
+  - README results table is a strict subset of this doc
+  artifacts:
+  - docs/benchmarks/BENCHMARK.md
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-BENCH-05
+  title: docs/benchmarks/reproduce.md — exact commands to regenerate the table from
+    scratch
+  status: completed
+  priority: p1
+  area: docs
+  milestone: v1.0 Product-MVP — Frozen Benchmark
+  due: 2026-07-11
+  labels:
+  - sprint/Product-MVP
+  - area/docs
+  - type/docs
+  - priority/p1
+  depends_on:
+  - SP-BENCH-04
+  acceptance:
+  - One or two commands that a stranger can copy-paste after clone
+  - Mentions seed, hardware class, expected runtime, where artifacts land
+  - Linked from README and BENCHMARK.md
+  artifacts:
+  - docs/benchmarks/reproduce.md
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-BENCH-06
+  title: 'README rewrite: lead with results table, ''Reproduce'' section, link to
+    BENCHMARK.md'
+  status: completed
+  priority: p0
+  area: docs
+  milestone: v1.0 Product-MVP — Frozen Benchmark
+  due: 2026-07-04
+  labels:
+  - sprint/Product-MVP
+  - area/docs
+  - type/docs
+  - priority/p0
+  depends_on:
+  - SP-BENCH-04
+  acceptance:
+  - First screen after title is the headline table (CE vs risk-aware, key metrics)
+  - Reproduce section with 60-second command
+  - All quantitative claims have footnote or link into BENCHMARK.md
+  - RAG content is clearly marked 'auxiliary / deferred'
+  artifacts:
+  - README.md
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-DEPLOY-01
+  title: pyproject.toml with ruff, mypy, pytest config — replaces requirements.txt
+    as canonical dependency spec
+  status: completed
+  priority: p1
+  area: tooling
+  milestone: v1.0 Product-MVP — Packaging & CI
+  due: 2026-06-13
+  labels:
+  - sprint/Product-MVP
+  - area/tooling
+  - type/tooling
+  - priority/p1
+  depends_on: []
+  acceptance:
+  - pyproject.toml [project] + [tool.ruff] + [tool.mypy] + [tool.pytest.ini_options]
+  - pip install -e '.[dev]' works
+  - requirements.txt kept only for legacy or pinned CI if needed (commented)
+  artifacts:
+  - pyproject.toml
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-DEPLOY-02
+  title: Replace all pass / TODO tests with real assertions on metrics, training,
+    and losses hot path
+  status: completed
+  priority: p0
+  area: tests
+  milestone: v1.0 Product-MVP — Packaging & CI
+  due: 2026-06-20
+  labels:
+  - sprint/Product-MVP
+  - area/tests
+  - type/test
+  - priority/p0
+  depends_on:
+  - SP-DEPLOY-01
+  acceptance:
+  - tests/unit/test_models.py , test_metrics.py , test_losses.py etc. have real asserts
+  - No more 'pass' that make 'pytest passes' misleading
+  - CI will catch breakage on the trained artifacts and metric values
+  artifacts:
+  - tests/unit/test_*.py (updated)
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-DEPLOY-03
+  title: .github/workflows/ci.yml — ruff lint + mypy + pytest on push/PR (CPU, toy
+    data, no GPU required)
+  status: completed
+  priority: p1
+  area: infra
+  milestone: v1.0 Product-MVP — Packaging & CI
+  due: 2026-06-20
+  labels:
+  - sprint/Product-MVP
+  - area/infra
+  - type/ci
+  - priority/p1
+  depends_on:
+  - SP-DEPLOY-01
+  - SP-DEPLOY-02
+  acceptance:
+  - Jobs for lint, type, test (cpu torch)
+  - Uses pyproject.toml for config
+  - Fails the PR on any of the three
+  artifacts:
+  - .github/workflows/ci.yml
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-DEPLOY-04
+  title: Dockerfile multi-stage (torch-cpu build → runtime, non-root, ENTRYPOINT ["python",
+    "scripts/train.py"])
+  status: completed
+  priority: p2
+  area: infra
+  milestone: v1.0 Product-MVP — Packaging & CI
+  due: 2026-07-04
+  labels:
+  - sprint/Product-MVP
+  - area/infra
+  - type/infra
+  - priority/p2
+  depends_on:
+  - SP-DEPLOY-03
+  acceptance:
+  - 'Multi-stage: install torch-cpu + project in builder, copy to slim runtime'
+  - Non-root user; can run the mini train inside container
+  - docker build -t raft-lm:dev . && docker run ... --config configs/risk_training.yaml
+    works
+  artifacts:
+  - Dockerfile
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-DEPLOY-05
+  title: docker-compose.yml for local dev with data + artifact volume mounts
+  status: completed
+  priority: p2
+  area: infra
+  milestone: v1.0 Product-MVP — Packaging & CI
+  due: 2026-07-04
+  labels:
+  - sprint/Product-MVP
+  - area/infra
+  - type/infra
+  - priority/p2
+  depends_on:
+  - SP-DEPLOY-04
+  acceptance:
+  - compose with volumes for data/ and artifacts/
+  - Service 'trainer' can be invoked with different configs
+  - Useful for iterating without polluting host python env
+  artifacts:
+  - docker-compose.yml
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-DEPLOY-06
+  title: docs/deployment.md — Docker guide, env vars, artifact reference, volume layout
+  status: completed
+  priority: p2
+  area: docs
+  milestone: v1.0 Product-MVP — Packaging & CI
+  due: 2026-07-11
+  labels:
+  - sprint/Product-MVP
+  - area/docs
+  - type/docs
+  - priority/p2
+  depends_on:
+  - SP-DEPLOY-04
+  acceptance:
+  - How to build and run the image for training and eval
+  - Volume mapping for data in / out
+  - Common env (CUDA_VISIBLE, TORCH_*, HF_HOME if used)
+  - Artifact directory conventions
+  artifacts:
+  - docs/deployment.md
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-TOOLS-01
+  title: src/tools/risk_tools.py — CVaR, drawdown, position size, volatility estimate
+    tools
+  status: completed
+  priority: p1
+  area: backend
+  milestone: v1.0 Product-MVP — LLM Risk Tools
+  due: 2026-07-04
+  labels:
+  - sprint/Product-MVP
+  - area/backend
+  - type/feature
+  - priority/p1
+  depends_on:
+  - SP-TRAIN-01
+  acceptance:
+  - Four functions with clear signatures and docstrings
+  - Implementations match (or are thin wrappers around) src/metrics/ where possible
+  - Return structured results (value + provenance)
+  artifacts:
+  - src/tools/risk_tools.py
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-TOOLS-02
+  title: JSON schemas for all tools (OpenAI function-calling format compatible)
+  status: completed
+  priority: p1
+  area: backend
+  milestone: v1.0 Product-MVP — LLM Risk Tools
+  due: 2026-07-04
+  labels:
+  - sprint/Product-MVP
+  - area/backend
+  - type/feature
+  - priority/p1
+  depends_on:
+  - SP-TOOLS-01
+  acceptance:
+  - Each tool has .json_schema() or equivalent that matches OpenAI tools format
+  - Schemas validated in unit tests
+  - Can be registered with a real LLM client for tool-use eval
+  artifacts:
+  - src/tools/schemas.py
+  - src/tools/risk_tools.py
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-TOOLS-03
+  title: src/tools/registry.py — ToolRegistry with name-based dispatch + list() endpoint
+  status: completed
+  priority: p1
+  area: backend
+  milestone: v1.0 Product-MVP — LLM Risk Tools
+  due: 2026-07-11
+  labels:
+  - sprint/Product-MVP
+  - area/backend
+  - type/feature
+  - priority/p1
+  depends_on:
+  - SP-TOOLS-02
+  acceptance:
+  - Registry singleton or factory that knows all risk tools
+  - list_tools() and call_tool(name, args) public API
+  - Used by training (tool-augmented loss or data gen) and eval
+  artifacts:
+  - src/tools/registry.py
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-TOOLS-04
+  title: 'Unit tests: 5 known-answer fixtures per tool function'
+  status: completed
+  priority: p1
+  area: tests
+  milestone: v1.0 Product-MVP — LLM Risk Tools
+  due: 2026-07-11
+  labels:
+  - sprint/Product-MVP
+  - area/tests
+  - type/test
+  - priority/p1
+  depends_on:
+  - SP-TOOLS-01
+  acceptance:
+  - Deterministic inputs → expected outputs for cvar, dd, sizing, vol
+  - Edge cases (empty, nan, zero) covered
+  artifacts:
+  - tests/unit/test_risk_tools.py
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-TOOLS-05
+  title: scripts/tool_eval.py — tool-calling accuracy evaluation harness
+  status: completed
+  priority: p2
+  area: eval
+  milestone: v1.0 Product-MVP — LLM Risk Tools
+  due: 2026-07-25
+  labels:
+  - sprint/Product-MVP
+  - area/eval
+  - type/tool
+  - priority/p2
+  depends_on:
+  - SP-TOOLS-03
+  acceptance:
+  - Given a (mock or real) LLM and a set of risk Q&A problems, measures correct tool
+    + arg selection
+  - Reports precision/recall per tool + overall
+  - Can run against a fine-tuned model checkpoint
+  artifacts:
+  - scripts/tool_eval.py
+  note: Completed 2026-06-11 on develop (portfolio execution plan).
+- id: SP-TOOLS-06
+  title: Tool call trace logging in BaseExperimentLogger when tools enabled
+  status: completed
+  priority: p2
+  area: observability
+  milestone: v1.0 Product-MVP — LLM Risk Tools
+  due: 2026-07-18
+  labels:
+  - sprint/Product-MVP
+  - area/observability
+  - type/feature
+  - priority/p2
+  depends_on:
+  - SP-TOOLS-03
+  - S8-02
+  acceptance:
+  - When tool-use is on, every tool call (name, args, result, latency) is logged via
+    the experiment logger
+  - Visible in W&B / local jsonl / etc.
+  artifacts:
+  - src/logging/base_logger.py
+  - src/tools/registry.py (instrumented)
+  note: Completed 2026-06-11 on develop (portfolio execution plan).

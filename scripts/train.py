@@ -1,9 +1,9 @@
 """
-Training script for Raft-LM experiments.
+Training script for RAFT-LM (Risk-Aware Fine-Tuning).
 
 Usage:
-    python scripts/train.py --config experiments/configs/my_experiment.json
-    python scripts/train.py --config configs/training/unsloth_lora_example.yaml
+    python scripts/train.py --config configs/methods/dpo_risk.yaml
+    python scripts/train.py --config configs/methods/grpo.yaml
 """
 
 import argparse
@@ -21,10 +21,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from src.application.train import run_training_orchestrated
 from src.logging.experiment_logger import create_experiment_logger
-from src.llm_integration.checkpoint_export import CheckpointExporter
-from src.llm_integration.factory import create_llm_provider_for_name
-from src.training.backends.factory import get_training_backend
+from src.trainers.constants import SUPPORTED_BACKENDS
+from src.trainers.factory import resolve_backend
 from src.training.policies.registry import get_policy_registry
 from src.utils.config import load_config, resolve_config, save_config, validate_config
 from src.utils.reproducibility import get_device, get_git_commit_hash, set_seed
@@ -40,21 +40,10 @@ def run_training(
     checkpoint_path: Optional[str] = None,
     loss_override: Optional[str] = None,
     backend_override: Optional[str] = None,
-    llm_provider: Optional[str] = None,
-    export_for_rada: bool = False,
     epochs_override: Optional[int] = None,
     batch_size_override: Optional[int] = None,
+    method_override: Optional[str] = None,
 ) -> Path:
-    """
-    Run a complete config-driven training workflow.
-
-    Args:
-        config_path: Path to experiment configuration file
-        seed_override: Optional seed that overrides the config value
-
-    Returns:
-        Path to the experiment run directory
-    """
     config_file = _resolve_path(config_path)
     config = resolve_config(load_config(str(config_file)))
     if policy_id is not None:
@@ -70,10 +59,10 @@ def run_training(
         config["training"].setdefault("loss", {})["type"] = loss_override
     if backend_override is not None:
         config["training"]["backend"] = backend_override
-    if llm_provider is not None:
-        # Validate provider alias/config early so runs fail fast.
-        create_llm_provider_for_name(llm_provider)
-        config["runtime_llm_provider"] = llm_provider
+    if method_override is not None:
+        config["method"] = method_override
+        if backend_override is None:
+            config["training"]["backend"] = resolve_backend(config)
     if epochs_override is not None:
         config["training"]["num_epochs"] = epochs_override
     if batch_size_override is not None:
@@ -108,15 +97,14 @@ def run_training(
         {
             "seed": config["training"]["seed"],
             "policy_id": config.get("policy_id"),
+            "method": config.get("method", "supervised"),
             "data_config": data_config_path,
             "backend": config["training"].get("backend", "mlp"),
         }
     )
 
-    backend_name = config["training"].get("backend", "mlp")
-    backend = get_training_backend(backend_name)
-    test_metrics = backend.run(
-        config=config,
+    run_dir, test_metrics = run_training_orchestrated(
+        config_path=str(config_file),
         run_dir=run_dir,
         data_config_path=data_config_path,
         exp_logger=exp_logger,
@@ -138,102 +126,31 @@ def run_training(
             completed_at=datetime.now(timezone.utc),
         ),
     )
-
-    if export_for_rada:
-        best_checkpoint = run_dir / "checkpoints" / "best_model.pt"
-        if best_checkpoint.exists():
-            exporter = CheckpointExporter(run_dir / "exports" / "rada")
-            result = exporter.export_for_rada(
-                best_checkpoint,
-                adapter_config={
-                    "backend": config["training"].get("backend", "mlp"),
-                    "weights_key": "model_state_dict",
-                },
-                model_id=config.get("model", {}).get("type"),
-            )
-            _write_json(
-                run_dir / "export_for_rada.json",
-                {
-                    "export_dir": str(result.export_dir),
-                    "manifest_path": str(result.manifest_path),
-                    "checkpoint_path": str(result.checkpoint_path),
-                },
-            )
-
     return run_dir
 
 
 def main():
-    """Load configuration, set up model and data, run training."""
-    parser = argparse.ArgumentParser(description="Train a Raft-LM model")
-    parser.add_argument(
-        "--config",
-        type=str,
-        required=True,
-        help="Path to experiment configuration file (JSON or YAML)",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=None,
-        help="Random seed (overrides config)",
-    )
-    parser.add_argument(
-        "--data-config",
-        type=str,
-        default=None,
-        help="Path to data-platform pipeline YAML (configs/data/*.yaml)",
-    )
-    parser.add_argument(
-        "--policy",
-        type=str,
-        default=None,
-        help="Policy bundle id (experiments/configs/policies/<id>.yaml|json)",
-    )
-    parser.add_argument(
-        "--checkpoint",
-        type=str,
-        default=None,
-        help="Resume training from checkpoint path",
-    )
+    parser = argparse.ArgumentParser(description="Train a RAFT-LM model")
+    parser.add_argument("--config", type=str, required=True)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--data-config", type=str, default=None)
+    parser.add_argument("--policy", type=str, default=None)
+    parser.add_argument("--checkpoint", type=str, default=None)
     parser.add_argument(
         "--loss",
         type=str,
         choices=["ce", "cvar_penalized", "tail_aware"],
         default=None,
-        help="Override training loss (ce, cvar_penalized, tail_aware)",
     )
+    parser.add_argument("--backend", type=str, choices=sorted(SUPPORTED_BACKENDS), default=None)
     parser.add_argument(
-        "--backend",
-        type=str,
-        choices=["mlp", "unsloth", "ddp", "fsdp"],
-        default=None,
-        help="Override training backend (mlp, unsloth, ddp, fsdp)",
-    )
-    parser.add_argument(
-        "--llm-provider",
+        "--method",
         type=str,
         default=None,
-        help="Optional provider alias or config path to validate runtime LLM wiring.",
+        help="supervised, sft, dpo, kto, ppo_lm, grpo, gigpo, actor_critic, ppo_env, dqn_env",
     )
-    parser.add_argument(
-        "--export-for-rada",
-        action="store_true",
-        help="Export best checkpoint into RADA-compatible handoff format.",
-    )
-    parser.add_argument(
-        "--epochs",
-        type=int,
-        default=None,
-        help="Override number of epochs for quick smoke tests.",
-    )
-    parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=None,
-        help="Override data.batch_size for smoke tests.",
-    )
-
+    parser.add_argument("--epochs", type=int, default=None)
+    parser.add_argument("--batch-size", type=int, default=None)
     args = parser.parse_args()
 
     run_dir = run_training(
@@ -244,10 +161,9 @@ def main():
         checkpoint_path=args.checkpoint,
         loss_override=args.loss,
         backend_override=args.backend,
-        llm_provider=args.llm_provider,
-        export_for_rada=args.export_for_rada,
         epochs_override=args.epochs,
         batch_size_override=args.batch_size,
+        method_override=args.method,
     )
     print(f"Training complete. Results saved to: {run_dir}")
 
@@ -263,7 +179,6 @@ def _resolve_path(path: str) -> Path:
 
 
 def _infer_run_dir_from_checkpoint(checkpoint_path: Path) -> Optional[Path]:
-    """Return the experiment run directory that owns a checkpoint path."""
     resolved = checkpoint_path.resolve()
     if resolved.name == "checkpoints" and resolved.is_dir():
         return resolved.parent
@@ -331,6 +246,7 @@ def _build_run_info(
         "config_path": str(config_file),
         "config_version": config["config_version"],
         "experiment_name": config["experiment_name"],
+        "method": config.get("method", "supervised"),
         "seed": config["training"]["seed"],
         "git_commit": get_git_commit_hash(str(REPO_ROOT)),
         "backend": config["training"].get("backend", "mlp"),

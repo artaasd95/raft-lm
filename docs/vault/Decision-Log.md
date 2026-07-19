@@ -25,7 +25,26 @@ Decisions are numbered `RF-YYYY-NN`. Superseded entries remain for traceability.
 
 ---
 
-## RF-2026-02 — LangGraph for RAG orchestration
+## RF-2026-29 — Hybrid RL architecture + Sphinx docs
+
+**Date:** 2026-07  
+**Status:** Accepted  
+**Context:** Project needed RL engineering signal (DPO, PPO-LM, GRPO, env RL, rewards) while keeping risk MLP training and RAG/BYOK inference.
+
+**Decision**
+
+1. Add hybrid RL training plane: `src/rl/`, `src/alignment/`, `src/rewards/`.
+2. Default LoRA path: `transformers` + `peft`; Unsloth SFT-only.
+3. RAG remains inference/usage plane (`scripts/infer.py`).
+4. Documentation: expand Sphinx (Furo + MyST); no MkDocs.
+
+**Consequences**
+
+- Method YAML under `configs/methods/`.
+- ADR [0003-hybrid-rl-architecture.md](../adr/0003-hybrid-rl-architecture.md).
+- README and Roadmap RL-first narrative.
+
+---
 
 **Status:** Accepted (unchanged)  
 **Doc:** [docs/adr/0002-rag-orchestration-framework.md](../adr/0002-rag-orchestration-framework.md)

@@ -1,0 +1,213 @@
+# S7-DP — Data platform: record cards, pipeline, multi-datasource, feedback contract, README.
+# Prerequisite for S7 risk-training benchmark vertical slice and S8 feedback/tools alignment.
+# Vault spec: Projects/raft-lm/Data-Platform.md → code repo docs/data-platform.md
+---
+version: 2
+archived: true
+sprint: S7-DP
+sprint_start: 2026-06-07
+sprint_target_end: 2026-07-05
+repo: artaasd95/raft-lm
+issues:
+  - id: S7-DP-01
+    title: "Publish docs/data-platform.md from vault spec and wire config layout"
+    status: completed
+    priority: p1
+    area: docs
+    milestone: "S7-DP - Data platform"
+    due: 2026-06-10
+    labels:
+      - "sprint/S7-DP"
+      - "area/docs"
+      - "area/data"
+      - "type/docs"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "docs/data-platform.md copied from vault Projects/raft-lm/Data-Platform.md with repo-relative links fixed"
+      - "configs/data/ directory scaffolded with train.yaml, eval.yaml, feedback.yaml examples from spec"
+      - "Architecture or README links to docs/data-platform.md"
+      - "Portfolio cross-link note in docs points to shared FeedbackRecord contract"
+    artifacts:
+      - "docs/data-platform.md"
+      - "configs/data/train.yaml"
+      - "configs/data/eval.yaml"
+      - "configs/data/feedback.yaml"
+
+  - id: S7-DP-02
+    title: "Record cards — EngineLabelRow, PreferencePair, ToolCallExample, FeedbackRecord"
+    status: completed
+    priority: p1
+    area: data
+    milestone: "S7-DP - Data platform"
+    due: 2026-06-14
+    labels:
+      - "sprint/S7-DP"
+      - "area/data"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S7-DP-01
+    acceptance:
+      - "src/data/cards/ defines Pydantic or dataclass models for all four cards per Data-Platform.md"
+      - "EngineLabelRow requires engine_labels dict with benchmark-configurable required keys"
+      - "ToolCallExample validates tool_name against a stub ToolRegistry interface (full registry in S8-07)"
+      - "FeedbackRecord matches portfolio shared contract in Knowledge/Data-Platform-Design.md"
+      - "Unit tests: valid/invalid fixtures for each card; rejection messages name missing field"
+    artifacts:
+      - "src/data/cards/"
+      - "tests/unit/test_record_cards.py"
+      - "tests/fixtures/cards/"
+
+  - id: S7-DP-03
+    title: "PipelineConfig loader and stage runner (normalize, enrich, label, split, filter)"
+    status: completed
+    priority: p1
+    area: data
+    milestone: "S7-DP - Data platform"
+    due: 2026-06-21
+    labels:
+      - "sprint/S7-DP"
+      - "area/data"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S7-DP-02
+    acceptance:
+      - "src/data/pipeline/config.py loads versioned YAML PipelineConfig with mode train|eval"
+      - "src/data/pipeline/runner.py executes ordered stages from config"
+      - "normalize stage validates rows against named RecordCard"
+      - "enrich stage delegates to src/metrics/ for engine_labels refresh"
+      - "label stage supports engine_score and correct_incorrect schemas"
+      - "split and filter stages are config-driven with logged drop counts"
+      - "Unit tests on synthetic YAML + in-memory rows"
+    artifacts:
+      - "src/data/pipeline/"
+      - "tests/unit/test_pipeline_runner.py"
+
+  - id: S7-DP-04
+    title: "DataSource adapters — file, HuggingFace, SQL db; Databricks interface stub"
+    status: completed
+    priority: p1
+    area: data
+    milestone: "S7-DP - Data platform"
+    due: 2026-06-28
+    labels:
+      - "sprint/S7-DP"
+      - "area/data"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S7-DP-03
+    acceptance:
+      - "src/data/sources/file_source.py reads JSONL/Parquet into card iterators"
+      - "src/data/sources/hf_source.py loads HF dataset split mapped to RecordCard"
+      - "src/data/sources/db_source.py reads SQL table with env-based connection string"
+      - "src/data/sources/databricks_source.py defines interface; raises NotImplementedError with doc link"
+      - "DataSourceSpec.type validated at config load; unknown type fails fast"
+      - "Integration test: file source → pipeline → artifact sink"
+    artifacts:
+      - "src/data/sources/"
+      - "tests/integration/test_file_source_pipeline.py"
+
+  - id: S7-DP-05
+    title: "scripts/build_dataset.py CLI and artifact sinks"
+    status: completed
+    priority: p1
+    area: data
+    milestone: "S7-DP - Data platform"
+    due: 2026-07-02
+    labels:
+      - "sprint/S7-DP"
+      - "area/data"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S7-DP-04
+    acceptance:
+      - "scripts/build_dataset.py accepts --config configs/data/train.yaml"
+      - "Writes train/eval JSONL artifacts to paths in config sinks"
+      - "Logs row counts: loaded, enriched, dropped, emitted per stage"
+      - "Exit non-zero on validation failure; prints first N errors"
+      - "Documented in docs/data-platform.md quickstart"
+    artifacts:
+      - "scripts/build_dataset.py"
+      - "tests/integration/test_build_dataset.py"
+
+  - id: S7-DP-06
+    title: "Wire train.py and evaluate.py to --data-config and --eval-config"
+    status: completed
+    priority: p1
+    area: training
+    milestone: "S7-DP - Data platform"
+    due: 2026-07-05
+    labels:
+      - "sprint/S7-DP"
+      - "area/training"
+      - "area/data"
+      - "type/feature"
+      - "priority/p1"
+    depends_on:
+      - S7-DP-05
+    acceptance:
+      - "scripts/train.py accepts --data-config and optional --eval-config"
+      - "scripts/evaluate.py accepts --eval-config"
+      - "Resolved datasource ids and row counts logged to run_info.json / experiment artifacts"
+      - "Existing train path without --data-config still works (backward compatible)"
+      - "Smoke test: build_dataset → train one step on tiny fixture"
+    artifacts:
+      - "scripts/train.py"
+      - "scripts/evaluate.py"
+      - "tests/integration/test_train_data_config.py"
+
+  - id: S7-DP-07
+    title: "Feedback pipeline config and FeedbackRecord validation (apply_feedback prep for S8-05)"
+    status: completed
+    priority: p2
+    area: data
+    milestone: "S7-DP - Data platform"
+    due: 2026-07-05
+    labels:
+      - "sprint/S7-DP"
+      - "area/data"
+      - "area/training"
+      - "type/feature"
+      - "priority/p2"
+    depends_on:
+      - S7-DP-02
+    acceptance:
+      - "configs/data/feedback.yaml loaded by pipeline config module"
+      - "feedback/incoming/ JSONL validated as FeedbackRecord on ingest"
+      - "scripts/apply_feedback.py stub validates input and prints planned sink actions (full logic in S8-05)"
+      - "Documented RADA RaftAuditor and TailWarp stress as expected sources"
+      - "Unit test on synthetic FeedbackRecord fixture"
+    artifacts:
+      - "scripts/apply_feedback.py"
+      - "tests/unit/test_feedback_record.py"
+
+  - id: S7-DP-08
+    title: "README — data platform section, quickstart, and risk-training identity alignment"
+    status: completed
+    priority: p0
+    area: docs
+    milestone: "S7-DP - Data platform"
+    due: 2026-07-05
+    labels:
+      - "sprint/S7-DP"
+      - "area/docs"
+      - "type/docs"
+      - "priority/p0"
+    depends_on:
+      - S7-DP-01
+      - S7-DP-05
+    acceptance:
+      - "README leads with Risk Aware Framework for Training Language Models (extends S0-02)"
+      - "New Data platform section: purpose, three-command quickstart (build_dataset, train, apply_feedback)"
+      - "Table of record cards (EngineLabelRow, PreferencePair, ToolCallExample) with when-to-use"
+      - "Example configs/data/train.yaml snippet inline or linked"
+      - "Link to docs/data-platform.md and docs/benchmarks/BENCHMARK.md"
+      - "RAG benchmark demoted to deferred auxiliary appendix with one-line pointer"
+      - "Cross-project note: RADA exports FeedbackRecord; raft-lm consumes via apply_feedback"
+    artifacts:
+      - "README.md"
+      - "docs/data-platform.md"

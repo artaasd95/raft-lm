@@ -1,9 +1,9 @@
+# Risk-Aware Fine-Tuning — training-only compose
 services:
   train:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     volumes:
       - ./data:/app/data
       - ./experiments:/app/experiments
-    command: ["python", "scripts/train.py", "--config", "configs/risk_training.yaml"]
+      - ./checkpoints:/app/checkpoints
+    command: ["python", "scripts/train.py", "--config", "configs/methods/ppo_env.yaml"]

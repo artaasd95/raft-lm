@@ -1,0 +1,10 @@
+guidance:
+  enabled: true
+  num_classes: 3
+  max_depth: 3
+  doubt_echo_threshold: 0.6
+items:
+  - record_id: smoke-1
+    prompt: "Given elevated CVaR, should we reduce exposure?"
+    features: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    risk_domain: market

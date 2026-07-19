@@ -1,37 +1,49 @@
 name: CI
 
 on:
-  push:
-    branches: [main, develop, master]
-  pull_request:
+  workflow_dispatch:
+    inputs:
+      build_docs:
+        description: Build Sphinx docs
+        required: false
+        default: false
+        type: boolean
+      run_gpu_tests:
+        description: Run GPU-marked tests (requires CUDA runner)
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   lint:
     runs-on: ubuntu-latest
+    environment: ci
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install package
-        run: pip install -e ".[dev,benchmark]"
+        run: pip install -e ".[dev,hf]"
       - name: Ruff
-        run: ruff check src tests scripts storage runpod
+        run: ruff check src tests scripts
 
   typecheck:
     runs-on: ubuntu-latest
+    environment: ci
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install package
-        run: pip install -e ".[dev,benchmark]"
+        run: pip install -e ".[dev,hf]"
       - name: Mypy
         run: mypy src
 
   test:
     runs-on: ubuntu-latest
+    environment: ci
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -41,6 +53,30 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install -e ".[dev,benchmark]"
-      - name: Pytest
-        run: pytest -q --tb=short -m "not gpu"
+          pip install -e ".[dev,hf]"
+      - name: Pytest with coverage
+        run: |
+          pytest -q --tb=short -m "not gpu and not ray" \
+            --cov=src/algorithms --cov=src/trainers --cov=src/search --cov=src/rewards --cov=src/generation \
+            --cov-report=term-missing \
+            --cov-fail-under=55
+      - name: GPU tests (optional)
+        if: ${{ inputs.run_gpu_tests }}
+        run: pytest -q --tb=short -m gpu
+
+  docs:
+    if: ${{ inputs.build_docs }}
+    runs-on: ubuntu-latest
+    environment: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install docs deps
+        run: |
+          pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[docs,hf]"
+      - name: Sphinx build
+        run: sphinx-build -W -b html docs docs/_build/html

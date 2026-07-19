@@ -65,7 +65,7 @@ def load_hf_safetensors(
         weights_path = candidate
 
     try:
-        from safetensors.torch import load_file  # type: ignore
+        from safetensors.torch import load_file
     except ImportError as exc:
         raise ImportError("load_hf_safetensors requires `pip install safetensors`") from exc
 
@@ -104,6 +104,8 @@ def load_from_hub_or_local(
     Hub: uses `huggingface_hub` snapshot when available.
     """
     local = Path(model_id_or_path)
+    if _looks_like_local_path(model_id_or_path) and not local.exists():
+        raise FileNotFoundError(model_id_or_path)
     if local.exists():
         if local.is_file() and local.suffix in {".pt", ".pth"}:
             if model is None:
@@ -124,7 +126,7 @@ def load_from_hub_or_local(
         raise FileNotFoundError(f"No recognized weights under {local}")
 
     try:
-        from huggingface_hub import snapshot_download  # type: ignore
+        from huggingface_hub import snapshot_download
     except ImportError as exc:
         raise ImportError(
             "Hub loading requires `pip install huggingface_hub` or a local path"
@@ -169,7 +171,7 @@ class _StateDictModule(torch.nn.Module):
         super().__init__()
         self._state_dict = state_dict
 
-    def state_dict(self, *args: Any, **kwargs: Any) -> Dict[str, torch.Tensor]:
+    def state_dict(self, *args: Any, **kwargs: Any) -> Dict[str, torch.Tensor]:  # type: ignore[override]
         return self._state_dict
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

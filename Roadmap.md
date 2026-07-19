@@ -1,44 +1,30 @@
 # RAFT-LM Roadmap
 
-**Identity:** Risk Aware Framework for Training LMs ([RF-2026-28](docs/vault/Decision-Log.md))
+**Identity:** Risk-Aware Fine-Tuning for training LLMs on financial risk-aware decision making.
 
-## Now (S9 — TBD)
-
-| ID | Deliverable | Status |
-|----|-------------|--------|
-| — | Next vertical slice (see vault hub) | Planning |
-
-## Shipped (S7 — data platform)
+## Shipped (v0.2 restructure)
 
 | ID | Deliverable | Status |
 |----|-------------|--------|
-| S7-DP-01…08 | Data platform vertical slice | Done — `issues/sprint-s7.yaml` |
-| S0-03 | Risk-training benchmark contract (draft) | `docs/benchmarks/BENCHMARK.md` |
-| S0-01…02 | Vault + README realignment | `docs/vault/`, README |
+| RL-01 | RL-first package layout (`algorithms/`, `trainers/`, `search/`) | Done |
+| RL-02 | Remove inference/RAG/serving plane | Done |
+| RL-03 | GiGPO advantage + smoke backend | Done |
+| RL-04 | ReST-MCTS* search scaffold + CLI | Done |
+| RL-05 | Custom rewards directory + registry | Done |
+| RL-06 | Config tree rewrite + generation mock | Done |
+| RL-07 | Training-only Docker + manual CI | Done |
+| RL-08 | wandb/comet/ray optional extras | Done |
 
-## Shipped (S8 — policy, logging, loaders)
-
-| ID | Deliverable | Status |
-|----|-------------|--------|
-| S8-01 | `PolicyRegistry` + policy YAML/JSON | `src/training/policies/` |
-| S8-02 | `BaseExperimentLogger` (local, W&B, Comet, optional DB) | `src/logging/` |
-| S8-03 | Unified model loaders (PyTorch, HF safetensors, hub/local) | `src/models/loaders/` |
-| S8-04 | `train.py --policy` + local experiment logger | `scripts/train.py` |
-
-## Later (task 50+)
+## Next
 
 | ID | Deliverable |
 |----|-------------|
-| SP-TRAIN-* | Multi-seed risk-training runs with published artifacts |
-| SP-BENCH-* | Live risk-training + RAG benchmark runs |
-| — | LLM fine-tuning beyond MLP baseline |
-| — | Hydra/OmegaConf for large experiment matrices |
+| RL-09 | Full GPU PEFT/DPO optimizer loops on tiny HF model |
+| RL-10 | Real multi-GPU LM RL (DDP/FSDP on causal LM) |
+| RL-11 | Multi-turn GiGPO agent env with tool calls |
+| RL-12 | Preference JSONL from search → DPO train at scale |
 
-## Superseded / frozen
+## Explicit non-goals
 
-| Item | Disposition |
-|------|-------------|
-| S6-01…S6-05 RAG dashboard expansion | Superseded — not on risk-training path |
-| `financial_policy_v1` RAG showcase | Frozen regression harness |
-
-See [issues/sprint-s7.yaml](issues/sprint-s7.yaml) and [issues/sprint-s8.yaml](issues/sprint-s8.yaml) for sprint card detail.
+- Inference serving, RAG product, BYOK pipelines
+- Production deployment containers (training-only Docker only)

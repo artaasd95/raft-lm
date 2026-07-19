@@ -1,0 +1,265 @@
+# Canonical machine-readable issue seeds for raft-lm.
+# Edits here drive GitHub issue sync (.github/workflows/raft-lm-sync-issues.yml).
+# Set `status: completed` to close an existing seeded GitHub issue during sync.
+# Human narrative stays in ../Action-Queue.md, ../Roadmap.md, and ../ENTERPRISE-RAG-ACCURACY-ENGINE-ROADMAP.md.
+# Active implementation seeds: sprint-s5.yaml (S5-*). Completed: sprint-s3.yaml, sprint-s4.yaml. Queued: sprint-s6.yaml.
+---
+version: 2
+archived: true
+sprint: S2
+sprint_start: 2026-05-12
+sprint_target_end: 2026-05-26
+repo: artaasd95/raft-lm
+issues:
+  - id: S1-01
+    title: "Implement runnable scripts/train.py with checkpoint and metrics under experiments/results/"
+    status: completed
+    priority: p1
+    area: backend
+    milestone: "v0.1 — Runnable + honest"
+    due: 2026-05-24
+    labels:
+      - "sprint/S1"
+      - "area/train"
+      - "type/task"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "Config loads; seed set; toy or file data path runs end-to-end"
+      - "Checkpoint and metrics written under experiments/results/<run_id>/"
+      - "README documents the command that was verified"
+    artifacts:
+      - "scripts/train.py"
+
+  - id: S1-02
+    title: "Harden config schema, config_version, and validation in src/utils/config.py"
+    status: completed
+    priority: p1
+    area: backend
+    milestone: "v0.1 — Runnable + honest"
+    due: 2026-05-24
+    labels:
+      - "sprint/S1"
+      - "area/train"
+      - "type/task"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "Schema and config_version enforced with actionable validation errors"
+      - "experiments/configs/example_config.json matches the schema"
+    artifacts:
+      - "src/utils/config.py"
+      - "experiments/configs/example_config.json"
+
+  - id: S1-03
+    title: "Add mini integration test for the train path (no placeholder-only coverage)"
+    status: completed
+    priority: p1
+    area: backend
+    milestone: "v0.1 — Runnable + honest"
+    due: 2026-05-31
+    labels:
+      - "sprint/S1"
+      - "area/tests"
+      - "type/task"
+      - "priority/p1"
+    depends_on:
+      - S1-01
+    acceptance:
+      - "Integration test exercises a minimal train run (fast, CI-friendly)"
+      - "Active suites do not rely on TODO/pass-only tests for this path"
+    artifacts: []
+
+  - id: S1-04
+    title: "Stub docs/benchmarks/BENCHMARK.md with unfilled protocol (splits, metrics, baselines)"
+    status: completed
+    priority: p2
+    area: docs
+    milestone: "v0.2 — Benchmark v1 (prep)"
+    due: 2026-06-07
+    labels:
+      - "sprint/S1"
+      - "area/benchmark"
+      - "type/docs"
+      - "priority/p2"
+    depends_on: []
+    acceptance:
+      - "Frozen task, splits, metrics, ≥2 baselines, budget, ≥3 seeds are listed as TBD or placeholders"
+      - "Aligned with Roadmap v0.2 benchmark intent"
+    artifacts:
+      - "docs/benchmarks/BENCHMARK.md"
+
+  - id: S1-05
+    title: "scripts/evaluate.py: checkpoint path and unified JSON report"
+    status: completed
+    priority: p2
+    area: backend
+    milestone: "v0.2 — Benchmark v1 (prep)"
+    due: 2026-06-14
+    labels:
+      - "sprint/S1"
+      - "area/eval"
+      - "type/task"
+      - "priority/p2"
+    depends_on:
+      - S1-01
+    acceptance:
+      - "CLI accepts checkpoint path and emits a single structured JSON report"
+      - "Report sections cover task and risk groups as per roadmap"
+    artifacts:
+      - "scripts/evaluate.py"
+
+  - id: S1-06
+    title: "pyproject.toml and one-command dev quality (format/lint/test) documented in README"
+    status: completed
+    priority: p2
+    area: tooling
+    milestone: "v0.1 — Runnable + honest"
+    due: 2026-06-07
+    labels:
+      - "sprint/S1"
+      - "area/tooling"
+      - "type/task"
+      - "priority/p2"
+    depends_on: []
+    acceptance:
+      - "pyproject.toml defines dev dependencies and tool config"
+      - "README states the exact command(s) for format, lint, and test"
+    artifacts:
+      - "pyproject.toml"
+
+  - id: S2-01
+    title: "Lock Enterprise RAG benchmark corpus, scope, and claim wording"
+    status: completed
+    priority: p1
+    area: docs
+    milestone: "S2 - Enterprise RAG benchmark contract"
+    due: 2026-05-15
+    labels:
+      - "sprint/S2"
+      - "area/benchmark"
+      - "type/docs"
+      - "priority/p1"
+    depends_on: []
+    acceptance:
+      - "One legal, financial, or policy corpus is selected or represented by a bundled sample"
+      - "Claim wording is future-tense until benchmark artifacts exist"
+      - "README and BENCHMARK.md state Standard RAG vs RAFT-LM as the finite showcase comparison"
+    artifacts:
+      - "docs/benchmarks/BENCHMARK.md"
+      - "README.md"
+
+  - id: S2-02
+    title: "Define Standard RAG baseline contract with identical data, prompts, model, and budget"
+    status: completed
+    priority: p1
+    area: ai
+    milestone: "S2 - Enterprise RAG benchmark contract"
+    due: 2026-05-18
+    labels:
+      - "sprint/S2"
+      - "area/rag"
+      - "type/task"
+      - "priority/p1"
+    depends_on:
+      - S2-01
+    acceptance:
+      - "Baseline specifies ingestion, chunking, embeddings, vector store, top-k, prompt, generator, and citation rules"
+      - "Budget controls match RAFT-LM path for retrieval depth, context length, model/provider, and run count"
+      - "Baseline outputs are saved to the same report schema as RAFT-LM outputs"
+    artifacts:
+      - "src/rag/pipelines.py"
+      - "src/rag/retrievers.py"
+      - "docs/benchmarks/BENCHMARK.md"
+
+  - id: S2-03
+    title: "Define RAFT-LM v1 path without changing the existing risk-aware foundation"
+    status: completed
+    priority: p1
+    area: ai
+    milestone: "S2 - Enterprise RAG benchmark contract"
+    due: 2026-05-20
+    labels:
+      - "sprint/S2"
+      - "area/rag"
+      - "type/task"
+      - "priority/p1"
+    depends_on:
+      - S2-02
+    acceptance:
+      - "RAFT-LM v1 is scoped to distractor-aware retrieval, evidence policy, or RAFT-style data builder before broad fine-tuning"
+      - "Existing src/metrics, src/losses, src/training, and experiments remain the risk/experiment backbone"
+      - "No model zoo, serving platform, or multi-vector-store expansion enters this sprint"
+    artifacts:
+      - "src/rag/pipelines.py"
+      - "src/evals/benchmark_schema.py"
+      - "src/evals/hallucination_risk.py"
+
+  - id: S2-04
+    title: "Specify Ragas metric harness and hallucination severity score"
+    status: completed
+    priority: p1
+    area: scientific-math
+    milestone: "S2 - Enterprise RAG benchmark contract"
+    due: 2026-05-22
+    labels:
+      - "sprint/S2"
+      - "area/eval"
+      - "type/task"
+      - "priority/p1"
+    depends_on:
+      - S2-01
+    acceptance:
+      - "Metric list includes Context Precision and Faithfulness at minimum"
+      - "Optional answer correctness or semantic similarity is documented if available"
+      - "Hallucination severity maps failures to legal, financial, compliance, or operational risk"
+    artifacts:
+      - "src/evals/ragas_runner.py"
+      - "src/evals/hallucination_risk.py"
+      - "docs/benchmarks/BENCHMARK.md"
+
+  - id: S2-05
+    title: "Define benchmark report, dashboard, and artifact schema"
+    status: completed
+    priority: p2
+    area: frontend
+    milestone: "S2 - Enterprise RAG benchmark contract"
+    due: 2026-05-24
+    labels:
+      - "sprint/S2"
+      - "area/demo"
+      - "type/docs"
+      - "priority/p2"
+    depends_on:
+      - S2-04
+    acceptance:
+      - "Report schema saves JSON, CSV, markdown summary, and chart-ready comparison data"
+      - "Dashboard panels compare Standard RAG vs RAFT-LM, citations, Ragas scores, and severity buckets"
+      - "Every displayed number traces to a saved benchmark artifact"
+    artifacts:
+      - "src/evals/report_writer.py"
+      - "src/demo/streamlit_app.py"
+      - "docs/benchmarks/results/"
+
+  - id: S2-06
+    title: "Document Docker demo boundary and environment variables"
+    status: completed
+    priority: p2
+    area: tooling
+    milestone: "S2 - Enterprise RAG benchmark contract"
+    due: 2026-05-26
+    labels:
+      - "sprint/S2"
+      - "area/tooling"
+      - "type/docs"
+      - "priority/p2"
+    depends_on:
+      - S2-05
+    acceptance:
+      - "Docker scope is local benchmark and demo, not production SaaS deployment"
+      - ".env.example lists model provider, embedding model, generation model, Ragas settings, and benchmark mode"
+      - "make demo and make benchmark are documented as targets only after entrypoints exist"
+    artifacts:
+      - "deploy/Dockerfile"
+      - "deploy/docker-compose.yml"
+      - ".env.example"

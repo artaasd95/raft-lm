@@ -1,3 +1,2 @@
-# Canonical dependencies live in pyproject.toml.
-# Install with: pip install -e '.[dev]'
--e .
+# Risk-Aware Fine-Tuning for training LLMs
+-e ".[dev,hf]"

@@ -1,6 +1,6 @@
 """Unit tests for unlabeled guidance dataclasses."""
 
-from src.unlabeled_guidance.nodes import GuidanceItem, GuidanceResult, HypothesisNode, PGTSAction
+from src.search.pgts.nodes import GuidanceItem, GuidanceResult, HypothesisNode, PGTSAction
 
 
 def test_guidance_item_from_row():
