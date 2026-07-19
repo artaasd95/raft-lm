@@ -82,7 +82,7 @@ def main():
     )
 
     if args.data_config is not None:
-        from src.data_platform.config import load_pipeline_config
+        from src.data.pipeline.config import load_pipeline_config
 
         pipeline_config = load_pipeline_config(_resolve_data_config(args.data_config, REPO_ROOT))
         processed_dir = pipeline_config.resolved_output_dir(REPO_ROOT)

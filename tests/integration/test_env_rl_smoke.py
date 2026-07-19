@@ -8,7 +8,7 @@ import pytest
 
 pytest.importorskip("torch")
 
-from src.training.backends.env_rl_backend import DQNEnvBackend, PPOEnvBackend
+from src.trainers.env_rl_backend import DQNEnvBackend, PPOEnvBackend
 
 
 @pytest.mark.timeout(60)

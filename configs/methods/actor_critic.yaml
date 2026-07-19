@@ -1,0 +1,19 @@
+method: actor_critic
+experiment_name: actor_critic_smoke
+description: Classical PPO on risk allocation env (alias of ppo_env)
+training:
+  backend: ppo_env
+  num_epochs: 2
+  seed: 42
+  device: cpu
+  optimizer:
+    type: Adam
+    lr: 0.001
+    weight_decay: 0.0
+  loss:
+    type: CrossEntropyLoss
+  env:
+    name: RiskAllocationEnv
+    max_steps: 32
+output:
+  results_dir: experiments/results

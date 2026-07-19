@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.unlabeled_guidance.errors import GuidanceConfigError, MissingLabelError
+from src.search.errors import GuidanceConfigError, MissingLabelError
 
 
 def test_missing_label_error_message():

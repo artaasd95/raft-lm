@@ -9,7 +9,7 @@ import torch
 
 from src.models.base_models import SimpleMLP
 from src.models.loaders.unified import UnifiedModelLoader
-from src.training.backends.mlp_backend import _build_dataloaders, _evaluate_model
+from src.trainers.mlp_backend import _build_dataloaders, _evaluate_model
 from src.training.loss_factory import build_loss
 from src.utils.config import load_config, resolve_config
 from src.utils.reproducibility import get_device

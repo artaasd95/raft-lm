@@ -13,7 +13,7 @@ from typing import Any, Dict, Iterable, Mapping, MutableMapping, Optional, Type
 import yaml
 
 from src.domain.specs import SUPPORTED_METHODS, UNSLOTH_ALLOWED_METHODS
-from src.training.constants import SUPPORTED_BACKENDS
+from src.trainers.constants import SUPPORTED_BACKENDS
 
 CONFIG_VERSION = 1
 
@@ -168,10 +168,10 @@ def validate_config(config: Dict[str, Any]) -> bool:
         supported = ", ".join(sorted(SUPPORTED_METHODS))
         raise ValueError(f"Unsupported method {method!r}. Supported: {supported}")
 
-    if method in {"ppo_env", "dqn_env"}:
+    if method in {"ppo_env", "dqn_env", "actor_critic"}:
         if "training" not in config:
             raise ValueError("Missing required config field: training")
-    elif method in {"dpo", "kto", "ppo_lm", "grpo"}:
+    elif method in {"dpo", "kto", "ppo_lm", "grpo", "gigpo", "sft"}:
         if "training" not in config:
             raise ValueError("Missing required config field: training")
     else:
@@ -196,8 +196,8 @@ def validate_config(config: Dict[str, Any]) -> bool:
         "reward",
         "algorithm",
         "lora",
-        "inference",
-        "runtime_llm_provider",
+        "generation",
+        "distributed",
     }
     _validate_known_fields(config, "", top_level_fields)
 
@@ -207,11 +207,11 @@ def validate_config(config: Dict[str, Any]) -> bool:
             f"Unsloth backend only supports supervised method, got {method!r}. Use peft."
         )
 
-    if method in {"ppo_env", "dqn_env"}:
+    if method in {"ppo_env", "dqn_env", "actor_critic"}:
         _validate_env_rl_config(config)
         return True
 
-    if method in {"dpo", "kto", "ppo_lm", "grpo"}:
+    if method in {"dpo", "kto", "ppo_lm", "grpo", "gigpo", "sft"}:
         _validate_alignment_config(config)
         return True
 
@@ -265,7 +265,7 @@ def _validate_alignment_config(config: Dict[str, Any]) -> None:
 
 def _validate_reward(reward: Any) -> None:
     _require_mapping(reward, "reward")
-    _validate_known_fields(reward, "reward", {"name", "components", "custom_module"})
+    _validate_known_fields(reward, "reward", {"name", "components", "custom_module", "path", "class_path", "pnl_weight", "risk_weight", "alpha"})
     if reward.get("components") is not None:
         if not isinstance(reward["components"], list):
             raise ValueError("Invalid config field reward.components: expected list")
@@ -384,6 +384,7 @@ def _validate_training(training: Any) -> None:
             "resume_from_checkpoint",
             "unlabeled_guidance",
             "llm",
+            "env",
         },
     )
     backend = training.get("backend", "mlp")

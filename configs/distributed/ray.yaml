@@ -1,0 +1,2 @@
+strategy: ray
+inner_backend: grpo

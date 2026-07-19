@@ -5,11 +5,11 @@ import pytest
 
 pytest.importorskip("torch")
 
-from src.rl.algorithms.dqn import DQNAgent
-from src.rl.algorithms.ppo import PPOAgent
-from src.rl.buffers.replay import ReplayBuffer
-from src.rl.buffers.rollout import RolloutBuffer
-from src.rl.envs.risk_allocation import RiskAllocationEnv
+from src.algorithms.value.dqn import DQNAgent
+from src.algorithms.actor_critic.ppo import PPOAgent
+from src.buffers.replay import ReplayBuffer
+from src.buffers.rollout import RolloutBuffer
+from src.envs.risk_allocation import RiskAllocationEnv
 
 
 def test_risk_allocation_env_api():

@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-# Detect latest checkpoint and resume RunPod training.
-set -euo pipefail
-
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "${REPO_ROOT}"
-
-python runpod/train.py --resume auto "$@"

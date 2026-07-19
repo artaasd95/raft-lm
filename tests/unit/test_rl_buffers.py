@@ -5,9 +5,9 @@ import pytest
 
 pytest.importorskip("torch")
 
-from src.rl.algorithms.gae import compute_gae
-from src.rl.buffers.replay import ReplayBuffer
-from src.rl.buffers.rollout import RolloutBuffer
+from src.algorithms.actor_critic.gae import compute_gae
+from src.buffers.replay import ReplayBuffer
+from src.buffers.rollout import RolloutBuffer
 
 
 def test_rollout_buffer_shapes():

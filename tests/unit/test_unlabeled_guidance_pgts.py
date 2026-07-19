@@ -1,8 +1,8 @@
 """Unit tests for PGTS navigation."""
 
-from src.unlabeled_guidance.config import GuidanceConfig
-from src.unlabeled_guidance.nodes import GuidanceItem, PGTSAction
-from src.unlabeled_guidance.pgts import (
+from src.search.config import GuidanceConfig
+from src.search.pgts.nodes import GuidanceItem, PGTSAction
+from src.search.pgts.pgts import (
     decide_action,
     expand_hypotheses,
     feature_prior,
@@ -55,7 +55,7 @@ def test_bod_keeps_more_children_on_high_echo():
 
 
 def test_decide_action_terminates_at_max_depth():
-    from src.unlabeled_guidance.nodes import HypothesisNode
+    from src.search.pgts.nodes import HypothesisNode
 
     config = GuidanceConfig(max_depth=2)
     node = HypothesisNode(

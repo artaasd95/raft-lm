@@ -6,13 +6,13 @@ import pytest
 pytest.importorskip("torch")
 import torch
 
-from src.alignment.algorithms.dpo import dpo_loss
-from src.alignment.algorithms.grpo import compute_grpo_advantages
-from src.alignment.algorithms.kl import kl_divergence
-from src.alignment.algorithms.kto import kto_loss
-from src.alignment.algorithms.ppo_lm import ppo_lm_loss
-from src.alignment.datasets.preference import PreferenceDataset
-from src.data_platform.cards import PreferencePair
+from src.algorithms.preference.dpo import dpo_loss
+from src.algorithms.on_policy.grpo import compute_grpo_advantages
+from src.algorithms.preference.kl import kl_divergence
+from src.algorithms.preference.kto import kto_loss
+from src.algorithms.on_policy.ppo_lm import ppo_lm_loss
+from src.algorithms.datasets.preference import PreferenceDataset
+from src.data.pipeline.cards import PreferencePair
 
 
 def test_dpo_loss_prefers_chosen():

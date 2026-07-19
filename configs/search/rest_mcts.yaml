@@ -1,0 +1,7 @@
+max_depth: 4
+max_children: 3
+exploration_c: 1.4
+risk_weight: 0.5
+reward_weight: 0.5
+root_action: hold
+candidate_actions: [hold, reduce, hedge]

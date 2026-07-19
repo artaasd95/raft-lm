@@ -11,10 +11,10 @@ import yaml
 pytest.importorskip("torch", reason="PyTorch not available", exc_type=ImportError)
 
 from scripts.train import run_training
-from src.data_platform.config import load_pipeline_config
-from src.data_platform.pipeline import run_pipeline
-from src.training.backends.mlp_backend import _build_dataloaders_from_platform
-from src.unlabeled_guidance.errors import MissingLabelError
+from src.data.pipeline.config import load_pipeline_config
+from src.data.pipeline.pipeline import run_pipeline
+from src.trainers.mlp_backend import _build_dataloaders_from_platform
+from src.search.errors import MissingLabelError
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

@@ -1,40 +1,30 @@
 # RAFT-LM Roadmap
 
-**Identity:** Risk-Aware RL Framework for Training & Aligning LMs (see [ADR 0003](docs/adr/0003-hybrid-rl-architecture.md))
+**Identity:** Risk-Aware Fine-Tuning for training LLMs on financial risk-aware decision making.
 
-## Now — Hybrid RL redesign (shipped in tree)
+## Shipped (v0.2 restructure)
 
 | ID | Deliverable | Status |
 |----|-------------|--------|
-| RL-01 | Reward framework (`src/rewards/`) | Done |
-| RL-02 | Classical env PPO + DQN | Done |
-| RL-03 | DPO/KTO + PPO-LM/GRPO backends | Done |
-| RL-04 | PEFT LoRA loader + `peft` backend | Done |
-| RL-05 | `scripts/infer.py` inference plane | Done |
-| RL-06 | Sphinx docs reorder + RL narrative | Done |
-| RL-07 | Method YAML configs | Done |
+| RL-01 | RL-first package layout (`algorithms/`, `trainers/`, `search/`) | Done |
+| RL-02 | Remove inference/RAG/serving plane | Done |
+| RL-03 | GiGPO advantage + smoke backend | Done |
+| RL-04 | ReST-MCTS* search scaffold + CLI | Done |
+| RL-05 | Custom rewards directory + registry | Done |
+| RL-06 | Config tree rewrite + generation mock | Done |
+| RL-07 | Training-only Docker + manual CI | Done |
+| RL-08 | wandb/comet/ray optional extras | Done |
 
 ## Next
 
 | ID | Deliverable |
 |----|-------------|
-| RL-08 | Multi-seed RL benchmark table in README |
-| RL-09 | GPU-marked PEFT/DPO end-to-end on tiny HF model |
-| RL-10 | Preference JSONL from feedback → DPO train loop with optimizer |
-| RL-11 | Real multi-GPU LLM RL (honest scope — not started) |
+| RL-09 | Full GPU PEFT/DPO optimizer loops on tiny HF model |
+| RL-10 | Real multi-GPU LM RL (DDP/FSDP on causal LM) |
+| RL-11 | Multi-turn GiGPO agent env with tool calls |
+| RL-12 | Preference JSONL from search → DPO train at scale |
 
-## Shipped (prior)
+## Explicit non-goals
 
-| Area | Path |
-|------|------|
-| Risk MLP + CVaR losses | `src/training/backends/mlp_backend.py` |
-| Data platform | `src/data_platform/` |
-| RAG benchmark harness | `scripts/run_benchmark.py` |
-| Unsloth SFT | `src/training/backends/unsloth_trainer.py` |
-
-## Explicit non-goals (near term)
-
-- SAC/TD3/CQL classical suite
-- Multi-agent / Nash
-- C++/CUDA kernels
-- MkDocs (Sphinx is canonical)
+- Inference serving, RAG product, BYOK pipelines
+- Production deployment containers (training-only Docker only)

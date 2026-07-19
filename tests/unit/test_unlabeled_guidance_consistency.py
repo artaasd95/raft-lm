@@ -1,6 +1,6 @@
 """Unit tests for peer consistency verification."""
 
-from src.unlabeled_guidance.consistency import (
+from src.search.pgts.consistency import (
     mask_features,
     mask_trace,
     score_consistency_offline,

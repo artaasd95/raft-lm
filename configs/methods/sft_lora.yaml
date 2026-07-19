@@ -1,0 +1,22 @@
+method: sft
+experiment_name: sft_lora_smoke
+description: Supervised LoRA fine-tuning smoke (PEFT backend)
+model:
+  type: hf_lora
+  model_id: stub
+  lora:
+    enabled: true
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
+    target_modules: [q_proj, v_proj]
+generation:
+  backend: mock
+  risk_level: low
+training:
+  backend: peft
+  num_epochs: 1
+  seed: 42
+  device: cpu
+output:
+  results_dir: experiments/results

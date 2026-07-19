@@ -1,7 +1,7 @@
 raft-lm
 =======
 
-**Risk-Aware RL Framework for Training and Aligning Language Models** — hybrid RL (DPO, PPO-LM, GRPO, env PPO/DQN), extensible rewards, supervised risk training, and RAG/BYOK inference.
+**Risk-Aware Fine-Tuning for training LLMs** on financial risk-aware decision making.
 
 Build docs: ``cd docs && make html``
 
@@ -24,18 +24,11 @@ Build docs: ``cd docs && make html``
 
 .. toctree::
    :maxdepth: 2
-   :caption: Rewards
+   :caption: Rewards & search
 
    rewards/design
    rewards/custom-rewards
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Inference
-
-   inference/rag
-   inference/byok-and-local
-   inference/serving-adapters
+   unlabeled-guidance
 
 .. toctree::
    :maxdepth: 2
@@ -43,13 +36,6 @@ Build docs: ``cd docs && make html``
 
    config/yaml-reference
    artifacts-schema
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Benchmarks
-
-   benchmarks/BENCHMARK
-   benchmarks/reproduce
 
 .. toctree::
    :maxdepth: 1
@@ -60,13 +46,6 @@ Build docs: ``cd docs && make html``
 
 .. toctree::
    :maxdepth: 2
-   :caption: API Reference
+   :caption: API
 
    api/index
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

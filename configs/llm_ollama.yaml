@@ -1,3 +1,0 @@
-provider: ollama
-model_id: qwen2.5:0.5b
-base_url: http://localhost:11434

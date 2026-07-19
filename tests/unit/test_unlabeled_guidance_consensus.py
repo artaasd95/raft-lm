@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.unlabeled_guidance.consensus import aggregate_consensus, score_hypothesis_offline
+from src.search.pgts.consensus import aggregate_consensus, score_hypothesis_offline
 
 
 def test_aggregate_consensus_median():

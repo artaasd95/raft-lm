@@ -68,11 +68,11 @@ def test_ddp_backend_validates():
 
 
 def test_factory_backend_sync():
-    from src.training.constants import SUPPORTED_BACKENDS
+    from src.trainers.constants import SUPPORTED_BACKENDS
 
     cfg = deepcopy(DEFAULT_CONFIG)
     for backend in SUPPORTED_BACKENDS:
-        if backend in {"dpo", "kto", "ppo_lm", "grpo", "ppo_env", "dqn_env"}:
+        if backend in {"dpo", "kto", "ppo_lm", "grpo", "gigpo", "ppo_env", "dqn_env", "ray"}:
             continue
         cfg["training"]["backend"] = backend
         assert validate_config(cfg) is True

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from src.domain.specs import MethodSpec, UNSLOTH_ALLOWED_METHODS
-from src.training.backends.factory import get_training_backend, resolve_backend
+from src.trainers.factory import get_training_backend, resolve_backend
 from src.utils.config import load_config, resolve_config, validate_config
 
 
@@ -28,8 +28,8 @@ def run_training_orchestrated(
 
     if backend_name == "unsloth" and method not in UNSLOTH_ALLOWED_METHODS:
         raise ValueError(
-            f"Unsloth backend only supports method=supervised, got {method!r}. "
-            "Use training.backend: peft for DPO/PPO/GRPO."
+            f"Unsloth backend only supports method in {sorted(UNSLOTH_ALLOWED_METHODS)}, got {method!r}. "
+            "Use training.backend: peft for DPO/PPO/GRPO/GiGPO."
         )
 
     validate_config(config)

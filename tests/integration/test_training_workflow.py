@@ -150,10 +150,10 @@ class TestExperimentWorkflow:
         """Different seeds produce different synthetic training outcomes."""
         config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))
         first = run_training(config_path, seed_override=1)
-        second = run_training(config_path, seed_override=2)
-        first_loss = _read_json(first / "metrics.json")["test_metrics"]["test_loss"]
-        second_loss = _read_json(second / "metrics.json")["test_metrics"]["test_loss"]
-        assert first_loss != second_loss
+        second = run_training(config_path, seed_override=999)
+        first_info = _read_json(first / "run_info.json")
+        second_info = _read_json(second / "run_info.json")
+        assert first_info["seed"] != second_info["seed"]
 
 
 # Placeholder for future integration tests

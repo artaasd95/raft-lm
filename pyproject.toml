@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "raft-lm"
-version = "0.1.0"
-description = "Risk-Aware RL Framework for Training and Aligning Language Models"
+version = "0.2.0"
+description = "Risk-Aware Fine-Tuning for training LLMs on financial risk-aware decision making"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -32,20 +32,11 @@ dev = [
     "mypy>=1.8.0",
     "types-PyYAML",
 ]
-rl = [
-    "gymnasium>=0.29.0",
-]
 docs = [
     "sphinx>=7.0",
     "furo>=2024.1.29",
     "myst-parser>=2.0",
     "sphinx-autodoc-typehints>=2.0",
-]
-benchmark = [
-    "langgraph>=0.2.0",
-    "langchain-core>=0.3.0",
-    "ragas>=0.1.0",
-    "streamlit>=1.28.0",
 ]
 storage = [
     "boto3>=1.28.0",
@@ -78,6 +69,15 @@ unsloth = [
     "safetensors",
     "huggingface_hub",
 ]
+ray = [
+    "ray[train]>=2.9.0",
+]
+wandb = [
+    "wandb>=0.16.0",
+]
+comet = [
+    "comet_ml>=3.35.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -87,16 +87,17 @@ include = ["src*"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [
-    "gpu: requires CUDA GPU (Unsloth LoRA smoke)",
+    "gpu: requires CUDA GPU",
     "hf: requires transformers+peft installed",
     "slow: multi-second learning smoke",
+    "ray: requires ray installed",
 ]
-addopts = "-m 'not gpu'"
+addopts = "-m 'not gpu and not ray'"
 
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-exclude = ["notebooks", "data", "experiments/results"]
+exclude = ["notebooks", "data", "experiments/results", "docs/_build"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]

@@ -7,7 +7,7 @@ import pytest
 
 pytest.importorskip("torch")
 
-from src.training.backends.alignment_backend import DPOBackend
+from src.trainers.alignment_backend import DPOBackend
 
 
 def test_dpo_smoke_stub():

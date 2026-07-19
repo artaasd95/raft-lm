@@ -1,19 +1,19 @@
-.PHONY: test benchmark benchmark-raft benchmark-compare benchmark-smoke demo
+.PHONY: test train eval search docs lint
 
 test:
-	pytest
+	python -m pytest -q -m "not gpu and not ray"
 
-benchmark:
-	python scripts/run_benchmark.py --mode stub --pipeline standard_rag
+train:
+	python scripts/train.py --config configs/methods/grpo.yaml
 
-benchmark-raft:
-	python scripts/run_benchmark.py --mode stub --pipeline raft_lm
+eval:
+	python scripts/evaluate.py --help
 
-benchmark-compare:
-	python scripts/run_benchmark.py --mode stub --pipeline both
+search:
+	python scripts/run_search.py --config configs/search/pgts.yaml --output experiments/search_out.jsonl
 
-benchmark-smoke:
-	python scripts/run_benchmark.py --mode smoke --pipeline both --questions-limit 1
+lint:
+	ruff check src tests scripts
 
-demo:
-	streamlit run src/demo/streamlit_app.py
+docs:
+	cd docs && sphinx-build -b html . _build/html

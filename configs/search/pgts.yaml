@@ -1,0 +1,4 @@
+enabled: true
+num_classes: 3
+max_depth: 3
+doubt_echo_threshold: 0.6

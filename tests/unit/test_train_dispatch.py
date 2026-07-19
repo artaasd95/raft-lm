@@ -1,6 +1,6 @@
 """Train script method/backend dispatch tests."""
 
-from src.training.backends.factory import resolve_backend
+from src.trainers.factory import resolve_backend
 
 
 def test_resolve_backend_defaults_supervised_to_mlp():

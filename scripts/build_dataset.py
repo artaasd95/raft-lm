@@ -15,8 +15,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.data_platform.config import load_pipeline_config
-from src.data_platform.pipeline import run_pipeline
+from src.data.pipeline.config import load_pipeline_config
+from src.data.pipeline.pipeline import run_pipeline
 
 
 def main() -> None:

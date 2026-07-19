@@ -104,6 +104,8 @@ def load_from_hub_or_local(
     Hub: uses `huggingface_hub` snapshot when available.
     """
     local = Path(model_id_or_path)
+    if _looks_like_local_path(model_id_or_path) and not local.exists():
+        raise FileNotFoundError(model_id_or_path)
     if local.exists():
         if local.is_file() and local.suffix in {".pt", ".pth"}:
             if model is None:

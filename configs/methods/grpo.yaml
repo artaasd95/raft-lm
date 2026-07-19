@@ -3,16 +3,21 @@ experiment_name: grpo_smoke
 description: Group-relative policy optimization smoke
 algorithm:
   group_size: 2
+generation:
+  backend: mock
 training:
   backend: grpo
   num_epochs: 1
   seed: 42
   device: cpu
-  optimizer:
-    type: Adam
-    lr: 0.0002
-    weight_decay: 0.0
-  loss:
-    type: CrossEntropyLoss
+reward:
+  name: composite
+  components:
+    - name: task_accuracy
+      weight: 1.0
+    - name: risk_cvar
+      weight: 0.3
+      params:
+        alpha: 0.05
 output:
   results_dir: experiments/results

@@ -7,16 +7,16 @@ from pathlib import Path
 
 import pytest
 
-from src.data_platform.cards import (
+from src.data.pipeline.cards import (
     EngineLabelRow,
     FeedbackRecord,
     PreferencePair,
     ToolCallExample,
 )
-from src.data_platform.config import load_pipeline_config
-from src.data_platform.pipeline import run_pipeline
-from src.data_platform.sources.databricks import DatabricksSource
-from src.unlabeled_guidance.errors import MissingLabelError
+from src.data.pipeline.config import load_pipeline_config
+from src.data.pipeline.pipeline import run_pipeline
+from src.data.pipeline.sources.databricks import DatabricksSource
+from src.search.errors import MissingLabelError
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

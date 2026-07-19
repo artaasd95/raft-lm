@@ -9,21 +9,24 @@ from typing import Any, Dict, List, Optional
 SUPPORTED_METHODS = frozenset(
     {
         "supervised",
+        "sft",
         "dpo",
         "kto",
         "ppo_lm",
         "grpo",
+        "gigpo",
         "ppo_env",
+        "actor_critic",
         "dqn_env",
     }
 )
 
-UNSLOTH_ALLOWED_METHODS = frozenset({"supervised"})
+UNSLOTH_ALLOWED_METHODS = frozenset({"supervised", "sft"})
 
 
 @dataclass
 class LoRASpec:
-    """LoRA adapter configuration."""
+    """LoRA / QLoRA adapter configuration."""
 
     enabled: bool = True
     r: int = 16
@@ -31,6 +34,9 @@ class LoRASpec:
     lora_dropout: float = 0.05
     target_modules: List[str] = field(default_factory=lambda: ["q_proj", "v_proj"])
     bias: str = "none"
+    qlora: bool = False
+    load_in_4bit: bool = False
+    bnb_4bit_compute_dtype: str = "float16"
 
     @classmethod
     def from_dict(cls, data: Optional[Dict[str, Any]]) -> "LoRASpec":
@@ -43,6 +49,9 @@ class LoRASpec:
             lora_dropout=float(data.get("lora_dropout", 0.05)),
             target_modules=list(data.get("target_modules", ["q_proj", "v_proj"])),
             bias=str(data.get("bias", "none")),
+            qlora=bool(data.get("qlora", False)),
+            load_in_4bit=bool(data.get("load_in_4bit", data.get("qlora", False))),
+            bnb_4bit_compute_dtype=str(data.get("bnb_4bit_compute_dtype", "float16")),
         )
 
 
@@ -74,6 +83,9 @@ class AlgorithmSpec:
     group_size: int = 4
     beta: float = 0.1
     ref_free: bool = False
+    step_reward_gamma: float = 0.95
+    episode_reward_weight: float = 1.0
+    step_reward_weight: float = 1.0
 
     @classmethod
     def from_config(cls, cfg: Optional[Dict[str, Any]]) -> "AlgorithmSpec":
@@ -87,6 +99,9 @@ class AlgorithmSpec:
             group_size=int(cfg.get("group_size", 4)),
             beta=float(cfg.get("beta", 0.1)),
             ref_free=bool(cfg.get("ref_free", False)),
+            step_reward_gamma=float(cfg.get("step_reward_gamma", 0.95)),
+            episode_reward_weight=float(cfg.get("episode_reward_weight", 1.0)),
+            step_reward_weight=float(cfg.get("step_reward_weight", 1.0)),
         )
 
 
