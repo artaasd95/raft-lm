@@ -1,51 +1,40 @@
 # RAFT-LM Roadmap
 
-**Identity:** Risk Aware Framework for Training LMs ([RF-2026-28](docs/vault/Decision-Log.md))
+**Identity:** Risk-Aware RL Framework for Training & Aligning LMs (see [ADR 0003](docs/adr/0003-hybrid-rl-architecture.md))
 
-## Now (S9 — Benchmark Publication)
-
-| ID | Deliverable | Status |
-|----|-------------|--------|
-| S9-01 | Lightest multi-seed smoke (seeds 42, 123, 456) | Queued |
-| S9-02 | Execution report + QA | Queued |
-| S9-03 | SP-TRAIN: CE vs CVaR vs tail-aware × 3 seeds | Queued |
-| S9-04 | Fill README + BENCHMARK.md results table | Queued |
-| S9-05 | Engine-label dataset end-to-end train | Queued |
-| S9-06 | Refresh stale planning docs | Queued |
-
-Seeds: [issues/sprint-s9-benchmark-publication.yaml](issues/sprint-s9-benchmark-publication.yaml)
-
-## Shipped (S7 — data platform)
+## Now — Hybrid RL redesign (shipped in tree)
 
 | ID | Deliverable | Status |
 |----|-------------|--------|
-| S7-DP-01…08 | Data platform vertical slice | Done — `issues/sprint-s7.yaml` |
-| S0-03 | Risk-training benchmark contract (draft) | `docs/benchmarks/BENCHMARK.md` |
-| S0-01…02 | Vault + README realignment | `docs/vault/`, README |
+| RL-01 | Reward framework (`src/rewards/`) | Done |
+| RL-02 | Classical env PPO + DQN | Done |
+| RL-03 | DPO/KTO + PPO-LM/GRPO backends | Done |
+| RL-04 | PEFT LoRA loader + `peft` backend | Done |
+| RL-05 | `scripts/infer.py` inference plane | Done |
+| RL-06 | Sphinx docs reorder + RL narrative | Done |
+| RL-07 | Method YAML configs | Done |
 
-## Shipped (S8 — policy, logging, loaders)
-
-| ID | Deliverable | Status |
-|----|-------------|--------|
-| S8-01 | `PolicyRegistry` + policy YAML/JSON | `src/training/policies/` |
-| S8-02 | `BaseExperimentLogger` (local, W&B, Comet, optional DB) | `src/logging/` |
-| S8-03 | Unified model loaders (PyTorch, HF safetensors, hub/local) | `src/models/loaders/` |
-| S8-04 | `train.py --policy` + local experiment logger | `scripts/train.py` |
-
-## Later (task 50+)
+## Next
 
 | ID | Deliverable |
 |----|-------------|
-| SP-TRAIN-* | Multi-seed risk-training runs with published artifacts |
-| SP-BENCH-* | Live risk-training + RAG benchmark runs |
-| — | LLM fine-tuning beyond MLP baseline |
-| — | Hydra/OmegaConf for large experiment matrices |
+| RL-08 | Multi-seed RL benchmark table in README |
+| RL-09 | GPU-marked PEFT/DPO end-to-end on tiny HF model |
+| RL-10 | Preference JSONL from feedback → DPO train loop with optimizer |
+| RL-11 | Real multi-GPU LLM RL (honest scope — not started) |
 
-## Superseded / frozen
+## Shipped (prior)
 
-| Item | Disposition |
-|------|-------------|
-| S6-01…S6-05 RAG dashboard expansion | Superseded — not on risk-training path |
-| `financial_policy_v1` RAG showcase | Frozen regression harness |
+| Area | Path |
+|------|------|
+| Risk MLP + CVaR losses | `src/training/backends/mlp_backend.py` |
+| Data platform | `src/data_platform/` |
+| RAG benchmark harness | `scripts/run_benchmark.py` |
+| Unsloth SFT | `src/training/backends/unsloth_trainer.py` |
 
-See [issues/sprint-s7.yaml](issues/sprint-s7.yaml) and [issues/sprint-s8.yaml](issues/sprint-s8.yaml) for sprint card detail.
+## Explicit non-goals (near term)
+
+- SAC/TD3/CQL classical suite
+- Multi-agent / Nash
+- C++/CUDA kernels
+- MkDocs (Sphinx is canonical)

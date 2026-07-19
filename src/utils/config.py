@@ -12,12 +12,18 @@ from typing import Any, Dict, Iterable, Mapping, MutableMapping, Optional, Type
 
 import yaml
 
+from src.domain.specs import SUPPORTED_METHODS, UNSLOTH_ALLOWED_METHODS
+from src.training.constants import SUPPORTED_BACKENDS
 
 CONFIG_VERSION = 1
 
 SUPPORTED_MODELS = {"SimpleMLP", "hf_lora"}
-SUPPORTED_DATASETS = {"SyntheticRiskDataset", "SFTJsonl"}
-SUPPORTED_BACKENDS = {"mlp", "unsloth"}
+SUPPORTED_DATASETS = {
+    "SyntheticRiskDataset",
+    "SFTJsonl",
+    "PreferenceJsonl",
+    "EnvSynthetic",
+}
 SUPPORTED_LOSSES = {
     "CrossEntropyLoss",
     "MSELoss",
@@ -37,6 +43,11 @@ SUPPORTED_METRICS = {
     "constraint_violation_rate",
     "perplexity",
     "tail_error_rate",
+    "preference_accuracy",
+    "mean_reward",
+    "kl_to_ref",
+    "constraint_satisfaction",
+    "win_rate_vs_sft",
 }
 
 DEFAULT_CONFIG: Dict[str, Any] = {
@@ -152,15 +163,28 @@ def validate_config(config: Dict[str, Any]) -> bool:
     if not isinstance(config, dict):
         raise ValueError("Config root must be a JSON object")
 
-    required_fields = ("model", "data", "training")
-    for field in required_fields:
-        if field not in config:
-            raise ValueError(f"Missing required config field: {field}")
+    method = config.get("method", "supervised")
+    if method not in SUPPORTED_METHODS:
+        supported = ", ".join(sorted(SUPPORTED_METHODS))
+        raise ValueError(f"Unsupported method {method!r}. Supported: {supported}")
+
+    if method in {"ppo_env", "dqn_env"}:
+        if "training" not in config:
+            raise ValueError("Missing required config field: training")
+    elif method in {"dpo", "kto", "ppo_lm", "grpo"}:
+        if "training" not in config:
+            raise ValueError("Missing required config field: training")
+    else:
+        required_fields = ("model", "data", "training")
+        for field in required_fields:
+            if field not in config:
+                raise ValueError(f"Missing required config field: {field}")
 
     top_level_fields = {
         "config_version",
         "experiment_name",
         "description",
+        "method",
         "model",
         "data",
         "training",
@@ -169,8 +193,27 @@ def validate_config(config: Dict[str, Any]) -> bool:
         "output",
         "policy_id",
         "constraints",
+        "reward",
+        "algorithm",
+        "lora",
+        "inference",
+        "runtime_llm_provider",
     }
     _validate_known_fields(config, "", top_level_fields)
+
+    backend = config["training"].get("backend", "mlp")
+    if backend == "unsloth" and method not in UNSLOTH_ALLOWED_METHODS:
+        raise ValueError(
+            f"Unsloth backend only supports supervised method, got {method!r}. Use peft."
+        )
+
+    if method in {"ppo_env", "dqn_env"}:
+        _validate_env_rl_config(config)
+        return True
+
+    if method in {"dpo", "kto", "ppo_lm", "grpo"}:
+        _validate_alignment_config(config)
+        return True
 
     _require_int(config.get("config_version"), "config_version", minimum=1)
     _require_type(config.get("experiment_name"), str, "experiment_name")
@@ -196,8 +239,53 @@ def validate_config(config: Dict[str, Any]) -> bool:
         _validate_logging(config["logging"])
     if "output" in config:
         _validate_output(config["output"])
+    if "reward" in config:
+        _validate_reward(config["reward"])
+    if "algorithm" in config:
+        _validate_algorithm(config["algorithm"])
 
     return True
+
+
+def _validate_env_rl_config(config: Dict[str, Any]) -> None:
+    _require_mapping(config.get("training"), "training")
+    _validate_training(config["training"])
+    if "evaluation" in config:
+        _validate_evaluation(config["evaluation"])
+
+
+def _validate_alignment_config(config: Dict[str, Any]) -> None:
+    _require_mapping(config.get("training"), "training")
+    _validate_training(config["training"])
+    if "model" in config:
+        model = config["model"]
+        if model.get("type") == "hf_lora":
+            _validate_model(model, backend=config["training"].get("backend", "peft"))
+
+
+def _validate_reward(reward: Any) -> None:
+    _require_mapping(reward, "reward")
+    _validate_known_fields(reward, "reward", {"name", "components", "custom_module"})
+    if reward.get("components") is not None:
+        if not isinstance(reward["components"], list):
+            raise ValueError("Invalid config field reward.components: expected list")
+
+
+def _validate_algorithm(algorithm: Any) -> None:
+    _require_mapping(algorithm, "algorithm")
+    _validate_known_fields(
+        algorithm,
+        "algorithm",
+        {
+            "clip_eps",
+            "gae_lambda",
+            "gamma",
+            "kl_coef",
+            "group_size",
+            "beta",
+            "ref_free",
+        },
+    )
 
 
 def _deep_merge(defaults: Mapping[str, Any], overrides: Mapping[str, Any]) -> Dict[str, Any]:
@@ -254,6 +342,9 @@ def _validate_data(data: Any, backend: str = "mlp") -> None:
             raise ValueError("data.distilled_corpus is required when data_source=distilled")
         return
 
+    if dataset_type in {"PreferenceJsonl", "EnvSynthetic"}:
+        return
+
     _validate_known_fields(
         data,
         "data",
@@ -296,7 +387,7 @@ def _validate_training(training: Any) -> None:
         },
     )
     backend = training.get("backend", "mlp")
-    _require_choice(backend, SUPPORTED_BACKENDS, "training.backend")
+    _require_choice(backend, set(SUPPORTED_BACKENDS), "training.backend")
     _require_int(training.get("num_epochs"), "training.num_epochs", minimum=1)
     _require_int(training.get("seed"), "training.seed", minimum=0)
     _validate_device(training.get("device"))

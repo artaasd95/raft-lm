@@ -449,6 +449,29 @@ Clear description of issue
 - Relevant dependency versions
 ```
 
+## RL, rewards, and LoRA
+
+### Adding a training method
+
+1. Implement algorithm in `src/alignment/` or `src/rl/`.
+2. Add backend in `src/training/backends/` and register in `factory.py`.
+3. Extend `SUPPORTED_METHODS` in `src/domain/specs.py` and validation in `src/utils/config.py`.
+4. Add method YAML under `configs/methods/` and Sphinx page under `docs/training/`.
+5. Unit tests in `tests/unit/`; integration smoke in `tests/integration/`.
+
+### Custom reward functions
+
+Subclass `BaseReward` in `src/rewards/`, register in `src/rewards/registry.py`, document in `docs/rewards/custom-rewards.md`.
+
+### LoRA
+
+- **Default:** `transformers` + `peft` via `src/models/loaders/causal_peft.py` and `training.backend: peft`.
+- **Optional SFT accelerator:** Unsloth (`training.backend: unsloth`) — not valid for DPO/PPO-LM/GRPO.
+
+### Docs
+
+Build Sphinx: `cd docs && pip install -r requirements-docs.txt && make html`
+
 ## Getting Help
 
 - **Documentation**: Start with [docs/project-plan-docs/00-START-HERE.md](docs/project-plan-docs/00-START-HERE.md)

@@ -24,7 +24,8 @@ if str(REPO_ROOT) not in sys.path:
 from src.logging.experiment_logger import create_experiment_logger
 from src.llm_integration.checkpoint_export import CheckpointExporter
 from src.llm_integration.factory import create_llm_provider_for_name
-from src.training.backends.factory import get_training_backend
+from src.training.backends.factory import get_training_backend, resolve_backend
+from src.training.constants import SUPPORTED_BACKENDS
 from src.training.policies.registry import get_policy_registry
 from src.utils.config import load_config, resolve_config, save_config, validate_config
 from src.utils.reproducibility import get_device, get_git_commit_hash, set_seed
@@ -44,6 +45,7 @@ def run_training(
     export_for_rada: bool = False,
     epochs_override: Optional[int] = None,
     batch_size_override: Optional[int] = None,
+    method_override: Optional[str] = None,
 ) -> Path:
     """
     Run a complete config-driven training workflow.
@@ -70,6 +72,10 @@ def run_training(
         config["training"].setdefault("loss", {})["type"] = loss_override
     if backend_override is not None:
         config["training"]["backend"] = backend_override
+    if method_override is not None:
+        config["method"] = method_override
+        if backend_override is None:
+            config["training"]["backend"] = resolve_backend(config)
     if llm_provider is not None:
         # Validate provider alias/config early so runs fail fast.
         create_llm_provider_for_name(llm_provider)
@@ -206,9 +212,15 @@ def main():
     parser.add_argument(
         "--backend",
         type=str,
-        choices=["mlp", "unsloth", "ddp", "fsdp"],
+        choices=sorted(SUPPORTED_BACKENDS),
         default=None,
-        help="Override training backend (mlp, unsloth, ddp, fsdp)",
+        help="Override training backend",
+    )
+    parser.add_argument(
+        "--method",
+        type=str,
+        default=None,
+        help="Override config method (supervised, dpo, kto, ppo_lm, grpo, ppo_env, dqn_env)",
     )
     parser.add_argument(
         "--llm-provider",
@@ -248,6 +260,7 @@ def main():
         export_for_rada=args.export_for_rada,
         epochs_override=args.epochs,
         batch_size_override=args.batch_size,
+        method_override=args.method,
     )
     print(f"Training complete. Results saved to: {run_dir}")
 

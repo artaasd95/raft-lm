@@ -1,0 +1,33 @@
+method: dpo
+experiment_name: dpo_risk_preference_smoke
+description: DPO on preference pairs (stub or HF)
+model:
+  type: hf_lora
+  model_id: stub
+  lora:
+    enabled: true
+    r: 8
+    lora_alpha: 16
+    target_modules: [q_proj, v_proj]
+data:
+  dataset_type: PreferenceJsonl
+algorithm:
+  beta: 0.1
+training:
+  backend: dpo
+  num_epochs: 1
+  seed: 42
+  device: cpu
+  optimizer:
+    type: Adam
+    lr: 0.0002
+    weight_decay: 0.0
+  loss:
+    type: CrossEntropyLoss
+reward:
+  name: composite
+  components:
+    - name: task_accuracy
+      weight: 1.0
+output:
+  results_dir: experiments/results

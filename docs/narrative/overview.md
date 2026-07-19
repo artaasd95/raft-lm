@@ -1,11 +1,14 @@
 Overview
 ========
 
-raft-lm provides config-driven Unsloth LoRA training, risk metrics, and a unified data platform.
+**RAFT-LM** is a **Risk-Aware RL Framework for Training and Aligning Language Models**.
 
-See also the existing Markdown docs in this directory (``training.md``, ``data-platform.md``).
+Three pillars:
 
-RunPod execution
-----------------
+1. **Hybrid RL training** — supervised risk, DPO/KTO, PPO-LM/GRPO, classical env PPO/DQN
+2. **Extensible rewards** — composable YAML reward recipes wired to risk metrics
+3. **RAG + BYOK inference** — train with ``method:`` configs; serve with RAG and local/cloud LLMs
 
-Use ``runpod/train.py`` for tmux-safe GPU training with auto-resume and FTP storage sync.
+Quick links: :doc:`../getting-started`, :doc:`../training/lora-peft`, :doc:`../rewards/design`.
+
+Build full docs: ``cd docs && make html``.

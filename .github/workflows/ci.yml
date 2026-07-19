@@ -44,3 +44,19 @@ jobs:
           pip install -e ".[dev,benchmark]"
       - name: Pytest
         run: pytest -q --tb=short -m "not gpu"
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install docs deps
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[docs]"
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e .
+      - name: Sphinx build
+        run: sphinx-build -b html docs docs/_build/html
