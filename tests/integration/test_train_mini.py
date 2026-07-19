@@ -6,6 +6,8 @@ import pytest
 
 pytest.importorskip("torch", reason="PyTorch not available", exc_type=ImportError)
 
+pytestmark = pytest.mark.slow
+
 from scripts.train import run_training
 from src.utils.config import load_config, resolve_config
 

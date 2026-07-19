@@ -84,7 +84,7 @@ def implied_volatility_bisection(
             spot, strike, time_to_expiry, risk_free_rate, sig, dividend_yield
         )
 
-    p_lo, p_hi = price(lo), price(hi)
+    _p_lo, p_hi = price(lo), price(hi)
     if market_price > p_hi:
         raise ValueError("market_price above BSM upper bound; widen hi")
     a, b = lo, hi

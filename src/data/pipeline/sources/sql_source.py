@@ -50,7 +50,7 @@ class SQLSource(BaseSource):
     def load_rows(self) -> List[Dict[str, Any]]:
         self._validate_query()
         try:
-            from sqlalchemy import create_engine, text  # type: ignore
+            from sqlalchemy import create_engine, text
         except ImportError as exc:
             raise ImportError(
                 "SQLSource requires `pip install sqlalchemy`. Use type: file for stubs."

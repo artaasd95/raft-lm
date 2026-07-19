@@ -5,7 +5,6 @@ Tests model evaluation, metric computation, and report generation.
 """
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -55,11 +54,12 @@ class TestEvaluationWorkflow:
         assert set(report.keys()) == {"task_metrics", "risk_metrics", "provenance"}
         assert "accuracy" in report["task_metrics"]
         assert "cvar" in report["risk_metrics"]
-    
+
     def test_risk_metric_computation(self):
         """CVaR helper returns expected tail mean for known losses."""
-        from src.metrics.risk_metrics import compute_cvar
         import torch
+
+        from src.metrics.risk_metrics import compute_cvar
 
         losses = torch.tensor([1.0, 2.0, 3.0, 10.0])
         assert compute_cvar(losses, alpha=0.75) == 10.0
@@ -110,7 +110,7 @@ class TestEvaluationWorkflow:
 
 class TestReportGeneration:
     """Test suite for report generation."""
-    
+
     def test_generate_evaluation_report(self, tmp_path):
         """evaluate_checkpoint returns task and risk metric sections."""
         from scripts.train import run_training

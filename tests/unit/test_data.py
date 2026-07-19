@@ -4,21 +4,22 @@ Unit tests for data loading and preprocessing.
 Tests dataset classes and dataloader functionality.
 """
 
-import pytest
 import numpy as np
+import pytest
+
 torch = pytest.importorskip("torch", reason="PyTorch not available", exc_type=ImportError)
-from src.data.datasets import BaseRiskDataset, SyntheticRiskDataset
-from src.data.dataloaders import create_dataloader
 from src.data.adapters import (
     build_aligned_panel,
     compute_f2_liquidity_features,
     compute_f3_dependence_features,
 )
+from src.data.dataloaders import create_dataloader
+from src.data.datasets import BaseRiskDataset, SyntheticRiskDataset
 
 
 class TestDatasets:
     """Test suite for dataset classes."""
-    
+
     def test_base_risk_dataset(self):
         """Test BaseRiskDataset functionality."""
         x = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
@@ -29,7 +30,7 @@ class TestDatasets:
         assert torch.equal(xi, x[1])
         assert yi.item() == 1
         assert ds.metadata["split"] == "train"
-    
+
     def test_synthetic_risk_dataset(self):
         """Test SyntheticRiskDataset."""
         x = torch.randn(4, 3)
@@ -44,7 +45,7 @@ class TestDatasets:
 
 class TestDataLoaders:
     """Test suite for dataloader utilities."""
-    
+
     def test_create_dataloader(self):
         """Test dataloader creation."""
         x = torch.randn(10, 2)
@@ -56,7 +57,7 @@ class TestDataLoaders:
         xb, yb = batches[0]
         assert xb.shape == (4, 2)
         assert yb.shape == (4,)
-    
+
     def test_dataloader_iteration(self):
         """Test iterating through dataloader."""
         x = torch.randn(7, 2)

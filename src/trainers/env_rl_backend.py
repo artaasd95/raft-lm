@@ -6,8 +6,10 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from src.algorithms.value.dqn import DQNAgent, DQNConfig
+from gymnasium.spaces import Box, Discrete
+
 from src.algorithms.actor_critic.ppo import PPOAgent, PPOConfig
+from src.algorithms.value.dqn import DQNAgent, DQNConfig
 from src.buffers.replay import ReplayBuffer
 from src.buffers.rollout import RolloutBuffer
 from src.envs.risk_allocation import RiskAllocationEnv
@@ -31,8 +33,12 @@ class PPOEnvBackend(TrainingBackend):
         ))
         algo = config.get("algorithm", {})
         env = RiskAllocationEnv(seed=config["training"]["seed"])
-        obs_dim = env.observation_space.shape[0]
-        action_dim = env.action_space.n
+        obs_space = env.observation_space
+        action_space = env.action_space
+        assert isinstance(obs_space, Box) and obs_space.shape is not None
+        assert isinstance(action_space, Discrete)
+        obs_dim = int(obs_space.shape[0])
+        action_dim = int(action_space.n)
         agent = PPOAgent(
             obs_dim,
             action_dim,
@@ -85,8 +91,12 @@ class DQNEnvBackend(TrainingBackend):
         ))
         algo = config.get("algorithm", {})
         env = RiskAllocationEnv(seed=config["training"]["seed"])
-        obs_dim = env.observation_space.shape[0]
-        action_dim = env.action_space.n
+        obs_space = env.observation_space
+        action_space = env.action_space
+        assert isinstance(obs_space, Box) and obs_space.shape is not None
+        assert isinstance(action_space, Discrete)
+        obs_dim = int(obs_space.shape[0])
+        action_dim = int(action_space.n)
         agent = DQNAgent(
             obs_dim,
             action_dim,

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from src.domain.specs import MethodSpec, UNSLOTH_ALLOWED_METHODS
+from src.domain.specs import UNSLOTH_ALLOWED_METHODS, MethodSpec
 from src.trainers.factory import get_training_backend, resolve_backend
 from src.utils.config import load_config, resolve_config, validate_config
 
@@ -36,6 +36,6 @@ def run_training_orchestrated(
     backend = get_training_backend(backend_name)
     if run_dir is None:
         run_dir = Path(config.get("output", {}).get("results_dir", "experiments/results"))
-        run_dir.mkdir(parents=True, exist_ok=True)
+    run_dir.mkdir(parents=True, exist_ok=True)
     metrics = backend.run(config=config, run_dir=run_dir, **kwargs)
     return run_dir, metrics

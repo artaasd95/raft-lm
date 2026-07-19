@@ -5,8 +5,8 @@ import pytest
 
 pytest.importorskip("torch")
 
-from src.algorithms.value.dqn import DQNAgent
 from src.algorithms.actor_critic.ppo import PPOAgent
+from src.algorithms.value.dqn import DQNAgent
 from src.buffers.replay import ReplayBuffer
 from src.buffers.rollout import RolloutBuffer
 from src.envs.risk_allocation import RiskAllocationEnv

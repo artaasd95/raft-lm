@@ -6,7 +6,6 @@ import pytest
 from src.rewards.builtin.accuracy import TaskAccuracyReward
 from src.rewards.builtin.kl import KLPenaltyReward
 from src.rewards.builtin.risk import RiskCVaRReward
-from src.rewards.composite import CompositeReward
 from src.rewards.registry import build_reward
 
 

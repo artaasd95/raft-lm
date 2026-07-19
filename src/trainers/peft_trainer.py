@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from src.domain.specs import LoRASpec
 from src.trainers.base import TrainingBackend
-from src.utils.reproducibility import get_device, set_seed
+from src.trainers.lm_training import run_sft_step, training_device
+from src.utils.reproducibility import set_seed
 
 
 class PeftTrainerBackend(TrainingBackend):
@@ -22,32 +22,20 @@ class PeftTrainerBackend(TrainingBackend):
         exp_logger: Optional[Any] = None,
     ) -> Dict[str, Any]:
         set_seed(config["training"]["seed"])
-        device = str(get_device(
-            None if config["training"]["device"] == "auto" else config["training"]["device"]
-        ))
-        model_cfg = config.get("model", {})
-        model_id = model_cfg.get("model_id") or model_cfg.get("hub_path") or "stub"
-        lora = LoRASpec.from_dict(model_cfg.get("lora"))
-        metrics: Dict[str, Any] = {
-            "backend": "peft",
-            "model_id": model_id,
-            "lora_enabled": lora.enabled,
-            "device": device,
-            "status": "stub_sft_ready",
-        }
+        device = training_device(config)
+        run_dir.mkdir(parents=True, exist_ok=True)
         try:
-            from src.models.loaders.causal_peft import load_causal_peft, save_adapter
-
-            if model_id != "stub":
-                bundle = load_causal_peft(model_id, lora=lora, device=device, load_ref=False)
-                adapter_dir = run_dir / "adapter"
-                save_adapter(bundle, str(adapter_dir))
-                metrics["adapter_dir"] = str(adapter_dir)
-                metrics["status"] = "adapter_saved"
-        except ImportError:
-            metrics["status"] = "hf_not_installed"
+            metrics = run_sft_step(config, device=device, run_dir=run_dir)
         except Exception as exc:  # pragma: no cover - hub/network failures
-            metrics["status"] = "load_skipped"
-            metrics["error"] = str(exc)[:200]
+            metrics = {
+                "backend": "peft",
+                "device": device,
+                "status": "load_skipped",
+                "error": str(exc)[:200],
+            }
         (run_dir / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+        if exp_logger is not None:
+            exp_logger.log_metrics(
+                {k: float(v) for k, v in metrics.items() if isinstance(v, (int, float))}
+            )
         return metrics

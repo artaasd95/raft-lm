@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "raft-lm"
-version = "0.2.0"
+version = "0.2.1"
 description = "Risk-Aware Fine-Tuning for training LLMs on financial risk-aware decision making"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -79,6 +79,12 @@ comet = [
     "comet_ml>=3.35.0",
 ]
 
+[project.scripts]
+raft-train = "application.entrypoints:train_main"
+raft-eval = "application.entrypoints:eval_main"
+raft-search = "application.entrypoints:search_main"
+raft-build-dataset = "application.entrypoints:build_dataset_main"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["src*"]
@@ -102,6 +108,11 @@ exclude = ["notebooks", "data", "experiments/results", "docs/_build"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*.py" = ["E402"]
+"tests/**/*.py" = ["E402"]
+"src/**/__init__.py" = ["F403"]
 
 [tool.mypy]
 python_version = "3.10"

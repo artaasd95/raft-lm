@@ -18,7 +18,6 @@ from src.data.pipeline.pipeline import run_pipeline
 from src.data.pipeline.sources.databricks import DatabricksSource
 from src.search.errors import MissingLabelError
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 

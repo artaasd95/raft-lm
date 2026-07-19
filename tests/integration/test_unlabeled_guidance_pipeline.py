@@ -10,7 +10,6 @@ import pytest
 from src.data.pipeline.config import load_pipeline_config
 from src.data.pipeline.pipeline import run_pipeline
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 

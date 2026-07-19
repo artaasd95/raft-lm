@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.trainers.factory import get_training_backend, resolve_backend
 from src.trainers.constants import METHOD_TO_BACKEND, SUPPORTED_BACKENDS
+from src.trainers.factory import get_training_backend, resolve_backend
 
 
 def test_all_backends_instantiate():

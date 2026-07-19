@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import List, Sequence
+from typing import List, Sequence, Union
 
 import numpy as np
+
+ArrayLike = Union[Sequence[float], np.ndarray]
 
 DEFAULT_EVALUATOR_ROLES = ("clarity", "objectivity", "evidence")
 
@@ -21,7 +23,7 @@ class ConsensusResult:
     evaluator_scores: List[float]
 
 
-def _median_abs_deviation(values: Sequence[float]) -> float:
+def _median_abs_deviation(values: ArrayLike) -> float:
     arr = np.asarray(values, dtype=float)
     if arr.size == 0:
         return 0.0
@@ -30,7 +32,7 @@ def _median_abs_deviation(values: Sequence[float]) -> float:
 
 
 def _downweight_outliers(
-    scores: Sequence[float],
+    scores: ArrayLike,
     *,
     outlier_mad_factor: float = 2.5,
 ) -> List[float]:

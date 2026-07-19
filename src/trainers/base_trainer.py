@@ -18,10 +18,10 @@ from src.training.per_sample_loss import per_sample_loss
 class BaseTrainer:
     """
     Base trainer class for risk-aware learning.
-    
+
     Provides the core training loop structure. All specialized trainers
     (e.g., CVaRTrainer, DPOTrainer, PPOTrainer) should inherit from this.
-    
+
     Attributes:
         model: The neural network model
         optimizer: Optimizer for training
@@ -29,7 +29,7 @@ class BaseTrainer:
         device: Device for training (cpu/cuda)
         config: Training configuration dictionary
     """
-    
+
     def __init__(
         self,
         model: nn.Module,
@@ -40,7 +40,7 @@ class BaseTrainer:
     ):
         """
         Initialize the base trainer.
-        
+
         Args:
             model: Neural network model
             optimizer: Optimizer for training
@@ -53,16 +53,16 @@ class BaseTrainer:
         self.criterion = criterion
         self.device = device
         self.config = config
-        
+
         # Training state
         self.current_epoch = 0
         self.global_step = 0
         self.best_val_loss = float('inf')
-        
+
         # Metrics tracking
-        self.train_metrics = []
-        self.val_metrics = []
-        
+        self.train_metrics: list[dict[str, float]] = []
+        self.val_metrics: list[dict[str, float]] = []
+
     def train_epoch(
         self,
         train_loader: DataLoader,
@@ -71,10 +71,10 @@ class BaseTrainer:
     ) -> Dict[str, float]:
         """
         Train for one epoch.
-        
+
         Args:
             train_loader: Training data loader
-            
+
         Returns:
             Dictionary of training metrics for this epoch
         """
@@ -86,7 +86,7 @@ class BaseTrainer:
         for batch_idx, (inputs, targets) in enumerate(train_loader):
             inputs = inputs.to(self.device)
             targets = targets.to(self.device)
-            
+
             # Forward pass
             self.optimizer.zero_grad()
             outputs = self.model(inputs)
@@ -111,37 +111,37 @@ class BaseTrainer:
         if per_sample_chunks:
             metrics["_per_sample_losses"] = torch.cat(per_sample_chunks)
         return metrics
-    
+
     def validate(self, val_loader: DataLoader) -> Dict[str, float]:
         """
         Validate the model.
-        
+
         Args:
             val_loader: Validation data loader
-            
+
         Returns:
             Dictionary of validation metrics
         """
         self.model.eval()
         val_loss = 0.0
         num_batches = 0
-        
+
         with torch.no_grad():
             for inputs, targets in val_loader:
                 inputs = inputs.to(self.device)
                 targets = targets.to(self.device)
-                
+
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, targets)
-                
+
                 val_loss += loss.item()
                 num_batches += 1
-        
+
         if num_batches == 0:
             raise ValueError("Validation data loader is empty")
         avg_loss = val_loss / num_batches
         return {'val_loss': avg_loss}
-    
+
     def train(
         self,
         train_loader: DataLoader,
@@ -152,7 +152,7 @@ class BaseTrainer:
     ) -> None:
         """
         Main training loop.
-        
+
         Args:
             train_loader: Training data loader
             val_loader: Validation data loader
@@ -164,10 +164,10 @@ class BaseTrainer:
             save_path.mkdir(parents=True, exist_ok=True)
             checkpoint_path = save_path / 'checkpoints'
             checkpoint_path.mkdir(parents=True, exist_ok=True)
-        
+
         for epoch in range(num_epochs):
             self.current_epoch = epoch
-            
+
             # Train
             train_metrics = self.train_epoch(
                 train_loader,
@@ -179,29 +179,29 @@ class BaseTrainer:
                 for cb in callbacks:
                     if hasattr(cb, "on_epoch_losses"):
                         cb.on_epoch_losses(epoch, per_sample)
-            
+
             # Validate
             val_metrics = self.validate(val_loader)
             self.val_metrics.append(val_metrics)
-            
+
             # Log progress
             print(f"Epoch {epoch+1}/{num_epochs} - "
                   f"Train Loss: {train_metrics['train_loss']:.4f} - "
                   f"Val Loss: {val_metrics['val_loss']:.4f}")
-            
+
             # Save checkpoint if best
             if save_dir and val_metrics['val_loss'] < self.best_val_loss:
                 self.best_val_loss = val_metrics['val_loss']
                 self.save_checkpoint(checkpoint_path / 'best_model.pt')
-            
+
             # Save metrics
             if save_dir:
                 self.save_metrics(save_path / 'metrics.json')
-    
-    def save_checkpoint(self, checkpoint_path: str) -> None:
+
+    def save_checkpoint(self, checkpoint_path: str | Path) -> None:
         """
         Save model checkpoint.
-        
+
         Args:
             checkpoint_path: Path to save checkpoint
         """
@@ -214,11 +214,11 @@ class BaseTrainer:
             'config': self.config
         }
         torch.save(checkpoint, checkpoint_path)
-    
+
     def load_checkpoint(self, checkpoint_path: str) -> None:
         """
         Load model checkpoint.
-        
+
         Args:
             checkpoint_path: Path to checkpoint file
         """
@@ -234,11 +234,11 @@ class BaseTrainer:
         self.best_val_loss = checkpoint['best_val_loss']
         if 'config' in checkpoint:
             self.config = checkpoint['config']
-    
-    def save_metrics(self, metrics_path: str) -> None:
+
+    def save_metrics(self, metrics_path: str | Path) -> None:
         """
         Save training metrics to JSON file.
-        
+
         Args:
             metrics_path: Path to save metrics
         """

@@ -8,9 +8,9 @@ API Reference
    metrics
    training
    rewards
-   rl
-   alignment
    models
    tools
-   data_platform
-   unlabeled_guidance
+   data_pipeline
+   search
+   trainers
+   algorithms

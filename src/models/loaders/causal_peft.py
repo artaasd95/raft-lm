@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Literal, Optional, cast
 
 import torch
 import torch.nn as nn
@@ -33,8 +33,8 @@ class ValueHead(nn.Module):
 
 def _require_hf() -> None:
     try:
-        import transformers  # noqa: F401
         import peft  # noqa: F401
+        import transformers  # noqa: F401
     except ImportError as exc:
         raise ImportError(
             "transformers and peft required. Install with: pip install -e '.[hf]'"
@@ -61,27 +61,28 @@ def load_causal_peft(
 
     dtype = torch.float32
     base = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=dtype)
-    base.to(device)
+    base = cast(Any, base).to(device)
 
     if adapter_path and Path(adapter_path).exists():
-        policy = PeftModel.from_pretrained(base, adapter_path, is_trainable=True)
+        policy: Any = PeftModel.from_pretrained(base, adapter_path, is_trainable=True)
     elif lora.enabled:
+        bias = cast(Literal["none", "all", "lora_only"], lora.bias)
         lora_cfg = LoraConfig(
             r=lora.r,
             lora_alpha=lora.lora_alpha,
             lora_dropout=lora.lora_dropout,
             target_modules=lora.target_modules,
-            bias=lora.bias,
+            bias=bias,
             task_type="CAUSAL_LM",
         )
         policy = get_peft_model(base, lora_cfg)
     else:
         policy = base
 
-    ref = None
+    ref: Any = None
     if load_ref:
         ref_base = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=dtype)
-        ref_base.to(device)
+        ref_base = cast(Any, ref_base).to(device)
         for p in ref_base.parameters():
             p.requires_grad = False
         ref = ref_base

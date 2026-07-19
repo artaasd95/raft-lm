@@ -1,5 +1,7 @@
 """Unit tests for PGTS navigation."""
 
+import random
+
 from src.search.config import GuidanceConfig
 from src.search.pgts.nodes import GuidanceItem, PGTSAction
 from src.search.pgts.pgts import (
@@ -9,7 +11,6 @@ from src.search.pgts.pgts import (
     run_pgts,
     select_child,
 )
-import random
 
 
 def _item() -> GuidanceItem:

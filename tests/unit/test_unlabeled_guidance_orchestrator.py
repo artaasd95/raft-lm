@@ -4,12 +4,12 @@ import pytest
 
 from src.search.config import GuidanceConfig
 from src.search.errors import GuidanceConfigError, MissingLabelError
-from src.search.pgts.nodes import GuidanceItem
 from src.search.orchestrator import (
     ensure_labels_or_guide,
     guide_item,
     guide_rows,
 )
+from src.search.pgts.nodes import GuidanceItem
 
 
 def test_guide_item_deterministic():

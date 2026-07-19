@@ -2,7 +2,7 @@
 Training script for RAFT-LM (Risk-Aware Fine-Tuning).
 
 Usage:
-    python scripts/train.py --config configs/methods/dpo.yaml
+    python scripts/train.py --config configs/methods/dpo_risk.yaml
     python scripts/train.py --config configs/methods/grpo.yaml
 """
 

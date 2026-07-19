@@ -11,6 +11,8 @@ import torch
 
 pytest.importorskip("torch", reason="PyTorch not available", exc_type=ImportError)
 
+pytestmark = pytest.mark.slow
+
 from scripts.train import run_training  # noqa: E402
 
 
@@ -74,7 +76,7 @@ def _read_json(path):
 
 class TestTrainingWorkflow:
     """Test suite for end-to-end training workflow."""
-    
+
     def test_complete_training_run(self, tmp_path):
         """Test a complete training run on toy data."""
         config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))
@@ -100,7 +102,7 @@ class TestTrainingWorkflow:
         assert "timestamp" in run_info
         assert "started_at" in run_info
         assert "completed_at" in run_info
-    
+
     def test_checkpoint_save_load(self, tmp_path):
         """Saved best checkpoint can be loaded with weights_only=True."""
         config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))
@@ -122,7 +124,7 @@ class TestTrainingWorkflow:
 
 class TestExperimentWorkflow:
     """Test suite for experiment workflow."""
-    
+
     def test_config_loading(self, tmp_path):
         """Test loading experiment configuration."""
         config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))
@@ -131,7 +133,7 @@ class TestExperimentWorkflow:
         resolved_config = _read_json(run_dir / "resolved_config.json")
 
         assert resolved_config["training"]["seed"] == 321
-    
+
     def test_reproducibility(self, tmp_path):
         """Test that results are reproducible with same seed."""
         config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))
@@ -145,7 +147,7 @@ class TestExperimentWorkflow:
         assert first_metrics["train_metrics"] == second_metrics["train_metrics"]
         assert first_metrics["val_metrics"] == second_metrics["val_metrics"]
         assert first_metrics["test_metrics"] == second_metrics["test_metrics"]
-    
+
     def test_multi_seed_experiment(self, tmp_path):
         """Different seeds produce different synthetic training outcomes."""
         config_path = _write_config(tmp_path, _tiny_config(str(tmp_path / "results")))

@@ -305,6 +305,9 @@ celerybeat.pid
 .dmypy.json
 dmypy.json
 
+# Local implementation plans (agent-generated)
+plans/
+
 *.log
 
 linkedin_post_ideas.md

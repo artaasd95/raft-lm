@@ -1,12 +1,13 @@
 """Integration smoke for env RL backends."""
 
-import json
 import tempfile
 from pathlib import Path
 
 import pytest
 
 pytest.importorskip("torch")
+
+pytestmark = pytest.mark.slow
 
 from src.trainers.env_rl_backend import DQNEnvBackend, PPOEnvBackend
 

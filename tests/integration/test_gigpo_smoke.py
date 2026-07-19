@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from src.application.train import run_training_orchestrated
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

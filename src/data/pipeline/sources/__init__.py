@@ -1,12 +1,14 @@
 """Data source connectors for the RAFT-LM data platform."""
 
+from typing import Dict, Type
+
 from src.data.pipeline.sources.base import BaseSource
 from src.data.pipeline.sources.databricks import DatabricksSource
 from src.data.pipeline.sources.file_source import FileSource
 from src.data.pipeline.sources.hf_source import HuggingFaceSource
 from src.data.pipeline.sources.sql_source import SQLSource
 
-SOURCE_TYPES = {
+SOURCE_TYPES: Dict[str, Type[BaseSource]] = {
     "file": FileSource,
     "hf": HuggingFaceSource,
     "sql": SQLSource,

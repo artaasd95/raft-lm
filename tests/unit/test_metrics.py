@@ -9,7 +9,7 @@ import math
 import numpy as np
 import pytest
 
-from src.metrics.task_metrics import accuracy, mse, mae, f1_score
+from src.metrics.task_metrics import accuracy, f1_score, mae, mse
 
 
 def _torch_ok() -> bool:
@@ -84,7 +84,11 @@ class TestRiskMetrics:
         assert max_drawdown_wealth(w) == pytest.approx((1.2 - 1.0) / 1.2)
 
     def test_max_drawdown_from_returns(self):
-        from src.metrics.risk_metrics import max_drawdown_from_returns, max_drawdown_wealth, wealth_from_simple_returns
+        from src.metrics.risk_metrics import (
+            max_drawdown_from_returns,
+            max_drawdown_wealth,
+            wealth_from_simple_returns,
+        )
 
         r = np.array([0.0, 0.25, -0.20])
         w = wealth_from_simple_returns(r, 1.0)

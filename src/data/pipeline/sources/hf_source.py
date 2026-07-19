@@ -23,7 +23,7 @@ class HuggingFaceSource(BaseSource):
 
     def load_rows(self) -> List[Dict[str, Any]]:
         try:
-            from datasets import load_dataset  # type: ignore
+            from datasets import load_dataset
         except ImportError as exc:
             raise ImportError(
                 "HuggingFaceSource requires `pip install datasets`. "

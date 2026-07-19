@@ -26,7 +26,7 @@ class RayTrainerBackend(TrainingBackend):
         inner_name = str(distributed.get("inner_backend") or resolve_backend(config))
         if strategy == "ray":
             try:
-                import ray  # type: ignore  # noqa: F401
+                import ray  # noqa: F401
             except ImportError as exc:
                 raise ImportError(
                     "RayTrainerBackend requires `pip install -e '.[ray]'`"

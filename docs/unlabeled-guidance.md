@@ -24,11 +24,11 @@ Unlabeled row
 
 ### Methods
 
-1. **PGTS** (`src/unlabeled_guidance/pgts.py`) — navigates hypothesis nodes using value, exploration bonus, and feature prior. **Backtrack-on-doubt** relaxes pruning when council disagreement (`echo_score`) exceeds `doubt_echo_threshold`.
+1. **PGTS** (`src/search/pgts/pgts.py`) — navigates hypothesis nodes using value, exploration bonus, and feature prior. **Backtrack-on-doubt** relaxes pruning when council disagreement (`echo_score`) exceeds `doubt_echo_threshold`.
 
-2. **Consensus council** (`src/unlabeled_guidance/consensus.py`) — multiple evaluator roles score clarity, objectivity, and evidence. Outliers are downweighted via MAD; `echo_score` captures epistemic ambiguity.
+2. **Consensus council** (`src/search/pgts/consensus.py`) — multiple evaluator roles score clarity, objectivity, and evidence. Outliers are downweighted via MAD; `echo_score` captures epistemic ambiguity.
 
-3. **Peer consistency** (`src/unlabeled_guidance/consistency.py`) — discriminator completes a masked partial state; consistency score blends token overlap and label-bucket agreement.
+3. **Peer consistency** (`src/search/pgts/consistency.py`) — discriminator completes a masked partial state; consistency score blends token overlap and label-bucket agreement.
 
 Offline mode uses deterministic heuristics (no API keys). Optional LLM backends can be wired later via `training.llm.config_path`.
 
@@ -94,12 +94,12 @@ Guidance attaches to row `metadata.guidance`:
 
 | File | Role |
 |------|------|
-| `src/unlabeled_guidance/nodes.py` | `GuidanceItem`, `HypothesisNode`, `GuidanceResult` |
-| `src/unlabeled_guidance/consensus.py` | Council scoring |
-| `src/unlabeled_guidance/consistency.py` | Peer consistency |
-| `src/unlabeled_guidance/pgts.py` | Tree search |
-| `src/unlabeled_guidance/orchestrator.py` | `guide_item`, `guide_rows`, `ensure_labels_or_guide` |
-| `src/unlabeled_guidance/errors.py` | `MissingLabelError`, `GuidanceConfigError` |
+| `src/search/pgts/nodes.py` | `GuidanceItem`, `HypothesisNode`, `GuidanceResult` |
+| `src/search/pgts/consensus.py` | Council scoring |
+| `src/search/pgts/consistency.py` | Peer consistency |
+| `src/search/pgts/pgts.py` | Tree search |
+| `src/search/orchestrator.py` | `guide_item`, `guide_rows`, `ensure_labels_or_guide` |
+| `src/search/errors.py` | `MissingLabelError`, `GuidanceConfigError` |
 
 ## Related docs
 

@@ -10,6 +10,8 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 
+Requires **Python 3.10+** (recommended: 3.11, see `.python-version`).
+
 ## What this project is
 
 RAFT-LM trains language models to balance **risk and reward** using:
@@ -75,6 +77,27 @@ python scripts/evaluate.py --checkpoint experiments/results/.../checkpoints/best
 ## CI
 
 CI runs on **manual workflow dispatch** only (GitHub Environment `ci`). Use the Actions tab → **CI** → Run workflow.
+
+Local checks before dispatch:
+
+```bash
+ruff check src tests scripts
+mypy src
+pytest -q -m "not gpu and not ray"
+```
+
+Optional GPU validation (not CI): `pytest tests/integration/test_gpu_training.py -m gpu`
+
+## Console commands
+
+After `pip install -e ".[dev,hf]"`:
+
+```bash
+raft-train --config configs/methods/grpo.yaml
+raft-eval --checkpoint experiments/results/.../checkpoints/best_model.pt --config configs/risk_training.yaml
+raft-search --config configs/search/pgts.yaml --output out.jsonl
+raft-build-dataset --config configs/data/risk_training_stub.yaml
+```
 
 ## Docs
 

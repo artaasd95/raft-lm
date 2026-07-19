@@ -6,12 +6,12 @@ import pytest
 pytest.importorskip("torch")
 import torch
 
-from src.algorithms.preference.dpo import dpo_loss
+from src.algorithms.datasets.preference import PreferenceDataset
 from src.algorithms.on_policy.grpo import compute_grpo_advantages
+from src.algorithms.on_policy.ppo_lm import ppo_lm_loss
+from src.algorithms.preference.dpo import dpo_loss
 from src.algorithms.preference.kl import kl_divergence
 from src.algorithms.preference.kto import kto_loss
-from src.algorithms.on_policy.ppo_lm import ppo_lm_loss
-from src.algorithms.datasets.preference import PreferenceDataset
 from src.data.pipeline.cards import PreferencePair
 
 

@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 import torch
 
 from src.data.sft_dataset import load_distilled_splits, rows_to_hf_dataset
-from src.metrics.risk_metrics import compute_cvar, constraint_violation_rate
+from src.metrics.risk_metrics import compute_cvar
 from src.models.model_registry import get_model_registry
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -125,7 +125,7 @@ def _compute_lm_losses(
     load_in_4bit: bool = True,
 ) -> List[float]:
     try:
-        from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore
+        from transformers import AutoModelForCausalLM, AutoTokenizer
     except ImportError:
         return _stub_losses_from_dataset(test_ds, seed=seed, adapter_dir=adapter_dir)
 
@@ -138,9 +138,10 @@ def _compute_lm_losses(
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    model: Any
     if adapter_dir:
         try:
-            from peft import PeftModel  # type: ignore
+            from peft import PeftModel
 
             base = AutoModelForCausalLM.from_pretrained(
                 model_path,

@@ -13,9 +13,8 @@ pytest.importorskip("torch", reason="PyTorch not available", exc_type=ImportErro
 from scripts.train import run_training
 from src.data.pipeline.config import load_pipeline_config
 from src.data.pipeline.pipeline import run_pipeline
-from src.trainers.mlp_backend import _build_dataloaders_from_platform
 from src.search.errors import MissingLabelError
-
+from src.trainers.mlp_backend import _build_dataloaders_from_platform
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -110,7 +109,7 @@ def test_training_raises_without_guidance_on_unlabeled(tmp_path):
         "logging": {"save_checkpoints": False},
         "output": {"results_dir": str(tmp_path / "results")},
     }
-    config_path = _write_json(tmp_path / "cfg.json", config)
+    _write_json(tmp_path / "cfg.json", config)
 
     with pytest.raises(MissingLabelError):
         _build_dataloaders_from_platform(config, str(data_yaml_path))

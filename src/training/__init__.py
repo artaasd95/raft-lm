@@ -1,20 +1,20 @@
 """
 Training modules for Raft-LM.
 
-Provides base trainers and specialized training loops for risk-aware learning.
+Shared training utilities (loss factory, callbacks, policies).
+BaseTrainer lives in src.trainers.base_trainer.
 """
 
-from .base_trainer import BaseTrainer
-from .specialized_trainer import (
-	ProbabilisticReasoningTrainer,
-	QuantitativeReasoningTrainer,
-	ToolAwareReasoningTrainer,
+from src.trainers.base_trainer import BaseTrainer
+from src.training.specialized_trainer import (
+    ProbabilisticReasoningTrainer,
+    QuantitativeReasoningTrainer,
+    ToolAwareReasoningTrainer,
 )
 
 __all__ = [
-	"BaseTrainer",
-	"ProbabilisticReasoningTrainer",
-	"QuantitativeReasoningTrainer",
-	"ToolAwareReasoningTrainer",
+    "BaseTrainer",
+    "ProbabilisticReasoningTrainer",
+    "QuantitativeReasoningTrainer",
+    "ToolAwareReasoningTrainer",
 ]
-

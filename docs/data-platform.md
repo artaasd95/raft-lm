@@ -6,10 +6,10 @@ Config-driven pipelines that turn adapter exports (Meridian, RADA) and raw files
 
 | Concept | Module |
 |---------|--------|
-| Row cards | `src/data_platform/cards.py` |
-| Pipeline config | `src/data_platform/config.py` |
-| Stages | `src/data_platform/pipeline.py` |
-| Sources | `src/data_platform/sources/` |
+| Row cards | `src/data/pipeline/cards.py` |
+| Pipeline config | `src/data/pipeline/config.py` |
+| Stages | `src/data/pipeline/pipeline.py` |
+| Sources | `src/data/pipeline/sources/` |
 
 ## Pipeline stages
 

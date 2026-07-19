@@ -15,14 +15,14 @@ import torch
 def set_seed(seed: int) -> None:
     """
     Set random seed for reproducibility.
-    
+
     Args:
         seed: Random seed value
     """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    
+
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
@@ -34,17 +34,17 @@ def set_seed(seed: int) -> None:
 def get_device(device: Optional[str] = None) -> torch.device:
     """
     Get the appropriate device for training.
-    
+
     Args:
         device: Specific device string ('cpu', 'cuda', 'cuda:0', etc.)
                 If None, automatically selects cuda if available
-        
+
     Returns:
         PyTorch device object
     """
     if device is not None:
         return torch.device(device)
-    
+
     return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 

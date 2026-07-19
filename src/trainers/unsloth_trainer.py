@@ -25,8 +25,8 @@ class UnslothTrainer(TrainingBackend):
         exp_logger: Optional[Any] = None,
     ) -> Dict[str, Any]:
         try:
-            from unsloth import FastLanguageModel  # type: ignore
-            from trl import SFTTrainer, SFTConfig  # type: ignore
+            from trl import SFTConfig, SFTTrainer
+            from unsloth import FastLanguageModel
         except ImportError as exc:
             raise ImportError(
                 "Unsloth backend requires optional deps: pip install -e '.[unsloth]'"
@@ -89,7 +89,7 @@ class UnslothTrainer(TrainingBackend):
         save_total_limit = int(logging_cfg.get("checkpoint_keep_last", 3))
         resume_from = training_cfg.get("resume_from_checkpoint") or None
 
-        training_args = SFTConfig(
+        training_args = SFTConfig(  # type: ignore[call-arg]
             output_dir=str(run_dir / "checkpoints"),
             num_train_epochs=config["training"]["num_epochs"],
             per_device_train_batch_size=int(data_cfg.get("batch_size", 2)),
@@ -98,7 +98,7 @@ class UnslothTrainer(TrainingBackend):
             weight_decay=float(config["training"]["optimizer"]["weight_decay"]),
             logging_steps=int(logging_cfg.get("log_interval", 10)),
             save_strategy="steps" if save_checkpoints else "no",
-            save_steps=save_steps if save_checkpoints else None,
+            save_steps=float(save_steps) if save_checkpoints else 0.0,
             save_total_limit=save_total_limit if save_checkpoints else None,
             resume_from_checkpoint=resume_from,
             report_to="none",
@@ -107,7 +107,7 @@ class UnslothTrainer(TrainingBackend):
             dataset_text_field="text",
         )
 
-        trainer = SFTTrainer(
+        trainer = SFTTrainer(  # type: ignore[call-arg]
             model=model,
             tokenizer=tokenizer,
             train_dataset=train_ds,
@@ -232,6 +232,7 @@ def _evaluate_sft_model(
     device: Any,
 ) -> Dict[str, Any]:
     import torch
+
     from src.metrics.risk_metrics import compute_cvar, constraint_violation_rate
 
     model.eval()
